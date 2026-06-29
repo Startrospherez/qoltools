@@ -37,7 +37,7 @@
         
         .flex-row { display: flex; gap: 4px; }
         
-        #float-ui-btn { position: fixed; top: 10px; left: 10px; z-index: 10000; display: none; background: var(--bg); color: var(--fg); border: 1px solid rgb(170,170,170); width: 30px; height: 26px; border-radius: 4px; cursor: pointer; font-size: 14px; align-items: center; justify-content: center; box-shadow: none; text-shadow: none !important; }
+        #float-ui-btn { position: fixed; top: 10px; left: 10px; z-index: 10000; display: none; background: rgb(255,255,255); color: rgb(0,0,0); border: 1px solid rgb(170,170,170); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; align-items: center; justify-content: center; box-shadow: none; text-shadow: none !important; }
         #float-ui-btn:hover { background: rgb(238,238,238); }
         
         .huge-canvas { position: absolute; width: 20000px; height: 20000px; transform-origin: 0 0; }
@@ -54,7 +54,7 @@
         .n.j .nt, .n.j .nd, .n.j .p { display: none !important; }
         
         /* SHAPES */ 
-        .n[data-shape="circle"] { border-radius: 50% !important; min-width: 120px; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px !important; }
+        .n[data-shape="circle"] { border-radius: 50% !important; aspect-ratio: 1 / 1 !important; min-width: 120px; min-height: 120px; width: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px !important; }
         .n[data-shape="ellipse"] { border-radius: 50% / 50% !important; min-width: 140px; min-height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px 30px !important; }
         .n[data-shape="speech-box"] { border-radius: 15px !important; }
         .n[data-shape="speech-box"]::after { content: ""; position: absolute; bottom: -10px; left: 30px; width: 18px; height: 18px; background: var(--n-bg); border-width: 0 4px 4px 0; border-style: solid; border-color: var(--n-bd); transform: rotate(45deg); z-index: -1; }
@@ -172,13 +172,13 @@
         <div class="ui-col" style="justify-content:center;">
             <div class="flex-row" style="margin-bottom:4px;">
                 <button onclick="window.doAlign('t')" title="ชิดบน">⊤ T-Align</button>
-                <button onclick="window.doAlign('cy')" title="กึ่งกลางแนวนอน">⌽ C-Align</button>
+                <button onclick="window.doAlign('cy')" title="กึ่งกลางแนวนอน">╪ C-Align</button>
                 <button onclick="window.doAlign('b')" title="ชิดล่าง">⊥ B-Align</button>
                 <button onclick="window.doDist('x')" title="กระจายแนวนอน">↔ Dist</button>
             </div>
             <div class="flex-row">
                 <button onclick="window.doAlign('l')" title="ชิดซ้าย">├ L-Align</button>
-                <button onclick="window.doAlign('cx')" title="กึ่งกลางแนวตั้ง">⌽ C-Align</button>
+                <button onclick="window.doAlign('cx')" title="กึ่งกลางแนวตั้ง">╫ C-Align</button>
                 <button onclick="window.doAlign('r')" title="ชิดขวา">┤ R-Align</button>
                 <button onclick="window.doDist('y')" title="กระจายแนวตั้ง">↕ Dist</button>
             </div>
