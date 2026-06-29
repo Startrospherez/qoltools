@@ -561,6 +561,13 @@
                 if(a && a.classList.contains('nt')) { e.preventDefault(); if(!e.shiftKey) { let nd = a.nextElementSibling; if(nd && nd.classList.contains('nd')) nd.focus(); } return; } 
                 else if(a && a.classList.contains('nd')) { e.preventDefault(); if(e.shiftKey) { let nt = a.previousElementSibling; if(nt && nt.classList.contains('nt')) nt.focus(); } return; } 
             }
+            if(e.key === 'Delete') {
+                let ae = document.activeElement;
+                if(ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+                let sels = abNodes.filter(n => n.classList.contains('sel'));
+                if(sels.length) { e.preventDefault(); sels.forEach(n => window.delAb(n.id)); window.doSaveStateAb(); }
+                return;
+            }
             if(e.altKey || (e.getModifierState && e.getModifierState('AltGraph'))) {
                 let c = e.code;
                 if(c === 'KeyS') { e.preventDefault(); window.saveFileHTML(); }
