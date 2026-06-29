@@ -1,0 +1,61 @@
+/* ============================================================
+   Notebook module — Favorites / Notes / History
+   โมดูลแยก ไม่ยุ่งกับสไตล์หลัก (ใช้ CSS variables ร่วมกับธีม)
+   ============================================================ */
+
+/* ปุ่มดาว + โน้ต มุมขวาบนของการ์ด */
+.card{position:relative}
+.hw{padding-right:78px}                 /* กันหัวศัพท์ชนปุ่ม */
+.card-tools{position:absolute; top:12px; right:14px; display:flex; gap:6px; z-index:2}
+.cbtn{
+  border:1px solid var(--line); background:var(--card); color:var(--muted);
+  width:32px; height:32px; border-radius:9px; cursor:pointer; font-size:17px; line-height:1;
+  display:inline-flex; align-items:center; justify-content:center; padding:0;
+}
+.cbtn:active{background:var(--chip)}
+.cbtn.on{color:var(--accent2); border-color:var(--accent2)}
+
+/* กล่องโน้ตใต้การ์ด */
+.note-saved{
+  margin-top:10px; white-space:pre-wrap; background:var(--hi); color:var(--ink);
+  border-radius:8px; padding:8px 10px; font-size:calc(15px * var(--fs));
+}
+.card-note{margin-top:10px; border-top:1px dashed var(--line); padding-top:8px}
+.card-note .nlbl{font-size:13px; color:var(--muted); margin-bottom:5px}
+.card-note textarea{
+  width:100%; min-height:64px; border:1px solid var(--line); border-radius:8px;
+  background:var(--bg); color:var(--ink); font-family:inherit;
+  font-size:calc(15px * var(--fs)); padding:8px; resize:vertical; outline:none;
+}
+.card-note textarea:focus{border-color:var(--accent2)}
+
+/* ===== panel "สมุดคำศัพท์" (ใช้ .modal/.modal-card จากหน้าหลัก) ===== */
+/* ซ่อนแท็บแบบ self-contained ไม่พึ่ง global .hidden (เวอร์ชัน server ไม่มี) */
+#nb-pane-fav.hidden, #nb-pane-hist.hidden{display:none}
+.nb-tabs{display:flex; gap:8px; margin:6px 0 12px}
+.nb-tab{
+  flex:1; padding:9px; border:1px solid var(--line); background:var(--card);
+  border-radius:9px; cursor:pointer; color:var(--accent); font-size:14px; text-align:center;
+}
+.nb-tab.active{background:var(--accent); color:#fff; border-color:var(--accent)}
+
+.nb-item{border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin:8px 0; cursor:pointer}
+.nb-item:active{background:var(--chip)}
+.nb-item .nb-hw{font-family:var(--pali-font); font-size:calc(20px * var(--fs)); color:var(--accent); font-weight:700}
+.nb-item .nb-roman{font-size:.7em; color:var(--muted); font-style:italic; font-family:'Sarabun',sans-serif}
+.nb-item .nb-c{font-family:var(--pali-font); font-size:calc(15px * var(--fs)); margin-top:4px; color:var(--ink)}
+.nb-item .nb-note{margin-top:7px; font-size:calc(14px * var(--fs)); background:var(--hi); color:var(--ink); border-radius:6px; padding:6px 9px; white-space:pre-wrap}
+.nb-item .nb-x{float:right; border:none; background:none; color:var(--muted); cursor:pointer; font-size:20px; line-height:1; padding:0 2px; margin-left:8px}
+.nb-item .nb-x:active{color:var(--accent2)}
+
+.nb-empty{color:var(--muted); text-align:center; padding:26px 6px; line-height:1.8}
+
+.nb-hist{display:flex; flex-wrap:wrap; gap:7px}
+.nb-hist .chip{font-family:var(--pali-font); cursor:pointer}
+
+.nb-actions{display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; border-top:1px solid var(--line); padding-top:14px}
+.nb-actions button{
+  flex:1; min-width:130px; padding:10px; border:1px solid var(--line); background:var(--card);
+  color:var(--accent); border-radius:9px; cursor:pointer; font-size:14px;
+}
+.nb-actions button:active{background:var(--chip)}

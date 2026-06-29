@@ -1,0 +1,27 @@
+/* โมดูล: ปุ่มส่งคำแนะนำพัฒนาแอพ — UI แยกไฟล์ ไม่แตะ logic หลัก */
+.fb-modal{position:fixed; inset:0; z-index:9000; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.45); padding:16px}
+.fb-modal.fb-hidden{display:none}
+.fb-card{background:var(--card,#fff); color:var(--ink,#2b2b2b); border:1px solid var(--line,#e3ddd0);
+  border-radius:14px; width:min(460px,100%); max-height:88vh; overflow:auto;
+  padding:20px 20px 18px; box-shadow:0 12px 40px rgba(0,0,0,.3); position:relative}
+.fb-card h2{margin:0 0 4px; font-size:calc(20px * var(--fs,1)); color:var(--accent,#8a6d3b)}
+.fb-card .fb-lead{margin:0 0 14px; font-size:calc(13px * var(--fs,1)); color:var(--muted,#8a8275); line-height:1.5}
+.fb-close{position:absolute; top:10px; right:12px; border:none; background:transparent;
+  font-size:24px; line-height:1; cursor:pointer; color:var(--muted,#8a8275)}
+.fb-field{margin:0 0 12px}
+.fb-field label{display:block; font-size:calc(13px * var(--fs,1)); margin:0 0 4px; font-weight:600}
+.fb-field .fb-req{color:#c0392b}
+.fb-field input, .fb-field textarea{width:100%; box-sizing:border-box; font:inherit;
+  font-size:calc(15px * var(--fs,1)); padding:9px 11px; border:1px solid var(--line,#d9d2c4);
+  border-radius:9px; background:var(--bg,#faf8f3); color:inherit; resize:vertical}
+.fb-field textarea{min-height:120px; line-height:1.55}
+.fb-field input:focus, .fb-field textarea:focus{outline:none; border-color:var(--accent,#8a6d3b)}
+.fb-actions{display:flex; gap:8px; align-items:center; margin-top:6px}
+.fb-send{flex:1; border:none; border-radius:9px; padding:11px; font:inherit; font-weight:700;
+  font-size:calc(15px * var(--fs,1)); background:var(--accent,#8a6d3b); color:#fff; cursor:pointer}
+.fb-send:disabled{opacity:.55; cursor:default}
+.fb-note{font-size:calc(12px * var(--fs,1)); color:var(--muted,#8a8275); margin:10px 0 0; line-height:1.5}
+.fb-status{font-size:calc(13px * var(--fs,1)); margin:10px 0 0; line-height:1.5; min-height:1.2em}
+.fb-status.ok{color:#2e7d32} .fb-status.err{color:#c0392b}
+/* ปุ่มเปิดบนแถบ tools ใช้คลาส .ctrlbtn เดิม */

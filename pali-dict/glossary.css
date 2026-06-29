@@ -1,0 +1,39 @@
+/* ============================================================
+   glossary module — ป้ายประเภทคำ (POS/ไวยากรณ์) + tooltip
+   badge คลิกได้ (เปิด Hub) ; hover/focus = tooltip คำเต็ม
+   ============================================================ */
+.gtag{
+  display:inline-block; font-family:'Sarabun','Leelawadee UI',sans-serif;
+  font-size:.78em; font-weight:600; line-height:1.45;
+  padding:0 7px; border-radius:10px; margin:0 3px; vertical-align:baseline;
+  white-space:nowrap; border:1px solid transparent; cursor:pointer;
+  transition:filter .12s;
+}
+.gtag:hover,.gtag:focus{ filter:brightness(.96); outline:none; box-shadow:0 0 0 2px var(--accent) }
+.gtag.g-m{background:#dbe9ff; color:#2b5fa8; border-color:#bcd6f7}   /* เพศชาย */
+.gtag.g-f{background:#ffe1ec; color:#b03a6e; border-color:#f5c4d8}   /* เพศหญิง */
+.gtag.g-n{background:#d4f1d8; color:#2e8b50; border-color:#b3e3bd}   /* เพศกลาง (เขียว) */
+.gtag.pos{background:var(--chip); color:var(--accent); border-color:var(--line)} /* ชนิดคำ */
+.gtag.gram{background:#e3f0e6; color:#3a7a4f; border-color:#c9e3d1}  /* ไวยากรณ์ */
+.groot{ color:#9c5b2e; font-weight:700 }   /* ราก √xxx */
+
+[data-theme="dark"] .gtag.g-m{background:#1d2c45; color:#9fc4f7; border-color:#2e466d}
+[data-theme="dark"] .gtag.g-f{background:#3b2230; color:#f0a8c5; border-color:#5d3349}
+[data-theme="dark"] .gtag.g-n{background:#16331f; color:#84d79a; border-color:#27512f}
+[data-theme="dark"] .gtag.gram{background:#1f3326; color:#90d0a4; border-color:#30503a}
+[data-theme="dark"] .groot{ color:#e0a86a }
+
+/* ปุ่มสวิตช์ในแถบเครื่องมือ */
+#glossary-toggle.on{background:var(--accent); color:#fff; border-color:var(--accent)}
+
+/* tooltip คำเต็ม */
+.gloss-tip{
+  position:absolute; z-index:9999; max-width:280px;
+  background:var(--card,#fff); color:var(--ink,#222);
+  border:1px solid var(--line,#ddd); border-radius:10px;
+  padding:8px 11px; font-size:13px; line-height:1.5;
+  box-shadow:0 6px 24px rgba(0,0,0,.18); pointer-events:none;
+}
+.gloss-tip b{ font-weight:700 }
+.gloss-tip .gloss-hint{ display:block; margin-top:4px; font-size:11px; color:var(--muted,#888) }
+.gloss-tip.gloss-hidden{ display:none }

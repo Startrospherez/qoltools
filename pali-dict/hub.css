@@ -1,0 +1,47 @@
+/* ============================================================
+   hub module — overlay หน้ารวมคำตามประเภท (คลิก badge)
+   ใช้คลาส .ghub-hidden ของตัวเอง (ไม่พึ่ง global .hidden)
+   ============================================================ */
+.ghub-overlay{
+  position:fixed; inset:0; z-index:10000;
+  background:rgba(0,0,0,.45); display:flex; align-items:flex-start;
+  justify-content:center; padding:5vh 14px; overflow:auto;
+}
+.ghub-overlay.ghub-hidden{ display:none }
+
+.ghub-box{
+  background:var(--card,#fff); color:var(--ink,#222);
+  border:1px solid var(--line,#ddd); border-radius:16px;
+  width:100%; max-width:560px; max-height:88vh; display:flex; flex-direction:column;
+  box-shadow:0 18px 60px rgba(0,0,0,.35); overflow:hidden;
+}
+.ghub-head{
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px 8px; border-bottom:1px solid var(--line);
+}
+.ghub-title{ font-size:17px; font-weight:700; flex:1; display:flex; align-items:center; gap:8px }
+.ghub-x{
+  border:none; background:var(--chip,#eee); color:var(--ink); cursor:pointer;
+  width:30px; height:30px; border-radius:50%; font-size:15px; line-height:1;
+}
+.ghub-x:hover{ background:var(--chip-act,#ddd) }
+.ghub-meaning{ padding:8px 16px 0; font-size:13px; color:var(--muted) }
+.ghub-search{
+  margin:12px 16px 6px; padding:9px 12px; font-size:15px; font-family:inherit;
+  border:1px solid var(--line); border-radius:10px; background:var(--bg,#fff);
+  color:var(--ink); outline:none;
+}
+.ghub-search:focus{ border-color:var(--accent) }
+.ghub-count{ padding:0 16px 6px; font-size:12px; color:var(--muted) }
+.ghub-list{
+  padding:6px 12px 14px; overflow:auto; display:flex; flex-wrap:wrap; gap:7px;
+  align-content:flex-start;
+}
+.ghub-item{
+  font-family:var(--pali-font); font-size:calc(17px * var(--fs,1));
+  padding:5px 11px; border:1px solid var(--line); border-radius:9px;
+  background:var(--chip,#f3f3f3); color:var(--accent); cursor:pointer;
+  transition:background .12s;
+}
+.ghub-item:hover{ background:var(--chip-act,#e4dcc6) }
+.ghub-empty{ padding:18px; color:var(--muted); width:100% ; text-align:center }

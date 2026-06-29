@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#8a6d3b">
+<title>StarDict — พจนานุกรม บาลี–ไทย</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="notebook.css"><!-- โมดูล: สมุดคำศัพท์ (Favorites/Notes/History) -->
+<link rel="stylesheet" href="glossary.css"><!-- โมดูล: ป้ายประเภทคำ + tooltip -->
+<link rel="stylesheet" href="hub.css"><!-- โมดูล: หน้ารวมคำตามประเภท -->
+<link rel="stylesheet" href="feedback.css"><!-- โมดูล: ส่งคำแนะนำพัฒนาแอพ -->
+<style>
+  @font-face{
+    font-family:'PaliTF';
+    src:url('pali-font.ttf') format('truetype');
+    font-display:swap;
+  }
+  :root{
+    --bg:#f4f1ea; --card:#ffffff; --ink:#2b2b2b; --muted:#8a8275;
+    --accent:#8a6d3b; --accent2:#b8860b; --line:#e6e0d4; --hi:#fff3cd;
+    --eng:#4a5568; --hdr1:#fbf9f4; --hdr2:#f4f1ea; --chip:#efe9da; --chip-act:#e4dcc6;
+    --fs:1;  /* ตัวคูณขนาดตัวอักษร ปรับด้วยปุ่ม A−/A+ */
+    --pali-font:'PaliTF','Sarabun','Leelawadee UI','Tahoma',sans-serif;
+  }
+  [data-theme="dark"]{
+    --bg:#191712; --card:#252119; --ink:#e9e4d8; --muted:#a59b88;
+    --accent:#cda965; --accent2:#dcb86a; --line:#3a342a; --hi:#4d4320;
+    --eng:#9fb0c4; --hdr1:#221f18; --hdr2:#191712; --chip:#332d22; --chip-act:#3e372a;
+  }
+  *{box-sizing:border-box}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  html{height:100%; background:var(--bg)}   /* พื้นหลัง root กันพื้นที่นอก body เป็นสีดำตอนเลื่อน */
+  body{
+    background:var(--bg); color:var(--ink);
+    height:100%; display:flex; flex-direction:column; overflow:hidden;  /* app-shell: header นิ่ง, 2 pane scroll เอง */
+    font-family:"Sarabun","Leelawadee UI","Segoe UI",Tahoma,sans-serif;
+    font-size:calc(18px * var(--fs)); line-height:1.6;
+    -webkit-text-size-adjust:100%;
+    transition:background-color .2s, color .2s;
+  }
+  header{
+    flex:0 0 auto; z-index:10;
+    background:linear-gradient(180deg,var(--hdr1) 0%,var(--hdr2) 100%);
+    border-bottom:1px solid var(--line);
+    padding:14px 16px 12px; padding-top:max(14px, env(safe-area-inset-top));
+  }
+  .wrap{max-width:780px; margin:0 auto}
+  .title{display:flex; align-items:baseline; gap:10px; margin:0 0 10px; flex-wrap:wrap}
+  .title h1{font-size:21px; margin:0; color:var(--accent); font-weight:700}
+  .title .sub{font-size:12px; color:var(--muted)}
+  .searchbox{position:relative}
+  #q{
+    width:100%; padding:13px 44px 13px 16px; font-size:calc(20px * var(--fs));
+    border:2px solid var(--line); border-radius:12px; background:var(--card); color:var(--ink);
+    outline:none; transition:border-color .15s; font-family:inherit;
+  }
+  #q:focus{border-color:var(--accent2)}
+  .clear{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    border:none; background:none; font-size:24px; color:var(--muted);
+    cursor:pointer; line-height:1; padding:6px 10px;
+  }
+  .meta{font-size:13px; color:var(--muted); margin-top:7px; min-height:18px}
+  /* ---- 2-pane (list ซ้าย / รายละเอียดขวา) ---- */
+  #results{flex:1 1 auto; min-height:0; display:flex; width:100%; max-width:1100px; margin:0 auto}
+  #list{
+    flex:0 0 320px; overflow:auto; border-right:1px solid var(--line);
+    padding:8px 6px 60px; -webkit-overflow-scrolling:touch;
+  }
+  main#main{
+    flex:1 1 auto; min-width:0; overflow:auto; max-width:none;
+    padding:8px 18px 60px; -webkit-overflow-scrolling:touch;
+  }
+  .litem{
+    display:block; width:100%; text-align:left; cursor:pointer;
+    background:none; border:none; border-radius:9px; padding:9px 11px; margin:2px 0;
+    color:var(--ink); font-family:inherit; line-height:1.3;
+  }
+  .litem:hover{background:var(--chip)}
+  .litem.active{background:var(--chip-act)}
+  .litem .li-hw{font-family:var(--pali-font); font-size:calc(18px * var(--fs)); color:var(--accent); font-weight:700}
+  .litem .li-rom{font-size:calc(12px * var(--fs)); color:var(--muted); margin-left:7px; font-style:italic}
+  .litem .li-src{display:block; font-size:11px; color:var(--muted); margin-top:1px}
+  .detail-back{
+    display:none; background:var(--chip); border:1px solid var(--line); color:var(--ink);
+    border-radius:9px; padding:7px 13px; margin:0 0 10px; cursor:pointer; font-family:inherit;
+    font-size:calc(14px * var(--fs));
+  }
+  /* welcome / ไม่พบ → แสดงเต็มหน้า (ซ่อน list) */
+  #results.single #list{display:none}
+  #results.single main#main{flex:1 1 auto}
+  @media(max-width:720px){
+    #results{flex-direction:column}
+    #list{flex:1 1 auto; border-right:none; width:100%; padding:8px 10px 60px}
+    main#main{display:none}
+    #results.show-detail #list{display:none}
+    #results.show-detail main#main{display:block}
+    .detail-back{display:inline-block}
+    #results.show-detail ~ .detail-back-fab{
+      display:inline-flex; align-items:center; gap:5px; position:fixed; right:16px; bottom:16px; z-index:40;
+      background:var(--accent); color:#fff; border:none; border-radius:22px; cursor:pointer;
+      padding:11px 17px; font-family:inherit; font-size:calc(14px * var(--fs)); box-shadow:0 4px 14px rgba(0,0,0,.28)}
+  }
+  .dsec{scroll-margin-top:8px}
+  .detail-back-fab{display:none}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:15px 17px; margin:12px 0; box-shadow:0 1px 2px rgba(0,0,0,.03);
+  }
+  .hw{font-size:calc(25px * var(--fs)); font-weight:700; color:var(--accent); margin:0; font-family:var(--pali-font)}
+  .hw .roman{font-size:calc(15px * var(--fs)); font-weight:400; color:var(--muted); margin-left:10px; font-style:italic; font-family:'Sarabun',sans-serif}
+  .content{margin:8px 0 0; white-space:pre-wrap; font-family:var(--pali-font); font-size:calc(18px * var(--fs))}
+  .eng{margin:8px 0 0; color:var(--eng); font-size:calc(16px * var(--fs)); display:none}
+  body.eng-on .eng{display:block}   /* ปุ่ม EN เดียวบนแถบ tools คุมทั้งหมด */
+  .eng-tag{display:inline-block; font-size:.72em; font-weight:700; letter-spacing:.5px;
+    background:var(--chip); color:var(--eng); border:1px solid var(--line);
+    border-radius:5px; padding:0 5px; vertical-align:1px; font-family:'Sarabun',sans-serif; margin-right:4px}
+  .src{margin-top:10px; font-size:12px; color:var(--muted); border-top:1px dashed var(--line); padding-top:8px}
+  mark{background:var(--hi); padding:0 2px; border-radius:3px}
+  .empty{text-align:center; color:var(--muted); margin-top:48px; padding:0 10px}
+  .empty .big{font-size:50px; opacity:.4}
+  .hint{font-size:14px; margin-top:8px}
+  .chip{
+    display:inline-block; background:var(--chip); color:var(--accent);
+    border-radius:20px; padding:5px 14px; font-size:calc(16px * var(--fs)); margin:5px 5px 0 0;
+    cursor:pointer; border:1px solid var(--line); font-family:var(--pali-font);
+  }
+  .chip:active{background:var(--chip-act)}
+  footer{text-align:center; color:var(--muted); font-size:12px; padding:18px}
+  /* loading overlay */
+  #loading{position:fixed; inset:0; background:var(--bg); display:flex;
+    flex-direction:column; align-items:center; justify-content:center; z-index:50; gap:14px}
+  #loading .spin{width:38px;height:38px;border:4px solid var(--line);border-top-color:var(--accent);
+    border-radius:50%; animation:sp 0.8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #loading .lbl{color:var(--muted); font-size:15px}
+  .hidden{display:none !important}
+  /* ปุ่มเกี่ยวกับ + modal */
+  .tools{margin-left:auto; display:flex; align-items:center; gap:6px}
+  .ctrlbtn,.infobtn{border:1px solid var(--line); background:var(--card); color:var(--accent);
+    height:30px; border-radius:15px; cursor:pointer; font-size:14px; line-height:1; flex:0 0 auto;
+    padding:0 10px; display:inline-flex; align-items:center; justify-content:center}
+  .ctrlbtn{min-width:36px; font-weight:600}
+  .ctrlbtn.active{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .infobtn{width:30px; padding:0; border-radius:50%}
+  .ctrlbtn:active,.infobtn:active{background:var(--chip)}
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center;
+    justify-content:center; z-index:60; padding:16px}
+  .modal-card{background:var(--card); max-width:560px; width:100%; max-height:86vh; overflow:auto;
+    border-radius:14px; padding:22px 22px 18px; position:relative; box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  .modal-close{position:absolute; right:12px; top:8px; border:none; background:none; font-size:26px;
+    color:var(--muted); cursor:pointer; line-height:1}
+  .modal-card h2{margin:0 0 4px; color:var(--accent); font-size:20px}
+  .modal-card h3{margin:16px 0 6px; font-size:15px; color:var(--accent)}
+  .modal-card p{font-size:14px; line-height:1.7; margin:6px 0}
+  .modal-card .tag{font-size:12.5px; color:var(--muted)}
+  .modal-card a{color:var(--accent2)}
+  .modal-card table{width:100%; border-collapse:collapse; font-size:13px; margin:6px 0}
+  .modal-card td{border-bottom:1px solid var(--line); padding:5px 6px; vertical-align:top}
+  @media (max-width:480px){
+    body{font-size:calc(17px * var(--fs))}
+    .hw{font-size:calc(23px * var(--fs))}
+    #q{font-size:calc(18px * var(--fs))}
+  }
+</style>
+<script>
+  /* ตั้งธีม/ขนาดตัวอักษรก่อนเรนเดอร์ กันพื้นหลังกระพริบ (FOUC) */
+  (function(){
+    try{
+      var t = localStorage.getItem('pali_theme') ||
+        ((window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+      var f = parseFloat(localStorage.getItem('pali_fs')) || 1;
+      document.documentElement.style.setProperty('--fs', f);
+      var m = document.querySelector('meta[name=theme-color]');
+      if(m) m.setAttribute('content', t === 'dark' ? '#191712' : '#8a6d3b');
+    }catch(e){}
+  })();
+</script>
+</head>
+<body>
+<div id="loading">
+  <div class="spin"></div>
+  <div class="lbl" id="loadlbl">กำลังโหลดพจนานุกรม…</div>
+</div>
+
+<header>
+  <div class="wrap">
+    <div class="title">
+      <a href="../index.html" title="กลับหน้า Hub" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 9px;margin-right:2px;">← Hub</a>
+      <h1><img src="icon-192.png" alt="" style="height:1.05em;vertical-align:-0.16em;margin-right:.32em;border-radius:6px">StarDict</h1>
+      <span class="sub">พจนานุกรม บาลี–ไทย · offline</span>
+      <div class="tools">
+        <button class="ctrlbtn" id="font-dec" title="ตัวอักษรเล็กลง" aria-label="ตัวอักษรเล็กลง">A−</button>
+        <button class="ctrlbtn" id="font-inc" title="ตัวอักษรใหญ่ขึ้น" aria-label="ตัวอักษรใหญ่ขึ้น">A+</button>
+        <button class="ctrlbtn" id="eng-toggle" title="แสดง/ซ่อนคำแปลอังกฤษ" aria-label="แสดงคำแปลอังกฤษ" aria-pressed="false">EN</button>
+        <button class="ctrlbtn" id="theme-toggle" title="สลับโหมดมืด/สว่าง" aria-label="สลับโหมดมืด/สว่าง">🌙</button>
+        <button class="infobtn" id="fb-open" title="ส่งคำแนะนำพัฒนาแอพ" aria-label="ส่งคำแนะนำ">💬</button>
+        <button class="infobtn" id="about-open" title="เกี่ยวกับ / เครดิต" aria-label="เกี่ยวกับ">ⓘ</button>
+      </div>
+    </div>
+    <div class="searchbox">
+      <input id="q" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
+             placeholder="พิมพ์คำบาลี (เช่น ธมฺม) หรือโรมัน (dhamma)…" disabled>
+      <button class="clear" id="clear" title="ล้าง">×</button>
+    </div>
+    <div class="meta" id="meta"></div>
+  </div>
+</header>
+
+<div id="results">
+  <div id="list" aria-label="รายการคำที่พบ"></div>
+  <main id="main"></main>
+</div>
+<button class="detail-back-fab" type="button" title="กลับไปรายการ" aria-label="กลับไปรายการ">↑ รายการ</button>
+<footer>พจนานุกรมบาลี-ไทย จากแอพ E-Tipitaka · ทำงาน offline บนอุปกรณ์ของคุณ</footer>
+
+<div id="about-modal" class="modal hidden">
+  <div class="modal-card">
+    <button class="modal-close" id="about-close" aria-label="ปิด">×</button>
+    <h2>เกี่ยวกับ</h2>
+    <p class="tag"><img src="icon-192.png" alt="" style="height:1.3em;vertical-align:-0.28em;margin-right:.35em;border-radius:5px"><b>StarDict</b> — พจนานุกรม บาลี–ไทย (ฉบับใช้ส่วนตัว)<br>
+      จัดทำเพื่อการศึกษาส่วนบุคคล · เผยแผ่เป็นธรรมทาน · ไม่จำหน่าย</p>
+
+    <h3>ที่มาของข้อมูล</h3>
+    <p>ฐานข้อมูลพจนานุกรมนำมาจากโปรแกรม <b>E-Tipitaka</b><br>
+      พัฒนาโดย <b>สุธี สุดประเสริฐ</b> (Sutee Sudprasert) · © 2010–2026<br>
+      ตัวโปรแกรมเผยแพร่ภายใต้ <a href="LICENSE" target="_blank" rel="noopener">Apache License 2.0</a></p>
+
+    <h3>ขอกราบขอบพระคุณผลงานต้นฉบับ</h3>
+    <p class="tag">ลิขสิทธิ์เนื้อหายังเป็นของผู้แต่ง/สำนักพิมพ์เดิม</p>
+    <table>
+      <tr><td>พจนานุกรม บาลี-ไทย-อังกฤษ ฉบับภูมิพโลภิกขุ</td><td>มูลนิธิภูมิพโลภิกขุ</td></tr>
+      <tr><td>ปทานุกรม บาลี-ไทย-อังกฤษ-สันสกฤต</td><td>กรมพระจันทบุรีนฤนาถ</td></tr>
+      <tr><td>พจนานุกรมบาลี-ไทย ฉบับพื้นฐาน ฯลฯ</td><td>รวมในชุด E-Tipitaka</td></tr>
+      <tr><td>Pali-English Dictionary</td><td>Rhys Davids &amp; Stede (PTS)</td></tr>
+    </table>
+    <p class="tag">ฟอนต์แสดงบาลีอักษรพิเศษ: ตระกูลฟอนต์ TF จากแพ็กเกจ E-Tipitaka</p>
+
+    <h3>การดัดแปลง</h3>
+    <p>แอพนี้ <b>ไม่ใช่ผลงานทางการ</b>ของ E-Tipitaka — นำเฉพาะพจนานุกรมบาลี-ไทยมาทำเครื่องมือค้นหา,
+      ถอดรหัสอักขระพิเศษเป็นอักษรไทยมาตรฐานเพื่อให้พิมพ์ค้นได้ (ไม่แก้เนื้อหาคำแปล),
+      ฝังฟอนต์ และทำเวอร์ชันเว็บ/มือถือ</p>
+
+    <p class="tag">จัดทำด้วยความเคารพต่อผู้สร้างสรรค์ทุกท่าน หากเจ้าของสิทธิ์ประสงค์ให้แก้ไข/นำออก โปรดแจ้งได้<br>
+      <a href="NOTICE" target="_blank" rel="noopener">NOTICE</a> ·
+      <a href="LICENSE" target="_blank" rel="noopener">LICENSE</a></p>
+  </div>
+</div>
+
+<script src="sql-wasm.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const q = $('#q'), main = $('#main'), meta = $('#meta');
+const listEl = $('#list'), resultsEl = $('#results');
+let curRows = [], curSel = -1;
+const isMobile = () => window.matchMedia('(max-width:720px)').matches;
+let db = null, timer = null, lastQuery = '';
+
+/* ---------- normalize: ต้องตรงกับ build_db.normalize ฝั่ง Python ---------- */
+const PUA_TO_THAI = {0xF70F:'ญ', 0xF700:'ฐ', 0xF701:'ฐ', 0xF702:'ฐ'};
+const LEADING = new Set([0x0E40,0x0E41,0x0E42,0x0E43,0x0E44]); // เ แ โ ใ ไ
+const STRIP = new Set([
+  0x0E3A,0x0E4C,0x0E4D,        // พินทุ การันต์ นิคหิต
+  0x20,0x09,0x2E,             // space tab .
+  0xB7,0xA0,0x200B,0xB0,0x2DA,0x2013,0x2014,0x2019,0x2026, // · nbsp zwsp ° ˚ – — ’ …
+  0xF711,0xF718,0xF719,0xF71C // PUA marks
+]);
+const F71A = 0xF71A;
+
+function normalize(s){
+  if(!s) return '';
+  const out = [];
+  for(let i=0;i<s.length;i++){
+    const cp = s.charCodeAt(i);
+    if(cp === F71A){
+      const nx = (i+1<s.length) ? s.charCodeAt(i+1) : 0;
+      if(LEADING.has(nx)) out.push('ฐ');
+      continue; // อื่น ๆ ถือเป็นพินทุ -> ตัดทิ้ง
+    }
+    const r = PUA_TO_THAI[cp];
+    if(r !== undefined){ out.push(r); continue; }
+    if(STRIP.has(cp)) continue;
+    out.push(s[i]);
+  }
+  let res = out.join('').trim().toLowerCase();
+  res = res.replace(/ฐ{2,}/g, 'ฐ');
+  return res;
+}
+
+function cleanHeadword(hw){
+  if(!hw) return hw;
+  return hw.replace(/ /g,'').replace(/​/g,'');
+}
+
+/* ---------- query helpers ---------- */
+function runSQL(sql, params){
+  const st = db.prepare(sql);
+  st.bind(params);
+  const rows = [];
+  while(st.step()) rows.push(st.getAsObject());
+  st.free();
+  return rows;
+}
+
+const BASE = "SELECT _id, headword, content, roman, eng_content, source FROM p2t WHERE ";
+
+function search(term, limit){
+  term = (term||'').trim();
+  limit = limit || 60;
+  if(!term) return [];
+  const nk = normalize(term);
+  const isLatin = [...nk].every(c => c.charCodeAt(0) < 128 || c === ' ') && /[a-z]/.test(nk);
+
+  const results = [], seen = new Set();
+  function add(rows, tier){
+    for(const r of rows){
+      if(seen.has(r._id)) continue;
+      seen.add(r._id);
+      r._tier = tier;
+      r.headword = cleanHeadword(r.headword);
+      results.push(r);
+    }
+  }
+  if(isLatin && nk){
+    add(runSQL(BASE+"lower(roman)=? LIMIT ?", [nk, limit]), 0);
+    add(runSQL(BASE+"lower(roman) LIKE ? ORDER BY length(roman) LIMIT ?", [nk+'%', limit]), 1);
+    add(runSQL(BASE+"lower(roman) LIKE ? ORDER BY length(roman) LIMIT ?", ['%'+nk+'%', limit]), 2);
+  } else {
+    add(runSQL(BASE+"headword=? LIMIT ?", [term, limit]), 0);
+    add(runSQL(BASE+"search_key=? LIMIT ?", [nk, limit]), 0);
+    add(runSQL(BASE+"headword LIKE ? ORDER BY length(headword) LIMIT ?", [term+'%', limit]), 1);
+    add(runSQL(BASE+"search_key LIKE ? ORDER BY length(search_key) LIMIT ?", [nk+'%', limit]), 1);
+    add(runSQL(BASE+"search_key LIKE ? ORDER BY length(search_key) LIMIT ?", ['%'+nk+'%', limit]), 2);
+  }
+  results.sort((a,b)=> (a._tier-b._tier) || ((a.headword||'').length-(b.headword||'').length));
+  return results.slice(0, limit);
+}
+
+/* ---------- rendering ---------- */
+function esc(s){ return (s||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function cardHTML(r){
+  const roman = r.roman ? `<span class="roman">${esc(r.roman)}</span>` : '';
+  const eng = r.eng_content ? `<div class="eng"><span class="eng-tag">EN</span>${esc(r.eng_content)}</div>` : '';
+  const src = r.source ? `<div class="src">📖 ${esc(r.source)}</div>` : '';
+  return `<div class="card">
+    <p class="hw">${esc(r.headword)}${roman}</p>
+    <div class="content">${esc(r.content)}</div>
+    ${eng}${src}
+  </div>`;
+}
+
+/* ไฮไลต์คำที่เลือกใน outline (ซ้าย) + เลื่อน outline ให้เห็น */
+function setActiveList(i){
+  if(i === curSel) return;
+  curSel = i;
+  const items = listEl.querySelectorAll('.litem');
+  items.forEach((el, idx) => el.classList.toggle('active', idx === i));
+  const act = items[i];
+  if(act){ const ar = act.getBoundingClientRect(), lr = listEl.getBoundingClientRect();
+    if(ar.top < lr.top || ar.bottom > lr.bottom) act.scrollIntoView({block:'nearest'}); }
+}
+
+/* desktop: ทุกการ์ดเรียงในแผงขวา เลื่อนต่อเนื่อง (ซ้าย = outline) */
+function renderAll(){
+  main.innerHTML = curRows.map((r, i) =>
+    `<section class="dsec" data-i="${i}">${cardHTML(r)}</section>`).join('');
+  main.scrollTop = 0; curSel = -1; setActiveList(0);
+}
+
+/* desktop: คลิก outline → เลื่อนการ์ดนั้นมาบนสุดของแผงขวา */
+function jumpTo(i){
+  const sec = main.querySelector('.dsec[data-i="'+i+'"]'); if(!sec) return;
+  const top = sec.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop;
+  main.scrollTo({top, behavior:'smooth'});
+  setActiveList(i);
+}
+
+/* มือถือ: drill-down การ์ดเดียว — โครงการ์ดเดิม เพื่อให้ glossary/hub/notebook ทำงานต่อ */
+function showDetail(i){
+  if(i < 0 || i >= curRows.length) return;
+  curSel = i;
+  main.innerHTML = `<button class="detail-back" type="button">← กลับไปรายการ</button>` + cardHTML(curRows[i]);
+  main.scrollTop = 0;
+  listEl.querySelectorAll('.litem').forEach((el, idx) => el.classList.toggle('active', idx === i));
+  resultsEl.classList.add('show-detail');
+}
+
+function paint(term){
+  curSel = -1;
+  if(!curRows.length){
+    resultsEl.classList.add('single'); resultsEl.classList.remove('show-detail');
+    listEl.innerHTML = '';
+    main.innerHTML = `<div class="empty"><div class="big">∅</div>
+      <div>ไม่พบคำว่า “${esc(term)}”</div>
+      <div class="hint">ลองตัดพินทุ (ฺ) ออก หรือพิมพ์เฉพาะต้นคำ</div></div>`;
+    return;
+  }
+  resultsEl.classList.remove('single', 'show-detail');
+  listEl.innerHTML = curRows.map((r, i) => {
+    const rom = r.roman ? `<span class="li-rom">${esc(r.roman)}</span>` : '';
+    return `<button class="litem" type="button" data-i="${i}"><span class="li-hw">${esc(r.headword)}</span>${rom}</button>`;
+  }).join('');
+  listEl.scrollTop = 0;
+  if(isMobile()) main.innerHTML = '';   // มือถือ: โชว์ list ก่อน รอแตะ
+  else renderAll();                     // desktop: โชว์ทุกการ์ด เลื่อนได้ + outline jump
+}
+
+function render(rows, term){ curRows = rows; paint(term); }
+
+function welcome(){
+  const samples = ['ธมฺม','พุทฺธ','สงฺฆ','กมฺม','นิพฺพาน','เมตฺตา','ปญฺญา','สติ'];
+  return `<div class="empty">
+    <div class="big">📜</div>
+    <div>พิมพ์คำบาลีเพื่อค้นความหมาย</div>
+    <div class="hint">ลองคำเหล่านี้:</div>
+    <div style="margin-top:10px">
+      ${samples.map(s=>`<span class="chip" data-w="${s}">${s}</span>`).join('')}
+    </div>
+  </div>`;
+}
+
+function doSearch(term){
+  term = term.trim();
+  lastQuery = term;
+  if(!term){
+    resultsEl.classList.add('single'); resultsEl.classList.remove('show-detail');
+    listEl.innerHTML=''; curRows=[]; curSel=-1;
+    main.innerHTML = welcome(); meta.textContent=''; bindChips(); return;
+  }
+  try{
+    const rows = search(term);
+    if(term !== lastQuery) return;
+    meta.textContent = `พบ ${rows.length} รายการ`;
+    render(rows, term);
+  }catch(e){
+    meta.textContent = 'เกิดข้อผิดพลาดในการค้นหา';
+    console.error(e);
+  }
+}
+
+function bindChips(){
+  document.querySelectorAll('.chip').forEach(c =>
+    c.addEventListener('click', () => { q.value = c.dataset.w; q.focus(); doSearch(q.value); }));
+}
+
+/* คลิก outline ซ้าย → desktop: เลื่อนไปการ์ดนั้น ; มือถือ: drill-down */
+listEl.addEventListener('click', e => {
+  const it = e.target.closest('.litem'); if(!it) return;
+  const i = +it.dataset.i;
+  if(isMobile()) showDetail(i); else jumpTo(i);
+});
+/* แผงขวา: ปุ่ม ← (มือถือ) กลับไปรายการ */
+main.addEventListener('click', e => {
+  if(e.target.closest('.detail-back')) resultsEl.classList.remove('show-detail');
+});
+/* desktop: เลื่อนแผงขวา → ไฮไลต์ outline ตามตำแหน่ง (scroll-spy) */
+let spyRAF = 0;
+main.addEventListener('scroll', () => {
+  if(isMobile() || spyRAF) return;
+  spyRAF = requestAnimationFrame(() => { spyRAF = 0;
+    const secs = main.querySelectorAll('.dsec'); if(!secs.length) return;
+    const top = main.getBoundingClientRect().top + 12;
+    let idx = 0;
+    for(let j=0;j<secs.length;j++){ if(secs[j].getBoundingClientRect().top <= top) idx = j; else break; }
+    setActiveList(idx);
+  });
+});
+/* ข้ามเส้น mobile↔desktop → เรนเดอร์ใหม่ให้ตรงโหมด */
+let wasMobile = isMobile();
+window.addEventListener('resize', () => {
+  const m = isMobile();
+  if(m !== wasMobile){ wasMobile = m; if(curRows.length) paint(lastQuery); }
+});
+document.querySelector('.detail-back-fab').addEventListener('click', () => resultsEl.classList.remove('show-detail'));
+
+q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(()=>doSearch(q.value), 120); });
+$('#clear').addEventListener('click', () => { q.value=''; q.focus(); doSearch(''); });
+
+/* about modal */
+const aboutModal = $('#about-modal');
+function closeAbout(){ aboutModal.classList.add('hidden'); }
+$('#about-open').addEventListener('click', () => aboutModal.classList.remove('hidden'));
+$('#about-close').addEventListener('click', closeAbout);
+aboutModal.addEventListener('click', e => { if(e.target === aboutModal) closeAbout(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !aboutModal.classList.contains('hidden')) closeAbout(); });
+
+/* ---------- โหมดมืด + ขนาดตัวอักษร (จำค่าใน localStorage) ---------- */
+const root = document.documentElement;
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+
+let fs = parseFloat(localStorage.getItem('pali_fs')) || 1;
+function applyFs(){
+  fs = Math.min(1.8, Math.max(0.8, Math.round(fs*10)/10));
+  root.style.setProperty('--fs', fs);
+  localStorage.setItem('pali_fs', fs);
+}
+applyFs();
+$('#font-dec').addEventListener('click', () => { fs -= 0.1; applyFs(); });
+$('#font-inc').addEventListener('click', () => { fs += 0.1; applyFs(); });
+
+const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+let theme = localStorage.getItem('pali_theme') || (prefersDark ? 'dark' : 'light');
+function applyTheme(){
+  root.setAttribute('data-theme', theme);
+  $('#theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+  if(themeMeta) themeMeta.setAttribute('content', theme === 'dark' ? '#191712' : '#8a6d3b');
+  localStorage.setItem('pali_theme', theme);
+}
+applyTheme();
+$('#theme-toggle').addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); });
+
+/* ---------- ปุ่ม EN เดียว คุมคำแปลอังกฤษทั้งหมด (จำค่าใน localStorage) ---------- */
+let engOn = localStorage.getItem('pali_eng') === '1';
+function applyEng(){
+  document.body.classList.toggle('eng-on', engOn);
+  const b = $('#eng-toggle');
+  b.classList.toggle('active', engOn);
+  b.setAttribute('aria-pressed', engOn ? 'true' : 'false');
+  localStorage.setItem('pali_eng', engOn ? '1' : '0');
+}
+applyEng();
+$('#eng-toggle').addEventListener('click', () => { engOn = !engOn; applyEng(); });
+
+/* ---------- boot: load sql.js + database ---------- */
+async function boot(){
+  const lbl = $('#loadlbl');
+  try{
+    const SQL = await initSqlJs({ locateFile: f => f });   // sql-wasm.wasm อยู่โฟลเดอร์เดียวกัน
+    lbl.textContent = 'กำลังโหลดฐานข้อมูล…';
+    // ฐานข้อมูลถูกบีบอัด gzip (เล็กลง ~4 เท่า) แล้วคลายในเบราว์เซอร์
+    const resp = await fetch('dict.sqlite.gz');
+    let bytes;
+    if (typeof DecompressionStream !== 'undefined') {
+      const ds = new DecompressionStream('gzip');
+      const stream = resp.body.pipeThrough(ds);
+      const buf = await new Response(stream).arrayBuffer();
+      bytes = new Uint8Array(buf);
+    } else {
+      // เบราว์เซอร์เก่าไม่รองรับ DecompressionStream
+      throw new Error('เบราว์เซอร์นี้เก่าเกินไป (ไม่รองรับการคลายไฟล์) กรุณาใช้ Chrome/Edge/Safari รุ่นใหม่');
+    }
+    db = new SQL.Database(bytes);
+    // warm up
+    db.exec('SELECT 1');
+    $('#loading').classList.add('hidden');
+    q.disabled = false;
+    resultsEl.classList.add('single');
+    main.innerHTML = welcome();
+    bindChips();
+    q.focus();
+  }catch(e){
+    lbl.textContent = 'โหลดพจนานุกรมไม่สำเร็จ — ลองรีเฟรชหน้า';
+    console.error(e);
+  }
+}
+boot();
+
+/* ---------- PWA service worker ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+<script src="notebook.js" defer></script><!-- โมดูล: สมุดคำศัพท์ (แยกไฟล์ ไม่ยุ่งกับสคริปต์หลัก) -->
+<script src="tags-data.js" defer></script><!-- ข้อมูลตัวย่อ (auto-gen จาก abbreviations.tsv) -->
+<script src="glossary.js" defer></script><!-- โมดูล: ป้ายประเภทคำ + tooltip -->
+<script src="hub.js" defer></script><!-- โมดูล: หน้ารวมคำตามประเภท (คลิก badge) -->
+<script src="feedback.js" defer></script><!-- โมดูล: ส่งคำแนะนำพัฒนาแอพ -->
+
+<!-- ฟอร์มซ่อนให้ Netlify ตรวจพบตอน deploy (Netlify Forms) — feedback.js ส่งแบบ AJAX -->
+<form name="feedback" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input type="text" name="bot-field">
+  <input type="text" name="subject">
+  <textarea name="message"></textarea>
+  <input type="text" name="sender">
+  <input type="text" name="contact">
+</form>
+</body>
+</html>
