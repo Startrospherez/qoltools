@@ -23,7 +23,7 @@
         body { margin: 0; background: var(--bg); color: var(--fg); font-family: sans-serif; transition: background 0.3s, color 0.3s; overflow-x: hidden; }
         button { cursor: pointer; padding: 4px 8px; border: 1px solid rgb(170,170,170); border-radius: 4px; background: rgb(255,255,255); color: rgb(0,0,0); transition: all 0.2s; white-space: nowrap; }
         button:hover { background: rgb(238,238,238); }
-        .c { width: 24px; height: 24px; border-radius: 50%; padding: 0; border: 2px solid rgba(0,0,0,0.2); box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; color: rgba(0,0,0,0.6); }
+        .c { width: 24px !important; height: 24px !important; min-width: 24px; min-height: 24px; flex: 0 0 auto; border-radius: 50%; padding: 0; border: 2px solid rgba(0,0,0,0.2); box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; color: rgba(0,0,0,0.6); }
         .c:hover { transform: scale(1.2); box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         
         #sp-t .c[style*="background:var"] { color: #fff !important; text-shadow: 0px 1px 3px rgba(0,0,0,0.9); font-size: 13px; }
@@ -55,7 +55,7 @@
         #cnt { position: fixed; bottom: 15px; right: 25px; font-size: 14px; font-weight: bold; background: rgb(228,220,204); padding: 6px 12px; border-radius: 20px; border: 1px solid rgb(200,190,175); box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 999; pointer-events: none; color: rgb(60,60,60); }
         #ed { white-space: pre-wrap; tab-size: 4em; padding: 80px 32px 32px; font-size: 24px; outline: none; min-height: 100vh; box-sizing: border-box; }
         
-        #float-ui-btn { position: fixed; top: 10px; left: 10px; z-index: 10000; display: none; background: var(--bg); color: var(--fg); border: 1px solid rgb(170,170,170); width: 30px; height: 26px; border-radius: 4px; cursor: pointer; font-size: 14px; align-items: center; justify-content: center; box-shadow: none; }
+        #float-ui-btn { position: fixed; top: 10px; left: 10px; z-index: 10000; display: none; background: rgb(255,255,255); color: rgb(0,0,0); border: 1px solid rgb(170,170,170); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; align-items: center; justify-content: center; box-shadow: none; }
         #float-ui-btn:hover { background: rgb(238,238,238); }
     </style>
 </head>
@@ -101,7 +101,7 @@
 
     <!-- Toolbar: Scratchpad -->
     <div id="sp-t" contenteditable="false">
-        <button class="c" style="width:28px; height:28px; font-size:14px; border-radius:6px; background:var(--bg); text-shadow:none !important;" onclick="window.toggleUI()" title="ซ่อนแถบเครื่องมือ">🛠️</button>
+        <button class="c" style="width:28px !important; height:28px !important; font-size:14px; border-radius:6px !important; background:rgb(255,255,255); color:rgb(0,0,0); text-shadow:none !important;" onclick="window.toggleUI()" title="ซ่อนแถบเครื่องมือ">🛠️</button>
         <span style="border-left:1px solid rgb(170,170,170);height:20px;margin:0 2px"></span>
         
         <button class="c" style="background:var(--c1);" onmousedown="event.preventDefault()" onclick="document.execCommand('backColor',false,'rgb(255,1,1)')" title="Red (Alt+1)">1</button>

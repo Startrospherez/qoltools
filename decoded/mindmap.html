@@ -23,7 +23,7 @@
         body { margin: 0; background: var(--bg); color: var(--fg); font-family: sans-serif; transition: background 0.3s, color 0.3s; overflow: hidden; }
         button { cursor: pointer; padding: 4px 8px; border: 1px solid rgb(170,170,170); border-radius: 4px; background: rgb(255,255,255); color: rgb(0,0,0); transition: all 0.2s; white-space: nowrap; }
         button:hover { background: rgb(238,238,238); }
-        .c { width: 24px; height: 24px; border-radius: 50%; padding: 0; border: 2px solid rgba(0,0,0,0.2); box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; color: rgba(0,0,0,0.6); }
+        .c { width: 24px !important; height: 24px !important; min-width: 24px; min-height: 24px; flex: 0 0 auto; border-radius: 50%; padding: 0; border: 2px solid rgba(0,0,0,0.2); box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; color: rgba(0,0,0,0.6); }
         .c:hover { transform: scale(1.2); box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         
         .sys-ui { position: fixed; top: 0; left: 0; width: 100vw; background: var(--tb); padding: 8px 10px; border-bottom: 1px solid var(--bc); display: flex; gap: 8px; z-index: 999; align-items: center; box-sizing: border-box; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; }
@@ -54,7 +54,7 @@
         .n.j .nt, .n.j .nd, .n.j .p { display: none !important; }
         
         /* SHAPES */ 
-        .n[data-shape="circle"] { border-radius: 50% !important; aspect-ratio: 1 / 1 !important; min-width: 120px; min-height: 120px; width: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px !important; }
+        .n[data-shape="circle"] { border-radius: 50% !important; min-width: 120px; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px !important; }
         .n[data-shape="ellipse"] { border-radius: 50% / 50% !important; min-width: 140px; min-height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px 30px !important; }
         .n[data-shape="speech-box"] { border-radius: 15px !important; }
         .n[data-shape="speech-box"]::after { content: ""; position: absolute; bottom: -10px; left: 30px; width: 18px; height: 18px; background: var(--n-bg); border-width: 0 4px 4px 0; border-style: solid; border-color: var(--n-bd); transform: rotate(45deg); z-index: -1; }
@@ -130,7 +130,7 @@
     <div class="sys-ui" id="mm-ui">
         <!-- Block 1: Tools -->
         <div class="ui-col" style="align-items:center; justify-content:center;">
-            <button class="tool-btn" style="background:var(--bg); border-radius:4px; border:1px solid rgb(170,170,170); margin-bottom:4px; text-shadow:none !important;" onclick="window.toggleUI()" title="ซ่อนแถบเครื่องมือ">🛠️</button>
+            <button class="tool-btn" style="background:rgb(255,255,255); color:rgb(0,0,0); border-radius:4px; border:1px solid rgb(170,170,170); margin-bottom:4px; text-shadow:none !important;" onclick="window.toggleUI()" title="ซ่อนแถบเครื่องมือ">🛠️</button>
             <button class="tool-btn" style="margin-bottom:4px;" onclick="window.changeFontSize('+')" title="เพิ่มขนาดตัวอักษรกล่องที่เลือก">A+</button>
             <button class="tool-btn" onclick="window.changeFontSize('-')" title="ลดขนาดตัวอักษรกล่องที่เลือก">A-</button>
         </div>
@@ -172,13 +172,13 @@
         <div class="ui-col" style="justify-content:center;">
             <div class="flex-row" style="margin-bottom:4px;">
                 <button onclick="window.doAlign('t')" title="ชิดบน">⊤ T-Align</button>
-                <button onclick="window.doAlign('cy')" title="กึ่งกลางแนวนอน">╪ C-Align</button>
+                <button onclick="window.doAlign('cy')" title="กึ่งกลางแนวนอน"><span style="display:inline-block;transform:rotate(90deg)">⌽</span> C-Align</button>
                 <button onclick="window.doAlign('b')" title="ชิดล่าง">⊥ B-Align</button>
                 <button onclick="window.doDist('x')" title="กระจายแนวนอน">↔ Dist</button>
             </div>
             <div class="flex-row">
                 <button onclick="window.doAlign('l')" title="ชิดซ้าย">├ L-Align</button>
-                <button onclick="window.doAlign('cx')" title="กึ่งกลางแนวตั้ง">╫ C-Align</button>
+                <button onclick="window.doAlign('cx')" title="กึ่งกลางแนวตั้ง">⌽ C-Align</button>
                 <button onclick="window.doAlign('r')" title="ชิดขวา">┤ R-Align</button>
                 <button onclick="window.doDist('y')" title="กระจายแนวตั้ง">↕ Dist</button>
             </div>
@@ -559,6 +559,13 @@
                 let active = document.activeElement;
                 if(active && active.classList.contains('nt')) { e.preventDefault(); if(!e.shiftKey) { let nd = active.nextElementSibling; if(nd && nd.classList.contains('nd')) nd.focus(); } return; } 
                 else if(active && active.classList.contains('nd')) { e.preventDefault(); if(e.shiftKey) { let nt = active.previousElementSibling; if(nt && nt.classList.contains('nt')) nt.focus(); } return; } 
+            }
+            if(e.key === 'Delete') {
+                let ae = document.activeElement;
+                if(ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+                let sels = nodes.filter(n => n.classList.contains('sel'));
+                if(sels.length) { e.preventDefault(); sels.forEach(n => window.del(n.id)); window.doSaveState(); }
+                return;
             }
             if(e.altKey || (e.getModifierState && e.getModifierState('AltGraph'))) {
                 let c = e.code;
