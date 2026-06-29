@@ -5,18 +5,32 @@
     <title>MindMap V.3.71</title>
     <style>
         :root {
+            /* โทนสีปัจจุบัน (สำหรับกรอบ) */
             --bg: rgb(244,238,224); --fg: rgb(60,60,60); --tb: rgb(228,220,204); --bc: rgb(200,190,175);
-            --c1: rgb(255,153,153); --c2: rgb(255,191,128); --c3: rgb(255,230,128); --c4: rgb(255,242,128);
-            --c5: rgb(255,255,128); --c6: rgb(217,255,128); --c7: rgb(153,255,153); --c8: rgb(128,255,204);
-            --c9: rgb(128,204,255); --c10: rgb(191,128,255); --c11: rgb(255,128,255); --c12: rgb(255,128,191);
-            --c13: rgb(210,180,140); --c14: rgb(192,192,192); --c15: rgb(60,60,60); --c16: rgb(220,220,220);
+            --c1: rgb(220,50,50); --c2: rgb(230,110,20); --c3: rgb(240,160,0); --c4: rgb(220,190,0);
+            --c5: rgb(180,180,0); --c6: rgb(120,190,0); --c7: rgb(40,180,40); --c8: rgb(0,170,150);
+            --c9: rgb(30,120,220); --c10: rgb(120,70,210); --c11: rgb(180,50,200); --c12: rgb(220,60,140);
+            --c13: rgb(160,100,50); --c14: rgb(130,130,130); --c15: rgb(60,60,60); --c16: rgb(255,255,255);
         }
         .dark {
             --bg: rgb(30,30,30); --fg: rgb(220,220,220); --tb: rgb(50,50,50); --bc: rgb(70,70,70); --nb: rgb(51,51,51);
+            --c1: rgb(255,100,100); --c2: rgb(255,150,80); --c3: rgb(255,190,80); --c4: rgb(240,220,80);
+            --c5: rgb(220,220,80); --c6: rgb(180,230,80); --c7: rgb(100,220,100); --c8: rgb(80,220,200);
+            --c9: rgb(100,180,255); --c10: rgb(160,130,255); --c11: rgb(220,130,255); --c12: rgb(255,120,190);
+            --c13: rgb(190,140,100); --c14: rgb(170,170,170); --c15: rgb(60,60,60); --c16: rgb(220,220,220);
+        }
+        /* โทนสีเดิม (สำหรับไฮไลต์) — สลับด้วยปุ่ม 🎨 */
+        .hl-mode {
+            --c1: rgb(255,153,153); --c2: rgb(255,191,128); --c3: rgb(255,230,128); --c4: rgb(255,242,128);
+            --c5: rgb(255,255,128); --c6: rgb(217,255,128); --c7: rgb(153,255,153); --c8: rgb(128,255,204);
+            --c9: rgb(128,204,255); --c10: rgb(191,128,255); --c11: rgb(255,128,255); --c12: rgb(255,128,191);
+            --c13: rgb(210,180,140); --c14: rgb(192,192,192);
+        }
+        .dark.hl-mode {
             --c1: rgb(128,0,0); --c2: rgb(153,51,0); --c3: rgb(153,102,0); --c4: rgb(128,128,0);
             --c5: rgb(102,102,0); --c6: rgb(77,128,0); --c7: rgb(0,102,0); --c8: rgb(0,102,102);
             --c9: rgb(0,51,153); --c10: rgb(51,0,153); --c11: rgb(102,0,102); --c12: rgb(128,0,64);
-            --c13: rgb(102,64,32); --c14: rgb(85,85,85); --c15: rgb(60,60,60); --c16: rgb(220,220,220);
+            --c13: rgb(102,64,32); --c14: rgb(85,85,85);
         }
         .shader::after { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgb(220,204,177); mix-blend-mode: multiply; pointer-events: none; z-index: 99999; }
         
@@ -145,6 +159,7 @@
                 <button onclick="window.setTheme('dark')" style="flex:1;">Dark</button>
             </div>
             <button onclick="window.setTheme('shader')" title="Screen Shader (Alt+M)" style="margin-bottom:4px; width:100%;">🕶️ Shader</button>
+            <button onclick="window.toggleHlMode()" title="สลับโทนสี (เข้ม/ไฮไลต์)" style="margin-bottom:4px; width:100%;">🎨 โทนสี</button>
             <div class="flex-row" style="justify-content:center;">
                 <button onclick="window.doUndo()" title="Undo (Alt+Z)" style="flex:1;">↩️ Undo</button>
                 <button onclick="window.doRedo()" title="Redo (Alt+Y)" style="flex:1;">↪️ Redo</button>
@@ -292,10 +307,11 @@
         document.getElementById('sys-modal-inp').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); window.sysModalOk(); } });
 
         window.setTheme = function(t) {
-            if(t === 'sepia') bd.className = '';
-            else if(t === 'dark') bd.className = 'dark';
+            if(t === 'sepia') bd.classList.remove('dark');
+            else if(t === 'dark') bd.classList.add('dark');
             else if(t === 'shader') bd.classList.toggle('shader');
         };
+        window.toggleHlMode = function() { bd.classList.toggle('hl-mode'); };
 
         window.saveBackup = function() {
             try {
