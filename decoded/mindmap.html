@@ -32,6 +32,10 @@
             --c9: rgb(0,51,153); --c10: rgb(51,0,153); --c11: rgb(102,0,102); --c12: rgb(128,0,64);
             --c13: rgb(102,64,32); --c14: rgb(85,85,85);
         }
+        /* White base — auto when neither Sepia nor Dark is active */
+        .white {
+            --bg: rgb(255,255,255); --fg: rgb(40,40,40); --tb: rgb(248,248,248); --bc: rgb(218,218,218); --nb: rgb(255,255,255);
+        }
         .shader::after { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgb(220,204,177); mix-blend-mode: multiply; pointer-events: none; z-index: 99999; }
         
         body { margin: 0; background: var(--bg); color: var(--fg); font-family: sans-serif; transition: background 0.3s, color 0.3s; overflow: hidden; }
@@ -310,8 +314,8 @@
         document.getElementById('sys-modal-inp').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); window.sysModalOk(); } });
 
         window.setTheme = function(t) {
-            if(t === 'sepia') bd.classList.remove('dark');
-            else if(t === 'dark') bd.classList.add('dark');
+            if(t === 'sepia') window.toggleSepia();
+            else if(t === 'dark') window.toggleDark();
             else if(t === 'shader') bd.classList.toggle('shader');
         };
         window.toggleHlMode = function() { bd.classList.toggle('hl-mode'); };

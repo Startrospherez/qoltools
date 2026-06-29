@@ -9,32 +9,67 @@
 (function () {
   "use strict";
 
-  var THEME_KEY = "hub_theme"; // "light" | "dark"
+  var THEME_KEY = "hub_theme"; // "sepia" | "light"(=White) | "dark"
+
+  // The element that carries theme classes. Tools paint their canvas inside a
+  // #bd wrapper and toggle theme classes on it; fall back to <body>.
+  function themeEl() { return document.getElementById("bd") || document.body; }
+
+  // --- Theme model -------------------------------------------------------
+  // Three mutually-exclusive base states: sepia (default) / white / dark.
+  // sepia = no class (the tool's baked cream :root); white = .white; dark =
+  // .dark. Shader (.shader) and the 🎨 tone (.hl-mode) are independent overlays
+  // and are preserved across base-theme changes.
+  function setBaseTheme(state) {
+    var el = themeEl();
+    el.classList.remove("dark", "white");
+    if (state === "dark") el.classList.add("dark");
+    else if (state === "white") el.classList.add("white");
+    try {
+      localStorage.setItem(
+        THEME_KEY,
+        state === "dark" ? "dark" : (state === "white" ? "light" : "sepia")
+      );
+    } catch (e) {}
+  }
+  function getBaseTheme() {
+    var el = themeEl();
+    return el.classList.contains("dark")
+      ? "dark"
+      : (el.classList.contains("white") ? "white" : "sepia");
+  }
+  window.setBaseTheme = setBaseTheme;
+  window.getBaseTheme = getBaseTheme;
+  // Sepia is default-on; toggling it off drops to White. Sepia/Dark are
+  // mutually exclusive (setBaseTheme clears the other).
+  window.toggleSepia = function () {
+    setBaseTheme(getBaseTheme() === "sepia" ? "white" : "sepia");
+  };
+  window.toggleDark = function () {
+    setBaseTheme(getBaseTheme() === "dark" ? "white" : "dark");
+  };
 
   // --- 1. Apply global theme on load -------------------------------------
-  // Tools' own default look is already a warm/sepia cream, so both "light" and
-  // "sepia" map to "no dark"; only "dark" toggles the tool's dark class.
   function applyTheme() {
     var t = null;
     try { t = localStorage.getItem(THEME_KEY); } catch (e) {}
-    if (t === "dark") document.body.classList.add("dark");
-    else if (t === "light" || t === "sepia") document.body.classList.remove("dark");
-    // if unset, leave the tool's own default untouched
+    if (t === "dark") setBaseTheme("dark");
+    else if (t === "light") setBaseTheme("white");
+    else setBaseTheme("sepia"); // "sepia" or unset → Sepia is the default
   }
 
-  // --- 2. Sync tool's dark toggle back to the global key ------------------
-  // Preserve a "sepia" preference when the tool is not in dark mode.
+  // --- 2. Sync the tool's base theme back to the global key --------------
   function watchTheme() {
     var obs = new MutationObserver(function () {
       try {
-        var prev = localStorage.getItem(THEME_KEY);
-        var next = document.body.classList.contains("dark")
-          ? "dark"
-          : (prev === "sepia" ? "sepia" : "light");
-        localStorage.setItem(THEME_KEY, next);
+        var s = getBaseTheme();
+        localStorage.setItem(
+          THEME_KEY,
+          s === "dark" ? "dark" : (s === "white" ? "light" : "sepia")
+        );
       } catch (e) {}
     });
-    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    obs.observe(themeEl(), { attributes: true, attributeFilter: ["class"] });
   }
 
   // --- 3. Inject "back to hub" link --------------------------------------
