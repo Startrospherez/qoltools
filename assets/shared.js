@@ -84,6 +84,61 @@
     }, 150);
   }
 
+  // --- 4. PNG export: one button, ask opaque/transparent ------------------
+  // Each tool exposes window.doExportClick (crop) + window.doExportDblClick
+  // (full screen) + reads window.__pngTransparent. We keep the click=crop /
+  // dblclick=full gesture, but a single "📸 PNG" button now first asks the
+  // background (ทึบ/ใส) via a small popup, then runs the matching export.
+  var _pngTimer = null;
+
+  function runPng(full, transparent) {
+    window.__pngTransparent = transparent;
+    if (full) { if (window.doExportDblClick) window.doExportDblClick(); }
+    else { if (window.doExportClick) window.doExportClick(); }
+  }
+
+  function askPngBg(cb) {
+    if (document.getElementById("png-bg-ask")) return; // already open
+    var ov = document.createElement("div");
+    ov.id = "png-bg-ask";
+    ov.style.cssText =
+      "position:fixed;inset:0;z-index:2147483646;display:flex;" +
+      "align-items:center;justify-content:center;background:rgba(0,0,0,.45);";
+    var card = document.createElement("div");
+    card.style.cssText =
+      "background:var(--tb,#fff);color:var(--fg,#222);border:1px solid var(--bc,#ccc);" +
+      "border-radius:10px;padding:18px 20px;min-width:240px;text-align:center;" +
+      "box-shadow:0 6px 24px rgba(0,0,0,.3);font-family:sans-serif;";
+    card.innerHTML =
+      '<div style="font-weight:700;margin-bottom:14px;font-size:15px;">บันทึก PNG — เลือกพื้นหลัง</div>' +
+      '<div style="display:flex;gap:10px;justify-content:center;">' +
+      '<button data-png="opaque" style="flex:1;padding:10px;border-radius:8px;cursor:pointer;border:1px solid var(--bc,#bbb);background:#fff;color:#000;font-size:14px;font-weight:600;">⬛ ทึบ</button>' +
+      '<button data-png="clear"  style="flex:1;padding:10px;border-radius:8px;cursor:pointer;border:1px solid var(--bc,#bbb);background:#fff;color:#000;font-size:14px;font-weight:600;">▦ ใส</button>' +
+      "</div>" +
+      '<button data-png="cancel" style="margin-top:12px;background:transparent;border:none;color:var(--fg,#666);cursor:pointer;font-size:13px;text-decoration:underline;">ยกเลิก</button>';
+    ov.appendChild(card);
+    function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+    ov.addEventListener("click", function (e) {
+      var pick = e.target.getAttribute && e.target.getAttribute("data-png");
+      if (e.target === ov || pick === "cancel") return close();
+      if (pick === "opaque") { close(); cb(false); }
+      else if (pick === "clear") { close(); cb(true); }
+    });
+    document.body.appendChild(ov);
+  }
+
+  // Click waits briefly so a double-click can cancel it and route to full.
+  window.pngBtnClick = function () {
+    clearTimeout(_pngTimer);
+    _pngTimer = setTimeout(function () {
+      askPngBg(function (tr) { runPng(false, tr); });
+    }, 230);
+  };
+  window.pngBtnDbl = function () {
+    clearTimeout(_pngTimer);
+    askPngBg(function (tr) { runPng(true, tr); });
+  };
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", early);
   } else {

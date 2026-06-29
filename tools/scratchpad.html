@@ -135,8 +135,7 @@
         
         <button onclick="document.getElementById('importInput').click()" title="นำเข้าข้อมูล JSON">📥 Import</button>
         <button onclick="window.exportJSON()" title="ส่งออกข้อมูล JSON">📤 Export</button>
-        <button onclick="window.__pngTransparent=false; window.doExportClick()" ondblclick="window.__pngTransparent=false; window.doExportDblClick()" title="พื้นหลังทึบ — คลิก=ครอป | ดับเบิลคลิก=เต็มจอ">📸 ทึบ</button>
-        <button onclick="window.__pngTransparent=true; window.doExportClick()" ondblclick="window.__pngTransparent=true; window.doExportDblClick()" title="พื้นหลังโปร่งใส — คลิก=ครอป | ดับเบิลคลิก=เต็มจอ">📸 ใส</button>
+        <button onclick="window.pngBtnClick()" ondblclick="window.pngBtnDbl()" title="บันทึก PNG — คลิก=ครอป | ดับเบิลคลิก=เต็มจอ (ถามพื้นหลัง ทึบ/ใส)">📸 PNG</button>
         <button onclick="window.saveFileHTML()" title="Alt+S">💾 HTML</button>
     </div>
     
