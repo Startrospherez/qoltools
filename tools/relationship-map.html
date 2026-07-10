@@ -57,14 +57,17 @@
     .person {
       position: absolute; z-index: 3; cursor: grab; touch-action: none; user-select: none;
       text-align: center; color: var(--fg); font-weight: 700; font-size: 16px; line-height: 1.25;
-      padding: 8px 6px; overflow-wrap: anywhere;
+      align-items: center; background: color-mix(in srgb, var(--panel) 92%, var(--bg));
+      border: 2px solid color-mix(in srgb, var(--line) 72%, var(--fg)); border-radius: 16px;
+      box-shadow: 0 3px 0 rgba(60,54,46,.16), 0 12px 22px rgba(60,54,46,.14);
+      display: flex; justify-content: center; padding: 10px 16px; overflow-wrap: anywhere;
     }
-    .person.primary { color: var(--fg); text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+    .person.primary { border-color: var(--fg); background: color-mix(in srgb, var(--panel) 82%, var(--accent)); }
     .person:active { cursor: grabbing; }
     .edge-label {
-      position: absolute; z-index: 2; transform: translate(-50%,-50%); max-width: 240px;
-      background: color-mix(in srgb, var(--bg) 82%, transparent); border: 1px solid rgba(140,125,105,.45);
-      border-radius: 999px; padding: 4px 9px; text-align: center; overflow-wrap: anywhere;
+      position: absolute; z-index: 2; transform: translate(-50%,-50%) rotate(var(--edge-angle, 0deg)); transform-origin: center; max-width: 270px;
+      padding: 0 4px; text-align: center; overflow-wrap: anywhere;
+      text-shadow: 0 1px 0 var(--bg), 1px 0 0 var(--bg), 0 -1px 0 var(--bg), -1px 0 0 var(--bg);
       pointer-events: none; font-size: 13px; font-weight: 700;
     }
     .drawer {
@@ -173,11 +176,13 @@
       <button id="closeDrawer" type="button" aria-label="ปิด">x</button>
     </div>
     <form id="relationshipForm">
+      <datalist id="personOptions"></datalist>
+      <datalist id="roleOptions"></datalist>
       <div class="field-grid">
-        <label>บุคคลที่ 1<input id="from" placeholder="พระพุทธเจ้าโคดม"></label>
-        <label>บุคคลที่ 2<input id="to" placeholder="พระอานนท์"></label>
-        <label>บทบาทของบุคคลที่ 1<input id="fromRole" placeholder="พระศาสดา"></label>
-        <label>บทบาทของบุคคลที่ 2<input id="toRole" placeholder="อุปัฏฐาก"></label>
+        <label>บุคคลที่ 1<input id="from" list="personOptions" placeholder="พระพุทธเจ้าโคดม"></label>
+        <label>บุคคลที่ 2<input id="to" list="personOptions" placeholder="พระอานนท์"></label>
+        <label>บทบาทของบุคคลที่ 1<input id="fromRole" list="roleOptions" placeholder="พระศาสดา"></label>
+        <label>บทบาทของบุคคลที่ 2<input id="toRole" list="roleOptions" placeholder="อุปัฏฐาก"></label>
       </div>
       <div class="actions">
         <button class="primary" type="submit">เพิ่ม</button>
@@ -235,7 +240,7 @@
       function chars(s) { return Array.from(s || "").length; }
       function sizeFor(name) {
         var len = chars(name);
-        return { width: clamp(58 + len * 8, 128, 220), height: clamp(42 + Math.max(0, Math.ceil(len / 14) - 1) * 18, 48, 88) };
+        return { width: clamp(74 + len * 10, 150, 280), height: clamp(56 + Math.max(0, Math.ceil(len / 16) - 1) * 20, 68, 112) };
       }
       function loadRelationships() {
         try {
@@ -323,6 +328,8 @@
         if (!s || !t || !sn || !tn) return null;
         var dx = t.x - s.x, dy = t.y - s.y;
         var dist = Math.max(Math.hypot(dx, dy), 1);
+        var rawAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+        var angle = rawAngle > 90 ? rawAngle - 180 : rawAngle < -90 ? rawAngle + 180 : rawAngle;
         var ux = dx / dist, uy = dy / dist, nx = -uy, ny = ux;
         var offset = pairOffset(r);
         var startGap = sn.width / 2 + 28, endGap = tn.width / 2 + 28;
@@ -338,6 +345,7 @@
         return {
           path: "M " + start.x.toFixed(2) + " " + start.y.toFixed(2) + " C " + ca.x.toFixed(2) + " " + ca.y.toFixed(2) + ", " + cb.x.toFixed(2) + " " + cb.y.toFixed(2) + ", " + end.x.toFixed(2) + " " + end.y.toFixed(2),
           label: label,
+          angle: angle,
           text: r.fromRole + " - " + r.toRole
         };
       }
@@ -369,6 +377,7 @@
           lab.textContent = e.text;
           lab.style.left = e.label.x + "px";
           lab.style.top = e.label.y + "px";
+          lab.style.setProperty("--edge-angle", e.angle + "deg");
           labels.appendChild(lab);
         });
         nodes.forEach(function (node) {
@@ -377,6 +386,7 @@
           el.className = "person" + (p && node.name === p.name ? " primary" : "");
           el.textContent = node.name;
           el.style.width = node.width + "px";
+          el.style.height = node.height + "px";
           el.style.transform = "translate3d(" + (pos.x - node.width / 2).toFixed(2) + "px," + (pos.y - node.height / 2).toFixed(2) + "px,0)";
           el.dataset.name = node.name;
           el.addEventListener("pointerdown", beginDrag);
@@ -398,10 +408,30 @@
           textOutput.appendChild(s);
         }
         renderList();
+        syncSuggestions();
         viewport.style.transform = "scale(" + zoom + ")";
         document.getElementById("zoomLabel").textContent = Math.round(zoom * 100) + "%";
         document.getElementById("zoomRange").value = zoom;
         syncThemeButtons();
+      }
+      function fillDatalist(id, values) {
+        var dataList = document.getElementById(id);
+        dataList.innerHTML = "";
+        values.forEach(function (value) {
+          var option = document.createElement("option");
+          option.value = value;
+          dataList.appendChild(option);
+        });
+      }
+      function syncSuggestions() {
+        var people = [];
+        var roles = [];
+        relationships.forEach(function (r) {
+          [r.from, r.to].forEach(function (name) { if (name && people.indexOf(name) === -1) people.push(name); });
+          [r.fromRole, r.toRole].forEach(function (role) { if (role && roles.indexOf(role) === -1) roles.push(role); });
+        });
+        fillDatalist("personOptions", people);
+        fillDatalist("roleOptions", roles);
       }
       function renderList() {
         list.innerHTML = "";
