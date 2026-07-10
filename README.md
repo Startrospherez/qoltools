@@ -9,6 +9,7 @@
 | ScratchPad | `tools/scratchpad.html` | กระดาษทดชั่วคราว ขีดเขียน ลงสี |
 | MindMap | `tools/mindmap.html` | แผนผังความคิด |
 | ผังอภิธรรม | `tools/abhidhamma.html` | ลงสีผังอภิธรรม |
+| Relationship Map | `tools/relationship-map.html` | ผังเชื่อมโยงความสัมพันธ์ของบุคคล |
 
 ## ระบบเก็บข้อมูล
 

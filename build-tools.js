@@ -22,6 +22,7 @@ const tools = [
   { src: "scratchpad.html", out: "scratchpad.html", ns: "sp_" },
   { src: "mindmap.html", out: "mindmap.html", ns: "mm_" },
   { src: "abhidhamma.html", out: "abhidhamma.html", ns: "ab_" },
+  { src: "relationship-map.html", out: "relationship-map.html", ns: "rm_" },
 ];
 
 fs.mkdirSync(OUT, { recursive: true });

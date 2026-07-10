@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relationship Map</title>
+  <style>
+    :root {
+      --bg: rgb(244,238,224); --fg: rgb(60,54,46); --tb: rgb(228,220,204); --bc: rgb(200,190,175);
+      --panel: rgb(255,252,245); --muted: rgb(120,108,94); --line: rgb(150,130,104);
+      --accent: rgb(122,92,224); --blue: rgb(91,141,239); --danger: rgb(172,72,60);
+    }
+    .dark {
+      --bg: rgb(30,30,30); --fg: rgb(226,222,214); --tb: rgb(50,50,50); --bc: rgb(72,70,66);
+      --panel: rgb(39,38,36); --muted: rgb(184,176,164); --line: rgb(188,168,142);
+      --accent: rgb(126,100,230); --blue: rgb(102,160,255); --danger: rgb(230,126,113);
+    }
+    .white {
+      --bg: rgb(255,255,255); --fg: rgb(45,45,45); --tb: rgb(248,248,248); --bc: rgb(218,218,218);
+      --panel: rgb(255,255,255); --muted: rgb(105,105,105); --line: rgb(150,150,150);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg); color: var(--fg); font-family: sans-serif; overflow: hidden;
+      display: grid; grid-template-rows: auto 1fr; transition: background .25s, color .25s;
+    }
+    button, input { font: inherit; }
+    button {
+      cursor: pointer; padding: 2px 8px; border: 1px solid rgb(170,170,170); border-radius: 4px;
+      background: rgb(255,255,255); color: rgb(0,0,0); white-space: nowrap; height: 28px;
+    }
+    button:hover { background: rgb(238,238,238); }
+    .sys-ui {
+      width: 100vw; background: var(--tb); padding: 8px 10px; border-bottom: 1px solid var(--bc);
+      display: flex; gap: 8px; z-index: 20; align-items: center; box-sizing: border-box;
+      flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;
+    }
+    .ui-col { display: flex; gap: 5px; border-right: 1px solid rgb(170,170,170); padding-right: 8px; align-items: center; }
+    .ui-col:last-child { border-right: none; }
+    .brand { align-items: flex-start; flex-direction: column; gap: 0; min-width: 150px; }
+    .brand b { font-size: 14px; }
+    .brand span, .zoom-label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .is-active { outline: 2px solid rgba(122,92,224,.35); border-color: var(--accent); }
+    .zoom-row { display: flex; align-items: center; gap: 6px; }
+    .zoom-row input { width: 110px; accent-color: var(--accent); }
+    #stage {
+      position: relative; overflow: hidden; min-height: 0; background: var(--bg);
+      background-image:
+        linear-gradient(rgba(128,128,128,.14) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(128,128,128,.14) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    #viewport { position: absolute; inset: 0; transform-origin: center; transition: transform .16s ease; }
+    svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
+    path { fill: none; stroke: var(--line); stroke-width: 1.7; stroke-linecap: round; opacity: .78; }
+    .person {
+      position: absolute; z-index: 3; cursor: grab; touch-action: none; user-select: none;
+      text-align: center; color: var(--fg); font-weight: 700; font-size: 16px; line-height: 1.25;
+      padding: 8px 6px; overflow-wrap: anywhere;
+    }
+    .person.primary { color: var(--fg); text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+    .person:active { cursor: grabbing; }
+    .edge-label {
+      position: absolute; z-index: 2; transform: translate(-50%,-50%); max-width: 240px;
+      background: color-mix(in srgb, var(--bg) 82%, transparent); border: 1px solid rgba(140,125,105,.45);
+      border-radius: 999px; padding: 4px 9px; text-align: center; overflow-wrap: anywhere;
+      pointer-events: none; font-size: 13px; font-weight: 700;
+    }
+    .drawer {
+      position: fixed; right: 14px; bottom: 112px; z-index: 99990; width: min(390px, calc(100vw - 28px));
+      max-height: calc(100vh - 138px); overflow: auto; padding: 14px; background: var(--tb);
+      border: 1px solid var(--bc); border-radius: 10px; box-shadow: 0 4px 18px rgba(0,0,0,.25); display: none;
+    }
+    .drawer.open { display: block; }
+    .drawer-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .drawer h2, .drawer h3, .drawer p { margin: 0; }
+    .drawer small { color: var(--muted); font-weight: 700; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    input {
+      width: 100%; border: 1px solid var(--bc); border-radius: 5px; min-height: 34px; padding: 7px 9px;
+      background: var(--panel); color: var(--fg); outline: none;
+    }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(122,92,224,.18); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .primary { border-color: var(--accent); font-weight: 700; }
+    .danger { color: var(--danger); }
+    #message { margin-top: 8px; color: var(--danger); font-size: 13px; font-weight: 700; }
+    .list { margin-top: 14px; border-top: 1px solid var(--bc); padding-top: 10px; display: grid; gap: 10px; }
+    .item { display: grid; grid-template-columns: 1fr auto; gap: 8px; border-top: 1px solid rgba(150,140,125,.35); padding-top: 10px; }
+    .item:first-child { border-top: none; padding-top: 0; }
+    .names { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+    .roles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .roles span { border-bottom: 1px solid var(--bc); }
+    .text-output {
+      position: fixed; left: 12px; bottom: 12px; z-index: 40; max-width: min(780px, calc(100vw - 145px));
+      display: flex; gap: 7px; overflow-x: auto; padding: 2px;
+    }
+    .text-output code, .text-output span {
+      flex: 0 0 auto; max-width: 420px; padding: 6px 8px; border-radius: 6px;
+      background: rgba(255,255,255,.58); border: 1px solid rgba(150,140,125,.35);
+      color: var(--fg); white-space: normal; overflow-wrap: anywhere; font-size: 12px;
+    }
+    .dark .text-output code, .dark .text-output span { background: rgba(40,40,40,.62); }
+    #add-btn {
+      position: fixed; right: 14px; bottom: 108px; z-index: 99991; border: none; min-width: 70px;
+      border-radius: 999px; color: #fff; background: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      font-weight: 700; height: 34px;
+    }
+    #about-btn {
+      position: fixed; bottom: 25px; right: 25px; width: 36px; height: 36px; background: #2196F3;
+      color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+      font-size: 20px; font-family: serif; font-style: italic; font-weight: bold; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000; border: none;
+    }
+    .about-panel {
+      position: fixed; right: 16px; bottom: 148px; z-index: 99990; width: min(310px, calc(100vw - 32px));
+      display: none; background: var(--tb); color: var(--fg); border: 1px solid var(--bc);
+      border-radius: 10px; padding: 14px 16px; box-shadow: 0 4px 18px rgba(0,0,0,.25); font-size: 13px; line-height: 1.55;
+    }
+    .about-panel.open { display: block; }
+    .empty { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); color: var(--muted); font-weight: 700; }
+    @media (max-width: 720px) {
+      .brand { min-width: 130px; }
+      .zoom-row input { width: 82px; }
+      .field-grid { grid-template-columns: 1fr; }
+      .text-output { max-width: calc(100vw - 120px); }
+    }
+  </style>
+</head>
+<body id="bd">
+  <div class="sys-ui">
+    <div class="ui-col brand">
+      <b>Relationship Map</b>
+      <span id="summary">0 บุคคล · 0 ความสัมพันธ์</span>
+    </div>
+    <div class="ui-col">
+      <button id="sepiaBtn" type="button">Sepia</button>
+      <button id="darkBtn" type="button">Dark</button>
+    </div>
+    <div class="ui-col zoom-row">
+      <button id="zoomOut" type="button" aria-label="ซูมออก">−</button>
+      <span class="zoom-label" id="zoomLabel">100%</span>
+      <input id="zoomRange" type="range" min="0.65" max="1.65" step="0.05" value="1" aria-label="ระดับซูม">
+      <button id="zoomIn" type="button" aria-label="ซูมเข้า">＋</button>
+      <button id="zoomReset" type="button" aria-label="รีเซ็ตซูม">100</button>
+    </div>
+    <div class="ui-col">
+      <button id="openDrawerTop" type="button">✚ Relation</button>
+      <button id="sampleBtn" type="button">Sample</button>
+      <button id="clearBtn" type="button">Clear</button>
+    </div>
+  </div>
+
+  <main id="stage" aria-label="พื้นที่แสดงผังความสัมพันธ์">
+    <div id="viewport">
+      <svg id="lines" aria-label="เส้นเชื่อมความสัมพันธ์"></svg>
+      <div id="labels"></div>
+    </div>
+    <div class="empty" id="empty">กรอกความสัมพันธ์เพื่อสร้างผัง</div>
+  </main>
+
+  <div class="text-output" id="textOutput" aria-label="ผลลัพธ์แบบข้อความ"></div>
+
+  <button id="add-btn" type="button">✚ Add</button>
+  <aside class="drawer" id="drawer" aria-label="เครื่องมือสร้างความสัมพันธ์">
+    <div class="drawer-head">
+      <div>
+        <small>Tools</small>
+        <h2>เพิ่มความสัมพันธ์</h2>
+      </div>
+      <button id="closeDrawer" type="button" aria-label="ปิด">x</button>
+    </div>
+    <form id="relationshipForm">
+      <div class="field-grid">
+        <label>บุคคลที่ 1<input id="from" placeholder="พระพุทธเจ้าโคดม"></label>
+        <label>บุคคลที่ 2<input id="to" placeholder="พระอานนท์"></label>
+        <label>บทบาทของบุคคลที่ 1<input id="fromRole" placeholder="พระศาสดา"></label>
+        <label>บทบาทของบุคคลที่ 2<input id="toRole" placeholder="อุปัฏฐาก"></label>
+      </div>
+      <div class="actions">
+        <button class="primary" type="submit">เพิ่ม</button>
+        <button id="swapBtn" type="button">สลับ</button>
+      </div>
+      <p id="message"></p>
+    </form>
+    <div class="list" id="relationshipList"></div>
+  </aside>
+
+  <button id="about-btn" type="button" title="เกี่ยวกับ">i</button>
+  <div class="about-panel" id="aboutPanel">
+    <b>Relationship Map</b><br>
+    สร้างผังความสัมพันธ์จากคู่บุคคลและบทบาท แล้วแสดงผลเป็นข้อความลอยบนเส้นเชื่อมแบบ canvas โล่งๆ<br><br>
+    ลากชื่อบุคคลเพื่อจัดตำแหน่งเองได้ · ใช้แถบบนเพื่อซูมและสลับธีม
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      var STORAGE_KEY = "relationship_map_data";
+      var THEME_KEY = "hub_theme";
+      var initial = [
+        { id: "sample-ananda", from: "พระพุทธเจ้าโคดม", to: "พระอานนท์", fromRole: "พระศาสดา", toRole: "อุปัฏฐาก" },
+        { id: "sample-sariputta", from: "พระพุทธเจ้าโคดม", to: "พระสารีบุตร", fromRole: "พระศาสดา", toRole: "อัครสาวกเบื้องขวา" }
+      ];
+      var relationships = loadRelationships();
+      var positions = {};
+      var velocities = {};
+      var dragging = null;
+      var zoom = 1;
+      var stageW = 900;
+      var stageH = 600;
+
+      var bd = document.getElementById("bd");
+      var stage = document.getElementById("stage");
+      var viewport = document.getElementById("viewport");
+      var lines = document.getElementById("lines");
+      var labels = document.getElementById("labels");
+      var empty = document.getElementById("empty");
+      var summary = document.getElementById("summary");
+      var textOutput = document.getElementById("textOutput");
+      var drawer = document.getElementById("drawer");
+      var list = document.getElementById("relationshipList");
+      var msg = document.getElementById("message");
+      var inputs = {
+        from: document.getElementById("from"),
+        to: document.getElementById("to"),
+        fromRole: document.getElementById("fromRole"),
+        toRole: document.getElementById("toRole")
+      };
+
+      function uid() { return String(Date.now()) + "-" + Math.random().toString(16).slice(2); }
+      function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+      function chars(s) { return Array.from(s || "").length; }
+      function sizeFor(name) {
+        var len = chars(name);
+        return { width: clamp(58 + len * 8, 128, 220), height: clamp(42 + Math.max(0, Math.ceil(len / 14) - 1) * 18, 48, 88) };
+      }
+      function loadRelationships() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (Array.isArray(parsed.relationships)) return parsed.relationships;
+          }
+        } catch (e) {}
+        return initial.slice();
+      }
+      function saveRelationships() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ relationships: relationships })); } catch (e) {}
+      }
+      function setTheme(theme) {
+        bd.classList.remove("dark", "white");
+        if (theme === "dark") bd.classList.add("dark");
+        try { localStorage.setItem(THEME_KEY, theme === "dark" ? "dark" : "sepia"); } catch (e) {}
+        document.getElementById("sepiaBtn").classList.toggle("is-active", theme !== "dark");
+        document.getElementById("darkBtn").classList.toggle("is-active", theme === "dark");
+      }
+      function syncThemeButtons() {
+        document.getElementById("sepiaBtn").classList.toggle("is-active", !bd.classList.contains("dark"));
+        document.getElementById("darkBtn").classList.toggle("is-active", bd.classList.contains("dark"));
+      }
+      function getNodes() {
+        var order = [], degree = {};
+        function add(name) {
+          if (!degree[name]) { order.push(name); degree[name] = 0; }
+        }
+        relationships.forEach(function (r) {
+          add(r.from); add(r.to); degree[r.from] += 1; degree[r.to] += 1;
+        });
+        return order.map(function (name) {
+          var s = sizeFor(name);
+          return { name: name, degree: degree[name] || 0, width: s.width, height: s.height };
+        });
+      }
+      function primary(nodes) {
+        return nodes.reduce(function (best, node) { return !best || node.degree > best.degree ? node : best; }, null);
+      }
+      function resize() {
+        var r = stage.getBoundingClientRect();
+        stageW = Math.max(320, r.width);
+        stageH = Math.max(420, r.height);
+        lines.setAttribute("viewBox", "0 0 " + stageW + " " + stageH);
+      }
+      function initializeMissing(nodes) {
+        var p = primary(nodes);
+        var centerX = stageW / 2, centerY = stageH / 2;
+        var radiusX = clamp(stageW * .34, 150, 320);
+        var radiusY = clamp(stageH * .28, 110, 210);
+        nodes.forEach(function (node, index) {
+          if (!positions[node.name]) {
+            if (p && node.name === p.name) positions[node.name] = { x: centerX, y: centerY };
+            else {
+              var count = Math.max(1, nodes.length - 1);
+              var angle = -Math.PI / 2 + (index * Math.PI * 2) / count;
+              positions[node.name] = { x: centerX + Math.cos(angle) * radiusX, y: centerY + Math.sin(angle) * radiusY };
+            }
+            velocities[node.name] = { vx: 0, vy: 0 };
+          }
+        });
+        Object.keys(positions).forEach(function (name) {
+          if (!nodes.some(function (n) { return n.name === name; })) {
+            delete positions[name]; delete velocities[name];
+          }
+        });
+      }
+      function clampPosition(pos, node) {
+        pos.x = clamp(pos.x, node.width / 2 + 18, stageW - node.width / 2 - 18);
+        pos.y = clamp(pos.y, node.height / 2 + 18, stageH - node.height / 2 - 18);
+      }
+      function samePair(a, b) {
+        return (a.from === b.from && a.to === b.to) || (a.from === b.to && a.to === b.from);
+      }
+      function pairOffset(r) {
+        var same = relationships.filter(function (x) { return samePair(x, r); });
+        var idx = same.findIndex(function (x) { return x.id === r.id; });
+        return (idx - (same.length - 1) / 2) * 28;
+      }
+      function edgePath(r, nodeByName) {
+        var s = positions[r.from], t = positions[r.to];
+        var sn = nodeByName[r.from], tn = nodeByName[r.to];
+        if (!s || !t || !sn || !tn) return null;
+        var dx = t.x - s.x, dy = t.y - s.y;
+        var dist = Math.max(Math.hypot(dx, dy), 1);
+        var ux = dx / dist, uy = dy / dist, nx = -uy, ny = ux;
+        var offset = pairOffset(r);
+        var startGap = sn.width / 2 + 28, endGap = tn.width / 2 + 28;
+        var start = { x: s.x + ux * startGap, y: s.y + uy * startGap };
+        var end = { x: t.x - ux * endGap, y: t.y - uy * endGap };
+        var curve = offset + Math.sin((s.x + t.y) / 110) * 12;
+        var ca = { x: start.x + (end.x - start.x) * .36 + nx * curve, y: start.y + (end.y - start.y) * .36 + ny * curve };
+        var cb = { x: start.x + (end.x - start.x) * .64 + nx * curve, y: start.y + (end.y - start.y) * .64 + ny * curve };
+        var label = {
+          x: clamp(start.x + (end.x - start.x) * .5 + nx * (curve + 8), 76, stageW - 76),
+          y: clamp(start.y + (end.y - start.y) * .5 + ny * (curve + 8), 30, stageH - 30)
+        };
+        return {
+          path: "M " + start.x.toFixed(2) + " " + start.y.toFixed(2) + " C " + ca.x.toFixed(2) + " " + ca.y.toFixed(2) + ", " + cb.x.toFixed(2) + " " + cb.y.toFixed(2) + ", " + end.x.toFixed(2) + " " + end.y.toFixed(2),
+          label: label,
+          text: r.fromRole + " - " + r.toRole
+        };
+      }
+      function textRow(r) {
+        var a = positions[r.from], b = positions[r.to];
+        if (!a || !b || a.x <= b.x) return "| " + r.from + " |-" + r.toRole + "---" + r.fromRole + "-| " + r.to + " |";
+        return "| " + r.to + " |-" + r.fromRole + "---" + r.toRole + "-| " + r.from + " |";
+      }
+      function render() {
+        resize();
+        var nodes = getNodes();
+        initializeMissing(nodes);
+        var p = primary(nodes);
+        var nodeByName = {};
+        nodes.forEach(function (n) { nodeByName[n.name] = n; });
+        summary.textContent = nodes.length + " บุคคล · " + relationships.length + " ความสัมพันธ์";
+        empty.style.display = nodes.length ? "none" : "block";
+        lines.innerHTML = "";
+        labels.innerHTML = "";
+        viewport.querySelectorAll(".person").forEach(function (el) { el.remove(); });
+        relationships.forEach(function (r) {
+          var e = edgePath(r, nodeByName);
+          if (!e) return;
+          var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", e.path);
+          lines.appendChild(path);
+          var lab = document.createElement("span");
+          lab.className = "edge-label";
+          lab.textContent = e.text;
+          lab.style.left = e.label.x + "px";
+          lab.style.top = e.label.y + "px";
+          labels.appendChild(lab);
+        });
+        nodes.forEach(function (node) {
+          var pos = positions[node.name];
+          var el = document.createElement("div");
+          el.className = "person" + (p && node.name === p.name ? " primary" : "");
+          el.textContent = node.name;
+          el.style.width = node.width + "px";
+          el.style.transform = "translate3d(" + (pos.x - node.width / 2).toFixed(2) + "px," + (pos.y - node.height / 2).toFixed(2) + "px,0)";
+          el.dataset.name = node.name;
+          el.addEventListener("pointerdown", beginDrag);
+          el.addEventListener("pointermove", moveDrag);
+          el.addEventListener("pointerup", endDrag);
+          el.addEventListener("pointercancel", endDrag);
+          viewport.appendChild(el);
+        });
+        textOutput.innerHTML = "";
+        if (relationships.length) {
+          relationships.forEach(function (r) {
+            var c = document.createElement("code");
+            c.textContent = textRow(r);
+            textOutput.appendChild(c);
+          });
+        } else {
+          var s = document.createElement("span");
+          s.textContent = "ยังไม่มีข้อความจากผัง";
+          textOutput.appendChild(s);
+        }
+        renderList();
+        viewport.style.transform = "scale(" + zoom + ")";
+        document.getElementById("zoomLabel").textContent = Math.round(zoom * 100) + "%";
+        document.getElementById("zoomRange").value = zoom;
+        syncThemeButtons();
+      }
+      function renderList() {
+        list.innerHTML = "";
+        if (!relationships.length) {
+          var emptyItem = document.createElement("p");
+          emptyItem.textContent = "ยังไม่มีความสัมพันธ์ในผัง";
+          emptyItem.style.color = "var(--muted)";
+          list.appendChild(emptyItem);
+          return;
+        }
+        relationships.forEach(function (r) {
+          var item = document.createElement("article");
+          item.className = "item";
+          item.innerHTML = '<div><p class="names"><strong></strong><span>กับ</span><strong></strong></p><p class="roles"><span></span><span></span></p></div><button type="button" class="danger">ลบ</button>';
+          item.querySelectorAll("strong")[0].textContent = r.from;
+          item.querySelectorAll("strong")[1].textContent = r.to;
+          item.querySelectorAll(".roles span")[0].textContent = r.fromRole;
+          item.querySelectorAll(".roles span")[1].textContent = r.toRole;
+          item.querySelector("button").addEventListener("click", function () {
+            relationships = relationships.filter(function (x) { return x.id !== r.id; });
+            saveRelationships();
+            render();
+          });
+          list.appendChild(item);
+        });
+      }
+      function pointerPoint(e) {
+        var r = stage.getBoundingClientRect();
+        return {
+          x: (e.clientX - r.left - stageW / 2) / zoom + stageW / 2,
+          y: (e.clientY - r.top - stageH / 2) / zoom + stageH / 2
+        };
+      }
+      function beginDrag(e) {
+        var name = e.currentTarget.dataset.name;
+        var pt = pointerPoint(e);
+        var pos = positions[name];
+        dragging = { name: name, ox: pt.x - pos.x, oy: pt.y - pos.y };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }
+      function moveDrag(e) {
+        if (!dragging || dragging.name !== e.currentTarget.dataset.name) return;
+        var nodes = getNodes();
+        var node = nodes.find(function (n) { return n.name === dragging.name; });
+        var pt = pointerPoint(e);
+        positions[dragging.name] = { x: pt.x - dragging.ox, y: pt.y - dragging.oy };
+        velocities[dragging.name] = { vx: 0, vy: 0 };
+        if (node) clampPosition(positions[dragging.name], node);
+        render();
+      }
+      function endDrag(e) {
+        dragging = null;
+        try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+      }
+      function tick(time) {
+        var nodes = getNodes();
+        if (nodes.length) {
+          initializeMissing(nodes);
+          var p = primary(nodes);
+          for (var i = 0; i < nodes.length; i++) {
+            for (var j = i + 1; j < nodes.length; j++) {
+              var a = nodes[i], b = nodes[j], pa = positions[a.name], pb = positions[b.name];
+              var dx = pb.x - pa.x, dy = pb.y - pa.y, dist = Math.max(Math.hypot(dx, dy), 1);
+              var desired = (a.width + b.width) / 2 + 118;
+              if (dist < desired) {
+                var force = ((desired - dist) / desired) * .22;
+                velocities[a.name].vx -= dx / dist * force; velocities[a.name].vy -= dy / dist * force;
+                velocities[b.name].vx += dx / dist * force; velocities[b.name].vy += dy / dist * force;
+              }
+            }
+          }
+          relationships.forEach(function (r) {
+            var s = positions[r.from], t = positions[r.to];
+            if (!s || !t) return;
+            var dx = t.x - s.x, dy = t.y - s.y, dist = Math.max(Math.hypot(dx, dy), 1);
+            var desired = clamp(stageW * .28, 220, 350);
+            var force = (dist - desired) * .0034;
+            velocities[r.from].vx += dx / dist * force; velocities[r.from].vy += dy / dist * force;
+            velocities[r.to].vx -= dx / dist * force; velocities[r.to].vy -= dy / dist * force;
+          });
+          nodes.forEach(function (node, index) {
+            if (dragging && dragging.name === node.name) return;
+            var pos = positions[node.name], vel = velocities[node.name];
+            var centerStrength = p && node.name === p.name ? .012 : .0035;
+            var drift = Math.sin(time / 1300 + index * 1.7) * .018;
+            vel.vx += (stageW / 2 - pos.x) * centerStrength + drift;
+            vel.vy += (stageH / 2 - pos.y) * centerStrength - drift * .6;
+            vel.vx *= .86; vel.vy *= .86;
+            pos.x += vel.vx; pos.y += vel.vy;
+            clampPosition(pos, node);
+          });
+          render();
+        }
+        requestAnimationFrame(tick);
+      }
+      function openDrawer() { drawer.classList.add("open"); inputs.from.focus(); }
+      function closeDrawer() { drawer.classList.remove("open"); }
+      function setZoom(v) { zoom = clamp(Math.round(v * 100) / 100, .65, 1.65); render(); }
+
+      document.getElementById("relationshipForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var r = {
+          id: uid(),
+          from: inputs.from.value.trim(),
+          to: inputs.to.value.trim(),
+          fromRole: inputs.fromRole.value.trim(),
+          toRole: inputs.toRole.value.trim()
+        };
+        if (!r.from || !r.to || !r.fromRole || !r.toRole) {
+          msg.textContent = "กรอกชื่อและบทบาทให้ครบก่อนเพิ่มความสัมพันธ์";
+          return;
+        }
+        if (r.from === r.to) {
+          msg.textContent = "เลือกบุคคลสองฝั่งให้ต่างกัน";
+          return;
+        }
+        relationships.push(r);
+        Object.keys(inputs).forEach(function (k) { inputs[k].value = ""; });
+        msg.textContent = "";
+        saveRelationships();
+        render();
+      });
+      document.getElementById("swapBtn").addEventListener("click", function () {
+        var f = inputs.from.value, t = inputs.to.value, fr = inputs.fromRole.value, tr = inputs.toRole.value;
+        inputs.from.value = t; inputs.to.value = f; inputs.fromRole.value = tr; inputs.toRole.value = fr;
+      });
+      document.getElementById("add-btn").addEventListener("click", openDrawer);
+      document.getElementById("openDrawerTop").addEventListener("click", openDrawer);
+      document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
+      document.getElementById("sampleBtn").addEventListener("click", function () { relationships = initial.slice(); positions = {}; velocities = {}; saveRelationships(); render(); });
+      document.getElementById("clearBtn").addEventListener("click", function () { relationships = []; positions = {}; velocities = {}; saveRelationships(); render(); });
+      document.getElementById("zoomOut").addEventListener("click", function () { setZoom(zoom - .1); });
+      document.getElementById("zoomIn").addEventListener("click", function () { setZoom(zoom + .1); });
+      document.getElementById("zoomReset").addEventListener("click", function () { setZoom(1); });
+      document.getElementById("zoomRange").addEventListener("input", function (e) { setZoom(Number(e.target.value)); });
+      document.getElementById("sepiaBtn").addEventListener("click", function () { setTheme("sepia"); });
+      document.getElementById("darkBtn").addEventListener("click", function () { setTheme("dark"); });
+      document.getElementById("about-btn").addEventListener("click", function (e) { e.stopPropagation(); document.getElementById("aboutPanel").classList.toggle("open"); });
+      document.addEventListener("click", function (e) {
+        var p = document.getElementById("aboutPanel");
+        if (p.classList.contains("open") && !p.contains(e.target) && e.target.id !== "about-btn") p.classList.remove("open");
+      });
+      window.addEventListener("resize", render);
+      try {
+        var t = localStorage.getItem(THEME_KEY);
+        setTheme(t === "dark" ? "dark" : "sepia");
+      } catch (e) { setTheme("sepia"); }
+      render();
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>

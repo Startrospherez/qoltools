@@ -79,7 +79,8 @@
   var TOOLS = [
     { file: "scratchpad.html", label: "📝 ScratchPad" },
     { file: "mindmap.html", label: "🧠 MindMap" },
-    { file: "abhidhamma.html", label: "🪷 ผังอภิธรรม" }
+    { file: "abhidhamma.html", label: "🪷 ผังอภิธรรม" },
+    { file: "relationship-map.html", label: "🕸️ Relationship Map" }
   ];
 
   function injectHubLink() {
