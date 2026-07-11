@@ -53,6 +53,11 @@
   .title{display:flex; align-items:baseline; gap:10px; margin:0 0 10px; flex-wrap:wrap}
   .title h1{font-size:21px; margin:0; color:var(--accent); font-weight:700}
   .title .sub{font-size:12px; color:var(--muted)}
+  .hamburger{position:fixed; top:0; left:0; z-index:20; display:flex; align-items:center; gap:9px;
+    border:none; background:transparent; color:var(--accent); padding:18px 22px;
+    cursor:pointer; font-size:26px; font-weight:600; font-family:inherit}
+  .hamburger:hover,.hamburger:active{background:var(--chip)}
+  .hamburger span{font-size:15px}
   .searchbox{position:relative}
   #q{
     width:100%; padding:13px 44px 13px 16px; font-size:calc(20px * var(--fs));
@@ -162,10 +167,58 @@
   .modal-card a{color:var(--accent2)}
   .modal-card table{width:100%; border-collapse:collapse; font-size:13px; margin:6px 0}
   .modal-card td{border-bottom:1px solid var(--line); padding:5px 6px; vertical-align:top}
+  /* แผงตัวกรองแหล่งข้อมูล (สไตล์ NotebookLM "Sources") */
+  #srcPanel{display:none; background:var(--card)}
+  .srcPanelHead{display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; font-weight:700; color:var(--accent); border-bottom:1px solid var(--line)}
+  .srcClose{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px;
+    border:none; background:none; font-size:22px; color:var(--muted); cursor:pointer; line-height:1}
+  .srcClose:hover{color:var(--ink); background:var(--chip); border-radius:50%}
+  .srcRow{display:flex; align-items:center; gap:8px; padding:12px 16px;
+    border-bottom:1px solid var(--line); cursor:pointer; font-size:14px}
+  .srcRow-sub{padding:9px 16px 9px 30px; border-bottom:none}
+  .srcRow input{width:17px; height:17px; accent-color:var(--accent); cursor:pointer; flex:0 0 auto}
+  .srcRow b{margin-left:auto; font-weight:400; color:var(--muted); font-size:12px; white-space:nowrap}
+  .srcSubRow{border-bottom:1px solid var(--line)}
+  .srcExpand{display:block; width:100%; text-align:left; background:none; border:none; cursor:pointer;
+    color:var(--accent2); font-size:12.5px; padding:6px 16px 6px 30px; font-family:inherit}
+  .srcSub.hidden{display:none}
+  .srcHint{font-size:12px; color:var(--muted); padding:12px 16px; line-height:1.7}
+  .srcHint b{display:block; color:var(--accent); font-size:12.5px; margin:10px 0 4px}
+  .srcHint b:first-child{margin-top:0}
+  .srcHint ol{margin:0; padding-left:18px}
+  .srcHint li{margin:2px 0}
+  .srcHint p{margin:0}
+  .srcHintHr{border:none; border-top:1px dashed var(--line); margin:10px 0}
+  .mtabs{display:none}
   @media (max-width:480px){
     body{font-size:calc(17px * var(--fs))}
     .hw{font-size:calc(23px * var(--fs))}
     #q{font-size:calc(18px * var(--fs))}
+  }
+  @media(min-width:721px){
+    #srcPanel{position:fixed; top:0; left:0; bottom:0; width:270px; z-index:45; overflow:auto;
+      box-shadow:2px 0 14px rgba(0,0,0,.12); transform:translateX(-100%); transition:transform .2s}
+    body.src-open #srcPanel{display:block; transform:translateX(0)}
+  }
+  @media(min-width:721px) and (max-width:1100px){
+    .wrap{margin-top:64px}
+  }
+  @media(max-width:720px){
+    #src-open{display:none}
+    #srcPanel{position:fixed; inset:0; bottom:54px; z-index:50; overflow:auto; display:block;
+      transform:translateX(-100%); transition:transform .25s ease; -webkit-overflow-scrolling:touch}
+    body.src-open #srcPanel{transform:translateX(0)}
+    body.src-open .detail-back-fab{display:none !important}
+    .srcClose{display:inline-flex}
+    .mtabs{display:flex; position:fixed; left:0; right:0; bottom:0; z-index:51;
+      background:var(--card); border-top:1px solid var(--line)}
+    .mtab{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; border:none;
+      background:none; color:var(--muted); font-size:11px; padding:8px 0 6px; cursor:pointer; font-family:inherit}
+    .mtab.active{color:var(--accent); font-weight:700}
+    #results,main#main,#list{padding-bottom:70px}
+    #results.single main#main{display:block}
+    #results.show-detail ~ .detail-back-fab{bottom:70px}
   }
 </style>
 <script>
@@ -191,8 +244,8 @@
 
 <header>
   <div class="wrap">
+    <button class="hamburger" id="src-open" title="ดูแหล่งข้อมูล" aria-label="ดูแหล่งข้อมูล">☰<span>ดูแหล่งข้อมูล</span></button>
     <div class="title">
-      <a href="../index.html" title="กลับหน้า Hub" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 9px;margin-right:2px;">← Hub</a>
       <h1><img src="icon-192.png" alt="" style="height:1.05em;vertical-align:-0.16em;margin-right:.32em;border-radius:6px">StarDict</h1>
       <span class="sub">พจนานุกรม บาลี–ไทย · offline</span>
       <div class="tools">
@@ -217,8 +270,40 @@
   <div id="list" aria-label="รายการคำที่พบ"></div>
   <main id="main"></main>
 </div>
+<div id="srcPanel" aria-label="ตัวกรองแหล่งข้อมูล">
+  <div class="srcPanelHead">
+    <span>เลือกแหล่งข้อมูล</span>
+    <button class="srcClose" id="src-close" title="พับแผงแหล่งข้อมูล" aria-label="พับแผงแหล่งข้อมูล">×</button>
+  </div>
+  <label class="srcRow"><input type="checkbox" id="src-named"><span>📖 มีที่มาแน่ชัด</span><b id="cnt-named"></b></label>
+  <div class="srcSubRow" id="src-named-sub">
+    <button class="srcExpand" id="src-named-toggle" type="button" aria-label="แสดงรายเล่ม">▸ แยกเป็นรายเล่ม</button>
+    <div class="srcSub hidden" id="src-named-children">
+      <label class="srcRow srcRow-sub" title="พจนานุกรม บาลี-ไทย-อังกฤษ ฉบับภูมิพโลภิกขุ"><input type="checkbox" id="src-bhumi"><span>📕 ภูมิพโลภิกขุ</span><b id="cnt-bhumi"></b></label>
+      <label class="srcRow srcRow-sub" title="ปทานุกรม บาลี-ไทย-อังกฤษ-สันสกฤต"><input type="checkbox" id="src-pathan"><span>📗 ปทานุกรม</span><b id="cnt-pathan"></b></label>
+    </div>
+  </div>
+  <label class="srcRow"><input type="checkbox" id="src-unknown"><span>❔ ไม่ทราบที่มาแน่ชัด</span><b id="cnt-unknown"></b></label>
+  <div class="srcHint">
+    <b>มีที่มาแน่ชัด</b>
+    <ol>
+      <li>พจนานุกรม บาลี-ไทย-อังกฤษ ฉบับภูมิพโลภิกขุ</li>
+      <li>ปทานุกรม บาลี-ไทย-อังกฤษ-สันสกฤต</li>
+    </ol>
+    <b>ไม่ทราบที่มาแน่ชัด</b>
+    <p>ข้อมูลจากชุด E-Tipitaka ที่ไม่ได้ระบุชื่อพจนานุกรมต้นฉบับ</p>
+    <hr class="srcHintHr">
+    <b>วิธีเลือกแหล่งข้อมูล</b>
+    <p>เลือกทั้งหมด : สำหรับการใช้งานทั่วไป<br>เลือกเฉพาะหัวข้อที่ต้องการ : สำหรับการใช้งานเฉพาะทาง (เช่น ต้องการอ้างอิงเฉพาะทาง)</p>
+  </div>
+</div>
 <button class="detail-back-fab" type="button" title="กลับไปรายการ" aria-label="กลับไปรายการ">↑ รายการ</button>
 <footer>พจนานุกรมบาลี-ไทย จากแอพ E-Tipitaka · ทำงาน offline บนอุปกรณ์ของคุณ</footer>
+
+<nav class="mtabs">
+  <button class="mtab" id="mtab-src" type="button">🗂️<span>แหล่งข้อมูล</span></button>
+  <button class="mtab active" id="mtab-dict" type="button">📖<span>แปลบาลี-ไทย</span></button>
+</nav>
 
 <div id="about-modal" class="modal hidden">
   <div class="modal-card">
@@ -356,6 +441,60 @@ function cardHTML(r){
   </div>`;
 }
 
+/* ---------- ตัวกรองแหล่งข้อมูล: มีที่มาแน่ชัด (แยกรายเล่ม: ภูมิพโลภิกขุ/ปทานุกรม) / ไม่ทราบที่มาแน่ชัด ---------- */
+const SRC_BHUMI_TAG = 'ภูมิพโลภิกขุ';
+let showBhumi = localStorage.getItem('pali_src_bhumi') !== '0';
+let showPathan = localStorage.getItem('pali_src_pathan') !== '0';
+let showUnknownSrc = localStorage.getItem('pali_src_unknown') !== '0';
+function srcAllowed(source){
+  if(!source) return showUnknownSrc;
+  return source.indexOf(SRC_BHUMI_TAG) !== -1 ? showBhumi : showPathan;
+}
+const srcNamedCb = $('#src-named'), srcUnknownCb = $('#src-unknown');
+const srcBhumiCb = $('#src-bhumi'), srcPathanCb = $('#src-pathan');
+function applySrcFilter(){
+  srcBhumiCb.checked = showBhumi;
+  srcPathanCb.checked = showPathan;
+  srcUnknownCb.checked = showUnknownSrc;
+  srcNamedCb.checked = showBhumi && showPathan;
+  srcNamedCb.indeterminate = showBhumi !== showPathan;
+  localStorage.setItem('pali_src_bhumi', showBhumi ? '1' : '0');
+  localStorage.setItem('pali_src_pathan', showPathan ? '1' : '0');
+  localStorage.setItem('pali_src_unknown', showUnknownSrc ? '1' : '0');
+  if(lastQuery) doSearch(lastQuery);
+}
+applySrcFilter();
+srcNamedCb.addEventListener('change', () => {
+  showBhumi = showPathan = srcNamedCb.checked; applySrcFilter();
+});
+srcBhumiCb.addEventListener('change', () => { showBhumi = srcBhumiCb.checked; applySrcFilter(); });
+srcPathanCb.addEventListener('change', () => { showPathan = srcPathanCb.checked; applySrcFilter(); });
+srcUnknownCb.addEventListener('change', () => { showUnknownSrc = srcUnknownCb.checked; applySrcFilter(); });
+$('#src-named-toggle').addEventListener('click', () => {
+  const box = $('#src-named-children'), btn = $('#src-named-toggle');
+  const open = box.classList.toggle('hidden') === false;
+  btn.textContent = (open ? '▾' : '▸') + ' แยกเป็นรายเล่ม';
+});
+function setMobileTab(which){
+  const dt = $('#mtab-dict'), st = $('#mtab-src');
+  if(dt) dt.classList.toggle('active', which === 'dict');
+  if(st) st.classList.toggle('active', which === 'src');
+}
+function openSrcPanel(){ document.body.classList.add('src-open'); setMobileTab('src'); }
+function closeSrcPanel(){ document.body.classList.remove('src-open'); setMobileTab('dict'); }
+$('#src-open').addEventListener('click', () =>
+  document.body.classList.contains('src-open') ? closeSrcPanel() : openSrcPanel());
+$('#src-close').addEventListener('click', closeSrcPanel);
+const mtabDict = $('#mtab-dict'), mtabSrc = $('#mtab-src');
+if(mtabDict) mtabDict.addEventListener('click', closeSrcPanel);
+if(mtabSrc) mtabSrc.addEventListener('click', openSrcPanel);
+function setSrcCounts(named, bhumi, pathan, unknown){
+  $('#cnt-named').textContent = named.toLocaleString('th') + ' คำ';
+  $('#cnt-bhumi').textContent = bhumi.toLocaleString('th') + ' คำ';
+  $('#cnt-pathan').textContent = pathan.toLocaleString('th') + ' คำ';
+  $('#cnt-unknown').textContent = unknown.toLocaleString('th') + ' คำ';
+}
+
 /* ไฮไลต์คำที่เลือกใน outline (ซ้าย) + เลื่อน outline ให้เห็น */
 function setActiveList(i){
   if(i === curSel) return;
@@ -412,7 +551,7 @@ function paint(term){
   else renderAll();                     // desktop: โชว์ทุกการ์ด เลื่อนได้ + outline jump
 }
 
-function render(rows, term){ curRows = rows; paint(term); }
+function render(rows, term){ curRows = (rows || []).filter(r => srcAllowed(r.source)); paint(term); }
 
 function welcome(){
   const samples = ['ธมฺม','พุทฺธ','สงฺฆ','กมฺม','นิพฺพาน','เมตฺตา','ปญฺญา','สติ'];
@@ -437,7 +576,7 @@ function doSearch(term){
   try{
     const rows = search(term);
     if(term !== lastQuery) return;
-    meta.textContent = `พบ ${rows.length} รายการ`;
+    meta.textContent = `พบ ${rows.filter(r => srcAllowed(r.source)).length} รายการ`;
     render(rows, term);
   }catch(e){
     meta.textContent = 'เกิดข้อผิดพลาดในการค้นหา';
@@ -489,7 +628,11 @@ function closeAbout(){ aboutModal.classList.add('hidden'); }
 $('#about-open').addEventListener('click', () => aboutModal.classList.remove('hidden'));
 $('#about-close').addEventListener('click', closeAbout);
 aboutModal.addEventListener('click', e => { if(e.target === aboutModal) closeAbout(); });
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && !aboutModal.classList.contains('hidden')) closeAbout(); });
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(document.body.classList.contains('src-open')){ closeSrcPanel(); return; }
+  if(!aboutModal.classList.contains('hidden')) closeAbout();
+});
 
 /* ---------- โหมดมืด + ขนาดตัวอักษร (จำค่าใน localStorage) ---------- */
 const root = document.documentElement;
@@ -549,6 +692,10 @@ async function boot(){
     db = new SQL.Database(bytes);
     // warm up
     db.exec('SELECT 1');
+    const named = runSQL('SELECT COUNT(*) AS c FROM p2t WHERE source IS NOT NULL')[0].c || 0;
+    const bhumi = runSQL('SELECT COUNT(*) AS c FROM p2t WHERE source LIKE ?', ['%' + SRC_BHUMI_TAG + '%'])[0].c || 0;
+    const unknown = runSQL('SELECT COUNT(*) AS c FROM p2t WHERE source IS NULL')[0].c || 0;
+    setSrcCounts(named, bhumi, named - bhumi, unknown);
     $('#loading').classList.add('hidden');
     q.disabled = false;
     resultsEl.classList.add('single');
