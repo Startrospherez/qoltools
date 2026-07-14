@@ -52,6 +52,15 @@
         .ui-col.no-border { border-right: none; padding-right: 0; }
         .sys-ui button { margin: 0; padding: 2px 8px; font-size: 13px; height: 26px; }
         .sys-ui .tool-btn { width: 30px; height: 26px; font-size: 14px; display:flex; justify-content:center; align-items:center; padding: 0; }
+
+        #find-ui { position: fixed; top: 12px; right: 12px; z-index: 1001; display: none; align-items: center; gap: 4px; width: min(560px, calc(100vw - 24px)); padding: 7px; box-sizing: border-box; background: var(--tb); border: 1px solid var(--bc); border-radius: 7px; box-shadow: 0 3px 12px rgba(0,0,0,0.22); }
+        #find-input { flex: 1 1 auto; min-width: 80px; height: 28px; padding: 3px 8px; box-sizing: border-box; border: 1px solid var(--bc); border-radius: 4px; background: var(--bg); color: var(--fg); outline: none; }
+        #find-input:focus { border-color: rgb(33,150,243); box-shadow: 0 0 0 2px rgba(33,150,243,0.2); }
+        #find-scope { flex: 0 1 132px; min-width: 76px; height: 28px; padding: 3px 5px; box-sizing: border-box; border: 1px solid var(--bc); border-radius: 4px; background: var(--bg); color: var(--fg); }
+        #find-count { flex: 0 0 auto; min-width: 48px; text-align: center; font-size: 12px; color: var(--fg); }
+        #find-ui button { width: 30px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+        #find-ui button:disabled { opacity: 0.45; cursor: default; }
+        .file-grid { display: grid; grid-template-columns: repeat(2, max-content); gap: 4px; }
         
         .flex-row { display: flex; gap: 4px; }
         
@@ -69,6 +78,7 @@
             box-sizing: border-box; min-height: 60px;
         } 
         .n.sel { border-color: rgb(33,150,243) !important; --n-bd: rgb(33,150,243) !important; box-shadow: 0 0 0 3px rgba(33,150,243,0.3); }
+        .n.find-hit { outline: 4px solid rgb(255,193,7); outline-offset: 5px; box-shadow: 0 0 0 8px rgba(255,193,7,0.25), 0 4px 12px rgba(0,0,0,0.18); }
         .n.j { min-width: 16px !important; min-height: 16px !important; width: 16px; height: 16px; padding: 0 !important; border-radius: 50% !important; background: var(--fg) !important; border: 2px solid var(--bg) !important; box-shadow: none; resize: none; overflow: visible; }
         .n.j .nt, .n.j .nd, .n.j .p { display: none !important; }
         
@@ -222,15 +232,26 @@
         
         <!-- Block 6: File -->
         <div class="ui-col no-border" style="justify-content:center;">
-            <div class="flex-row" style="margin-bottom:4px;">
+            <div class="file-grid">
                 <button onclick="document.getElementById('importInput').click()" title="นำเข้าข้อมูล JSON">📥 Import</button>
                 <button onclick="window.exportJSON()" title="ส่งออกข้อมูล JSON">📤 Export</button>
-            </div>
-            <div class="flex-row">
                 <button onclick="window.pngBtnClick()" ondblclick="window.pngBtnDbl()" title="บันทึก PNG — คลิก=ครอป | ดับเบิลคลิก=เต็มจอ (ถามพื้นหลัง ทึบ/ใส)">📸 PNG</button>
                 <button onclick="window.saveFileHTML()" title="เซฟเป็นไฟล์ HTML (Alt+S)">💾 HTML</button>
+                <button onclick="window.openFind()" title="ค้นหาข้อความใน Mindmap">🔎 Find</button>
             </div>
         </div>
+    </div>
+
+    <div id="find-ui" role="search" aria-label="ค้นหาใน Mindmap">
+        <input id="find-input" type="search" placeholder="ค้นหา…" autocomplete="off" aria-label="คำค้นหา">
+        <select id="find-scope" aria-label="ขอบเขตการค้นหา" title="เลือกขอบเขตการค้นหา">
+            <option value="title">หัวข้อ</option>
+            <option value="all">หัวข้อ + รายละเอียด</option>
+        </select>
+        <span id="find-count" aria-live="polite">0 / 0</span>
+        <button id="find-prev" onclick="window.navigateFind(-1)" title="ผลก่อนหน้า (Shift+Enter)" aria-label="ผลก่อนหน้า">▲</button>
+        <button id="find-next" onclick="window.navigateFind(1)" title="ผลถัดไป (Enter)" aria-label="ผลถัดไป">▼</button>
+        <button onclick="window.closeFind()" title="ปิดการค้นหา (Esc)" aria-label="ปิดการค้นหา">×</button>
     </div>
 
     <div id="b" class="huge-canvas" style="transform:translate(-10000px,-10000px) scale(1)" data-cx="-10000" data-cy="-10000" data-zoom="1">
@@ -259,6 +280,103 @@
         let modalCallback = null;
         let currentCropRatio = null;
 
+        let findMatches = [];
+        let findIndex = -1;
+
+        function updateFindPosition() {
+            let findUI = document.getElementById('find-ui');
+            if(findUI.style.display === 'none' || !findUI.style.display) return;
+            let toolbar = document.getElementById('mm-ui');
+            let top = !uiHidden && toolbar.style.display !== 'none' ? toolbar.getBoundingClientRect().bottom + 10 : 12;
+            findUI.style.top = Math.round(top) + 'px';
+        }
+
+        function clearFindHighlight() {
+            document.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
+        }
+
+        function updateFindControls() {
+            let count = document.getElementById('find-count');
+            let hasMatches = findMatches.length > 0;
+            count.textContent = document.getElementById('find-input').value.trim() && !hasMatches ? 'ไม่พบ' : (hasMatches ? (findIndex + 1) + ' / ' + findMatches.length : '0 / 0');
+            document.getElementById('find-prev').disabled = !hasMatches;
+            document.getElementById('find-next').disabled = !hasMatches;
+        }
+
+        function centerFindNode(node) {
+            let toolbar = document.getElementById('mm-ui');
+            let usableTop = !uiHidden && toolbar.style.display !== 'none' ? toolbar.getBoundingClientRect().bottom : 0;
+            let centerX = window.innerWidth / 2;
+            let centerY = usableTop + (window.innerHeight - usableTop) / 2;
+            let nodeX = (parseFloat(node.style.left) || node.offsetLeft) + node.offsetWidth / 2;
+            let nodeY = (parseFloat(node.style.top) || node.offsetTop) + node.offsetHeight / 2;
+            cx = centerX - nodeX * zoom;
+            cy = centerY - nodeY * zoom;
+            updateTransform();
+        }
+
+        function showFindResult() {
+            clearFindHighlight();
+            if(findIndex < 0 || !findMatches[findIndex]) { updateFindControls(); return; }
+            let node = findMatches[findIndex];
+            node.classList.add('find-hit');
+            centerFindNode(node);
+            updateFindControls();
+        }
+
+        window.refreshFind = function(preferredNode) {
+            let query = document.getElementById('find-input').value.trim().toLocaleLowerCase();
+            let includeDetails = document.getElementById('find-scope').value === 'all';
+            clearFindHighlight();
+            if(!query) {
+                findMatches = []; findIndex = -1; updateFindControls(); return;
+            }
+            findMatches = nodes.filter(n => {
+                if(!n.isConnected || n.classList.contains('j')) return false;
+                let title = n.querySelector('.nt');
+                let detail = n.querySelector('.nd');
+                return (title && title.textContent.toLocaleLowerCase().includes(query)) || (includeDetails && detail && detail.textContent.toLocaleLowerCase().includes(query));
+            });
+            findIndex = preferredNode ? findMatches.indexOf(preferredNode) : 0;
+            if(findIndex < 0 && findMatches.length) findIndex = 0;
+            if(!findMatches.length) findIndex = -1;
+            showFindResult();
+        };
+
+        window.navigateFind = function(direction) {
+            let current = findMatches[findIndex];
+            window.refreshFind(current);
+            if(!findMatches.length) return;
+            let currentIndex = current ? findMatches.indexOf(current) : -1;
+            findIndex = currentIndex < 0 ? (direction > 0 ? 0 : findMatches.length - 1) : (currentIndex + direction + findMatches.length) % findMatches.length;
+            showFindResult();
+        };
+
+        window.openFind = function() {
+            let findUI = document.getElementById('find-ui');
+            let input = document.getElementById('find-input');
+            findUI.style.display = 'flex';
+            updateFindPosition();
+            window.refreshFind(findMatches[findIndex]);
+            input.focus(); input.select();
+        };
+
+        window.closeFind = function() {
+            document.getElementById('find-ui').style.display = 'none';
+            clearFindHighlight();
+            findMatches = []; findIndex = -1;
+            document.getElementById('find-count').textContent = '0 / 0';
+            if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        };
+
+        document.getElementById('find-input').addEventListener('input', function() { window.refreshFind(); });
+        document.getElementById('find-scope').addEventListener('change', function() { window.refreshFind(findMatches[findIndex]); });
+        document.getElementById('find-input').addEventListener('keydown', function(e) {
+            if(e.key === 'Enter') { e.preventDefault(); window.navigateFind(e.shiftKey ? -1 : 1); }
+        });
+        document.getElementById('find-ui').addEventListener('keydown', function(e) { if(e.key === 'Escape') { e.preventDefault(); window.closeFind(); } });
+        window.addEventListener('resize', updateFindPosition);
+
         window.toggleUI = function() {
             uiHidden = !uiHidden;
             if(uiHidden) {
@@ -268,6 +386,7 @@
                 document.getElementById('float-ui-btn').style.display = 'none';
                 document.getElementById('mm-ui').style.display = 'flex';
             }
+            updateFindPosition();
         };
 
         window.showToast = function(msg) {
@@ -345,6 +464,15 @@
         window.saveFileHTML = function() {
             updateTransform();
             let clone = document.documentElement.cloneNode(true);
+            clone.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
+            let clonedFindUI = clone.querySelector('#find-ui');
+            if(clonedFindUI) {
+                clonedFindUI.style.display = 'none'; clonedFindUI.style.top = '12px';
+                let clonedInput = clonedFindUI.querySelector('#find-input');
+                if(clonedInput) clonedInput.removeAttribute('value');
+                let clonedScope = clonedFindUI.querySelector('#find-scope');
+                if(clonedScope) { clonedScope.querySelectorAll('option').forEach(o => o.removeAttribute('selected')); clonedScope.querySelector('option[value="title"]').setAttribute('selected', 'selected'); }
+            }
             let a = document.createElement('a');
             a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent('<!DOCTYPE html>\n' + clone.outerHTML);
             a.download = 'mindmap_' + Date.now() + '.html';
@@ -538,14 +666,14 @@
         function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); }
 
         window.addEventListener('wheel', function(e) {
-            if(e.target.closest('.sys-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal')) return;
+            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal')) return;
             e.preventDefault();
             let xs = (e.clientX - cx) / zoom, ys = (e.clientY - cy) / zoom;
             zoom += e.deltaY * -0.001; zoom = Math.min(Math.max(0.1, zoom), 3); cx = e.clientX - xs * zoom; cy = e.clientY - ys * zoom; updateTransform();
         }, {passive: false});
 
         window.addEventListener('mousedown', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('.mb')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('.mb')) return;
             if(e.target.closest('#float-ui-btn')) return;
 
             if(e.button === 1 || e.button === 2) { isPan = true; px = e.clientX; py = e.clientY; }
@@ -574,14 +702,14 @@
         });
 
         window.addEventListener('dblclick', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('.mb') || e.target.closest('#about-btn')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('.mb') || e.target.closest('#about-btn')) return;
             if(e.target.closest('.n')) return; 
             let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; addNode(nx, ny, null); window.doSaveState();
         });
 
         window.addEventListener('dragover', function(e) { e.preventDefault(); });
         window.addEventListener('drop', function(e) {
-            if(e.target.closest('.sys-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal')) return;
+            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal')) return;
             e.preventDefault();
             let file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
             if(!file || !file.type.startsWith('image/')) return;
