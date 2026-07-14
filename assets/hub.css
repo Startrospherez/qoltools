@@ -104,7 +104,14 @@ body {
               background-color 0.35s ease, color 0.35s ease, box-shadow 0.35s ease;
 }
 .card:hover { transform: translateY(-3px); border-color: var(--accent); }
-.card .icon { font-size: 30px; }
+.card .icon {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  font-size: 30px;
+  line-height: 1;
+}
+.card .icon img { flex: 0 0 auto; }
 .card .name { font-weight: 700; font-size: 17px; }
 .card .desc { color: var(--muted); font-size: 14px; }
 
