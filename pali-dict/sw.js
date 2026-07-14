@@ -1,5 +1,5 @@
 /* Service worker — ทำให้แอพเปิดได้แบบ offline หลังโหลดครั้งแรก */
-const CACHE = 'pali-dict-v26';
+const CACHE = 'pali-dict-v27';
 const ASSETS = [
   './',
   'index.html',

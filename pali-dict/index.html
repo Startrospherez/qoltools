@@ -60,13 +60,14 @@
   .hamburger span{font-size:15px}
   .searchbox{position:relative}
   #q{
-    width:100%; padding:13px 44px 13px 16px; font-size:calc(20px * var(--fs));
+    width:100%; padding:14px 44px 14px 16px; font-size:calc(20px * var(--fs));
     border:2px solid var(--line); border-radius:12px; background:var(--card); color:var(--ink);
-    outline:none; transition:border-color .15s; font-family:inherit;
+    outline:none; transition:border-color .15s;
+    font-family:var(--pali-font);
   }
   #q:focus{border-color:var(--accent2)}
   .clear{
-    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
     border:none; background:none; font-size:24px; color:var(--muted);
     cursor:pointer; line-height:1; padding:6px 10px;
   }
@@ -298,7 +299,7 @@
   </div>
 </div>
 <button class="detail-back-fab" type="button" title="กลับไปรายการ" aria-label="กลับไปรายการ">↑ รายการ</button>
-<footer>พจนานุกรมบาลี-ไทย จากแอพ E-Tipitaka · ทำงาน offline บนอุปกรณ์ของคุณ</footer>
+<footer>พจนานุกรมบาลี-ไทย · ค้นแบบ offline บนอุปกรณ์ของคุณ</footer>
 
 <nav class="mtabs">
   <button class="mtab" id="mtab-src" type="button">🗂️<span>แหล่งข้อมูล</span></button>
@@ -554,7 +555,8 @@ function paint(term){
 function render(rows, term){ curRows = (rows || []).filter(r => srcAllowed(r.source)); paint(term); }
 
 function welcome(){
-  const samples = ['ธมฺม','พุทฺธ','สงฺฆ','กมฺม','นิพฺพาน','เมตฺตา','ปญฺญา','สติ'];
+  const PUA_TH = String.fromCharCode(0xF700), PUA_NY = String.fromCharCode(0xF70F);
+  const samples = ['พุทฺธ','ธมฺม','สงฺฆ', PUA_TH+'าน', 'กมฺม','นิพฺพาน','เมตฺตา', 'ป'+PUA_NY+'ฺ'+PUA_NY+'า', 'สติ'];
   return `<div class="empty">
     <div class="big">📜</div>
     <div>พิมพ์คำบาลีเพื่อค้นความหมาย</div>
