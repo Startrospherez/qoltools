@@ -6,23 +6,31 @@ Add a Find control to the Mindmap page so a user can search text across a crowde
 
 ## Scope
 
-The feature searches the visible text in both parts of every regular Mindmap node:
+The feature offers two search scopes for every regular Mindmap node:
 
-- The title (`.nt`)
-- The detail text (`.nd`)
+- `หัวข้อ`: search only the title (`.nt`). This is the default scope.
+- `หัวข้อ + รายละเอียด`: search both the title (`.nt`) and detail text (`.nd`).
 
-Matching is case-insensitive substring matching. For example, a search for `ธรรม` matches any title or detail containing that sequence. Connector/junction nodes (`.n.j`) have no searchable text and are excluded.
+Matching is case-insensitive substring matching. For example, a search for `ธรรม` matches any field included by the active scope that contains that sequence. Connector/junction nodes (`.n.j`) have no searchable text and are excluded.
 
 Find is transient UI state. It does not modify the Mindmap data model, selection, history, local storage, imports, or exports.
 
 ## User Interface
 
-Add a `🔎 Find` button to the existing Mindmap toolbar. Activating it opens a compact floating search bar at the upper-right of the viewport, visually similar to a browser's Ctrl+F control.
+Add a `🔎 Find` button to the existing toolbar's File group. The group uses three rows:
+
+- `Import` and `Export`
+- `PNG` and `HTML`
+- `Find`, positioned directly below `PNG`
+
+This reuses the File group's vertical space instead of adding another toolbar column. Activating Find opens a compact floating search bar at the upper-right of the viewport, visually similar to a browser's Ctrl+F control.
 
 The controls appear in this order:
 
-`[ search input ] [ current / total ] [ ▲ ][ ▼ ] [ × ]`
+`[ search input ] [ scope ▼ ] [ current / total ] [ ▲ ][ ▼ ] [ × ]`
 
+- The scope dropdown offers `หัวข้อ` and `หัวข้อ + รายละเอียด`.
+- `หัวข้อ` is selected when the page first loads.
 - `▲` moves to the previous result.
 - `▼` moves to the next result.
 - The arrow buttons sit directly beside each other on the right for easy repeated clicking.
@@ -32,21 +40,23 @@ The controls appear in this order:
 - Shift+Enter moves to the previous result.
 - Arrow buttons include Thai tooltips describing their action and keyboard equivalent.
 
-The bar normally sits below the fixed toolbar so it does not cover toolbar controls. When the toolbar is hidden, the Find bar moves near the top edge. The bar remains usable on narrow screens by constraining its width to the viewport.
+The bar normally sits below the fixed toolbar so it does not cover toolbar controls. When the toolbar is hidden, the Find bar moves near the top edge. The bar remains usable on narrow screens by constraining its width to the viewport and allowing the input and scope dropdown to shrink while keeping `▲`, `▼`, and `×` visible.
 
-Opening Find focuses the input and selects its current contents. Closing and reopening Find may retain the current query during the page session, but must not persist it across page reloads.
+Opening Find focuses the input and selects its current contents. Closing and reopening Find retains the current query and selected scope during the page session. Neither value persists across page reloads; a reload restores the default `หัวข้อ` scope.
 
 ## Search Behavior
 
-Typing in the input immediately rebuilds the ordered result list from the current `nodes` collection. Results follow the collection's existing order, which is stable for a given Mindmap state.
+Typing in the input or changing the scope immediately rebuilds the ordered result list from the current `nodes` collection. Results follow the collection's existing order, which is stable for a given Mindmap state.
 
 For a non-empty query:
 
-1. Read each eligible node's title and detail using visible text (`textContent`).
-2. Normalize both the query and candidate text to lowercase.
-3. Include the node when either field contains the normalized query.
-4. Set the current result to the first match after the query changes.
-5. Center that node in the usable viewport and apply the temporary Find highlight.
+1. Read each eligible node's title using visible text (`textContent`).
+2. When the active scope is `หัวข้อ + รายละเอียด`, also read the detail text.
+3. Normalize the query and included candidate text to lowercase.
+4. Include the node when any field allowed by the active scope contains the normalized query.
+5. Set the current result to the first match after the query changes.
+6. After the scope changes, retain the current node if it still matches; otherwise select the first match.
+7. Center the active node in the usable viewport and apply the temporary Find highlight.
 
 Navigation wraps in both directions: moving next from the final result selects the first, and moving previous from the first selects the final result.
 
@@ -67,8 +77,8 @@ Closing Find clears the Find highlight but leaves the viewport at the most recen
 The implementation remains within the existing standalone Mindmap HTML and is divided into small responsibilities:
 
 - Search bar markup and CSS: presentation and responsive placement.
-- Search state: current query, matching node references, and active result index.
-- Match refresh: reads node text and produces the ordered matches.
+- Search state: current query, active scope, matching node references, and active result index.
+- Match refresh: reads only the fields allowed by the active scope and produces the ordered matches.
 - Navigation: wraps the index and selects the active result.
 - Viewport focus: centers one node without changing zoom or data.
 - Cleanup: removes highlight and closes the transient UI.
@@ -81,6 +91,7 @@ The source change is made in `decoded/mindmap.html`; the repository's existing `
 - No matches: show `ไม่พบ`, disable or no-op both arrow buttons, and do not move the viewport.
 - One match: both directions remain on that match.
 - Duplicate text in one node: the node appears once, even if both title and detail match.
+- Detail-only match: exclude it in `หัวข้อ` scope and include it in `หัวข้อ + รายละเอียด` scope.
 - Rich or formatted content: search the readable text rather than HTML markup.
 - Deleted or replaced nodes: discard stale references before navigation.
 - Junction nodes: ignore them because their text fields are hidden and absent from the user-facing canvas.
@@ -90,15 +101,18 @@ The source change is made in `decoded/mindmap.html`; the repository's existing `
 
 Manual browser verification will cover:
 
-1. A query matching only a title.
-2. A query matching only details.
-3. Substring and case-insensitive matching.
-4. Multiple matching nodes using `▲`, `▼`, Enter, and Shift+Enter.
-5. Forward and backward wraparound.
-6. Empty and no-result queries.
-7. Preservation of zoom and existing node selection.
-8. Correct centering with the toolbar shown and hidden.
-9. Closing through `×` and Escape.
-10. Narrow viewport layout.
-11. Editing, deleting, undoing, redoing, or importing while Find is open.
-12. A build check confirming `tools/mindmap.html` is regenerated successfully from the decoded source.
+1. Default `หัวข้อ` scope matches title text and excludes a detail-only match.
+2. `หัวข้อ + รายละเอียด` scope includes a detail-only match.
+3. Changing scope updates results immediately and retains the current node when it remains eligible.
+4. Closing and reopening retains the scope, while reloading restores `หัวข้อ`.
+5. Substring and case-insensitive matching.
+6. Multiple matching nodes using `▲`, `▼`, Enter, and Shift+Enter.
+7. Forward and backward wraparound.
+8. Empty and no-result queries.
+9. Preservation of zoom and existing node selection.
+10. Correct centering with the toolbar shown and hidden.
+11. Closing through `×` and Escape.
+12. Narrow viewport layout with navigation buttons still visible.
+13. The Find button appears below PNG in the File group.
+14. Editing, deleting, undoing, redoing, or importing while Find is open.
+15. A build check confirming `tools/mindmap.html` is regenerated successfully from the decoded source.
