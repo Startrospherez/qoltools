@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V.3.71</title>
+    <title>MindMap V.3.72</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -112,6 +112,9 @@
         .p-l { left: -15px; top: 50%; transform: translateY(-50%); }
         .p-t { top: -15px; left: 50%; transform: translateX(-50%); }
         .p-b { bottom: -15px; left: 50%; transform: translateX(-50%); }
+        .note-btn { position: absolute; left: -10px; bottom: -10px; width: 22px; height: 22px; padding: 0; border: 1px solid var(--bc); border-radius: 50%; background: var(--c9); color: var(--fg); cursor: pointer; font-size: 12px; line-height: 20px; display: none; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+        .n:hover .note-btn, .n.sel .note-btn { display: block; }
+        .n.j .note-btn { display: none !important; }
         .dx { position: absolute; left: -10px; top: -10px; background: rgb(255,77,77); color: rgb(255,255,255); border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 18px; cursor: pointer; font-size: 12px; display: none; z-index: 4; }
         .n:hover .dx, .n.sel .dx { display: block; }
         .mb { position: absolute; background: var(--c9); color: #000; border: 2px solid var(--bc); border-radius: 50%; width: 18px; height: 18px; text-align: center; line-height: 14px; font-size: 14px; font-weight: bold; cursor: pointer; transform: translate(-50%,-50%); z-index: 3; pointer-events: auto; opacity: 0; transition: all 0.2s; }
@@ -140,6 +143,15 @@
                 <button onclick="window.sysModalOk()" style="background:rgb(33,150,243);color:rgb(255,255,255);border:none;padding:6px 15px;border-radius:4px;font-weight:bold;">ตกลง</button>
                 <button id="sys-modal-cancel" onclick="window.sysModalCancel()" style="display:none;background:rgb(244,67,54);color:rgb(255,255,255);border:none;padding:6px 15px;border-radius:4px;font-weight:bold;">ยกเลิก</button>
             </div>
+        </div>
+    </div>
+    <div id="node-note-ui" role="dialog" aria-modal="true" aria-labelledby="node-note-title" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000000;display:none;justify-content:center;align-items:center;padding:24px;box-sizing:border-box;">
+        <div style="width:min(760px,92vw);height:min(82vh,720px);display:flex;flex-direction:column;background:var(--tb);border:1px solid var(--bc);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.35);padding:18px;color:var(--fg);box-sizing:border-box;">
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
+                <div style="flex:1;min-width:0;text-align:left;"><div id="node-note-title" style="font-size:20px;font-weight:bold;word-break:break-word;"></div><div id="node-note-desc" style="margin-top:4px;font-size:14px;opacity:0.75;white-space:pre-wrap;word-break:break-word;"></div></div>
+                <button type="button" onclick="window.closeNodeNote()" title="ปิดบันทึก (Esc)" aria-label="ปิดบันทึก" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button>
+            </div>
+            <textarea id="node-note-input" aria-label="บันทึกประจำ node" placeholder="เขียนบันทึกเพิ่มเติมที่นี่…" style="flex:1;min-height:220px;width:100%;resize:none;box-sizing:border-box;border:1px solid var(--bc);border-radius:6px;background:var(--bg);color:var(--fg);padding:12px;font:15px/1.6 sans-serif;white-space:pre-wrap;"></textarea>
         </div>
     </div>
 
@@ -258,7 +270,7 @@
     <div id="b" class="huge-canvas" style="transform:translate(-10000px,-10000px) scale(1)" data-cx="-10000" data-cy="-10000" data-zoom="1">
         <svg id="s"></svg>
         <div id="selBox" class="selBox" style="left: 10811px; top: 10286px; width: 0px; height: 0px; display: none;"></div>
-    <div class="n" id="n0" data-shape="box" style="left: 10000px; top: 10000px;"><div class="dx" onclick="del('n0')" title="ลบกล่องนี้">x</div><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, 'n0','r')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, 'n0','l')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, 'n0','t')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, 'n0','b')">+</div></div></div>
+    <div class="n" id="n0" data-shape="box" data-note="" style="left: 10000px; top: 10000px;"><div class="dx" onclick="del('n0')" title="ลบกล่องนี้">x</div><button class="note-btn" type="button" onclick="window.openNodeNote('n0')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, 'n0','r')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, 'n0','l')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, 'n0','t')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, 'n0','b')">+</div></div></div>
 
     <!-- File Input for JSON Import -->
     <input type="file" id="importInput" style="display:none" accept=".json" onchange="window.importJSON(event)">
@@ -283,6 +295,8 @@
 
         let findMatches = [];
         let findIndex = -1;
+        let nodeNoteId = null;
+        let nodeNoteTimer = null;
 
         function updateFindPosition() {
             let findUI = document.getElementById('find-ui');
@@ -404,7 +418,7 @@
 
         window.showAbout = function() {
             let msg = `
-                <h2 style="margin-top:0;">MindMap V.3.71 (Standalone)</h2>
+                <h2 style="margin-top:0;">MindMap V.3.72 (Standalone)</h2>
                 <p>สร้างแผนผังความคิด เชื่อมโยงหัวข้อ</p>
                 <hr style="border-color:var(--bc); margin:15px 0;">
                 <p style="font-size:14px; text-align:left;">
@@ -444,6 +458,39 @@
         window.sysModalOk = function() { document.getElementById('sys-modal').style.display = 'none'; if (modalCallback) modalCallback(document.getElementById('sys-modal-inp').value); };
         window.sysModalCancel = function() { document.getElementById('sys-modal').style.display = 'none'; if (modalCallback) modalCallback(null); };
         document.getElementById('sys-modal-inp').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); window.sysModalOk(); } });
+
+        function saveNodeNote() {
+            if(nodeNoteTimer) { clearTimeout(nodeNoteTimer); nodeNoteTimer = null; }
+            if(!nodeNoteId) return;
+            let node = document.getElementById(nodeNoteId);
+            let input = document.getElementById('node-note-input');
+            if(!node || !input) return;
+            if((node.dataset.note || '') !== input.value) { node.dataset.note = input.value; window.doSaveState(); }
+        }
+
+        window.openNodeNote = function(id) {
+            let node = document.getElementById(id);
+            if(!node || node.classList.contains('j')) return;
+            if(nodeNoteId && nodeNoteId !== id) window.closeNodeNote();
+            nodeNoteId = id;
+            document.getElementById('node-note-title').textContent = node.querySelector('.nt')?.textContent || '';
+            document.getElementById('node-note-desc').textContent = node.querySelector('.nd')?.textContent || '';
+            let input = document.getElementById('node-note-input');
+            input.value = node.dataset.note || '';
+            document.getElementById('node-note-ui').style.display = 'flex';
+            input.focus();
+        };
+
+        window.closeNodeNote = function() {
+            saveNodeNote();
+            nodeNoteId = null;
+            document.getElementById('node-note-ui').style.display = 'none';
+        };
+
+        document.getElementById('node-note-input').addEventListener('input', function() {
+            if(nodeNoteTimer) clearTimeout(nodeNoteTimer);
+            nodeNoteTimer = setTimeout(saveNodeNote, 500);
+        });
 
         window.setTheme = function(t) {
             if(t === 'sepia') window.toggleSepia();
@@ -601,7 +648,7 @@
         window.setShape = function(s) { let sels = nodes.filter(n => n.classList.contains('sel')); if(sels.length === 0) return window.showToast('⚠️ โปรดเลือกกล่องก่อนครับ'); sels.forEach(n => { n.dataset.shape = s; }); window.doSaveState(); updateAll(); };
         
         window.doSaveState = function() { 
-            let state = nodes.map(n => ({ id: n.id, x: n.style.left, y: n.style.top, bg: n.style.background, fg: n.style.color, bd: n.style.borderColor, shape: n.dataset.shape || 'box', fs: n.querySelector('.nt') ? n.querySelector('.nt').style.fontSize : '', dfs: n.querySelector('.nd') ? n.querySelector('.nd').style.fontSize : '', txt: n.querySelector('.nt') ? n.querySelector('.nt').innerHTML : '', desc: n.querySelector('.nd') ? n.querySelector('.nd').innerHTML : '', type: n.classList.contains('j') ? 'j' : 'n' })); 
+            let state = nodes.map(n => ({ id: n.id, x: n.style.left, y: n.style.top, bg: n.style.background, fg: n.style.color, bd: n.style.borderColor, shape: n.dataset.shape || 'box', fs: n.querySelector('.nt') ? n.querySelector('.nt').style.fontSize : '', dfs: n.querySelector('.nd') ? n.querySelector('.nd').style.fontSize : '', txt: n.querySelector('.nt') ? n.querySelector('.nt').innerHTML : '', desc: n.querySelector('.nd') ? n.querySelector('.nd').innerHTML : '', note: n.dataset.note || '', type: n.classList.contains('j') ? 'j' : 'n' }));
             let lines = Array.from(s.querySelectorAll('line')).map(l => ({ id: l.id, n1: l.dataset.n1, n2: l.dataset.n2 }));
             let imgState = images.map(im => ({ id: im.id, x: im.style.left, y: im.style.top, w: im.style.width, h: im.style.height, src: im.querySelector('img').src }));
             if(curStep < mmHistory.length - 1) mmHistory = mmHistory.slice(0, curStep + 1);
@@ -609,18 +656,18 @@
             curStep++; window.saveBackup(); 
         };
         
-        window.doUndo = function() { if(curStep > 0) window.loadState(curStep - 1); }; window.doRedo = function() { if(curStep < mmHistory.length - 1) window.loadState(curStep + 1); };
+        window.doUndo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep > 0) window.loadState(curStep - 1); }; window.doRedo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep < mmHistory.length - 1) window.loadState(curStep + 1); };
         
         window.loadState = function(step) { 
             let state = mmHistory[step]; if(!state || !state.nodes) return; 
             nodes.forEach(n => n.remove()); s.innerHTML = ''; document.querySelectorAll('.mb').forEach(el => el.remove()); nodes = []; images.forEach(im => im.remove()); images = []; nid = state.nid || 0;
             state.nodes.forEach(ns => { 
-                let n = document.createElement('div'); n.className = ns.type === 'j' ? 'n j' : 'n'; n.id = ns.id; n.style.left = ns.x; n.style.top = ns.y; 
+                let n = document.createElement('div'); n.className = ns.type === 'j' ? 'n j' : 'n'; n.id = ns.id; n.style.left = ns.x; n.style.top = ns.y; n.dataset.note = ns.note || '';
                 if(ns.bg) { n.style.background = ns.bg; n.style.setProperty('--n-bg', ns.bg); } 
                 if(ns.fg) { n.style.color = ns.fg; } 
                 if(ns.bd) { n.style.borderColor = ns.bd; n.style.setProperty('--n-bd', ns.bd); } 
                 if(ns.shape) n.dataset.shape = ns.shape; 
-                n.innerHTML = '<div class="dx" onclick="del(\'' + ns.id + '\')">x</div><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">' + ns.txt + '</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">' + (ns.desc||'') + '</div><div class="p p-r" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'r\')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'l\')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'t\')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'b\')">+</div>'; 
+                n.innerHTML = '<div class="dx" onclick="del(\'' + ns.id + '\')">x</div><button class="note-btn" type="button" onclick="window.openNodeNote(\'' + ns.id + '\')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">' + ns.txt + '</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">' + (ns.desc||'') + '</div><div class="p p-r" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'r\')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'l\')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'t\')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'b\')">+</div>';
                 if(ns.fs) n.querySelector('.nt').style.fontSize = ns.fs; if(ns.dfs) n.querySelector('.nd').style.fontSize = ns.dfs;
                 b.appendChild(n); nodes.push(n); attachNodeEvents(n); 
             }); 
@@ -642,7 +689,7 @@
                 document.body.style.userSelect = 'none';
             }; 
         }
-        function addNode(x, y, pid, type = 'n') { let id = 'n' + nid++; let n = document.createElement('div'); n.className = type === 'j' ? 'n j' : 'n'; n.id = id; n.style.left = x + 'px'; n.style.top = y + 'px'; n.dataset.shape = 'box'; n.innerHTML = '<div class="dx" onclick="del(\'' + id + '\')" title="ลบกล่องนี้">x</div><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, \'' + id + '\',\'r\')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, \'' + id + '\',\'l\')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, \'' + id + '\',\'t\')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, \'' + id + '\',\'b\')">+</div>'; b.appendChild(n); nodes.push(n); attachNodeEvents(n); if(pid) { window.createLine(pid, id); } return n; }
+        function addNode(x, y, pid, type = 'n') { let id = 'n' + nid++; let n = document.createElement('div'); n.className = type === 'j' ? 'n j' : 'n'; n.id = id; n.style.left = x + 'px'; n.style.top = y + 'px'; n.dataset.shape = 'box'; n.dataset.note = ''; n.innerHTML = '<div class="dx" onclick="del(\'' + id + '\')" title="ลบกล่องนี้">x</div><button class="note-btn" type="button" onclick="window.openNodeNote(\'' + id + '\')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, \'' + id + '\',\'r\')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, \'' + id + '\',\'l\')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, \'' + id + '\',\'t\')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, \'' + id + '\',\'b\')">+</div>'; b.appendChild(n); nodes.push(n); attachNodeEvents(n); if(pid) { window.createLine(pid, id); } return n; }
 
         function addImage(x, y, w, h, src, id) { if(!id) id = 'im' + nid++; let im = document.createElement('div'); im.className = 'img-float'; im.id = id; im.style.left = x + 'px'; im.style.top = y + 'px'; im.style.width = w + 'px'; im.style.height = h + 'px'; im.innerHTML = '<img src="' + src + '" draggable="false"><div class="ifx" title="ลบรูปนี้" onmousedown="event.stopPropagation()" onclick="window.delImage(\'' + id + '\')">x</div><div class="ifr" title="ลากเพื่อย่อ/ขยาย"></div>'; b.appendChild(im); images.push(im); attachImgEvents(im); return im; }
         function attachImgEvents(im) {
@@ -667,7 +714,7 @@
         window.delImage = function(id) { let im = document.getElementById(id); if(!im) return; images = images.filter(x => x.id !== id); im.remove(); window.doSaveState(); };
         window.createLine = function(id1, id2) { let l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.setAttribute('stroke', 'var(--bc)'); l.setAttribute('stroke-width', '3'); l.id = 'l_' + id1 + '_' + id2 + '_' + Date.now(); l.dataset.n1 = id1; l.dataset.n2 = id2; s.appendChild(l); updateLine(l); return l; };
         window.startLineDrag = function(e, pid, dir) { e.stopPropagation(); let startX = e.clientX; let startY = e.clientY; let pNode = document.getElementById(pid); if(!pNode) return; let x1 = pNode.offsetLeft + pNode.offsetWidth / 2; let y1 = pNode.offsetTop + pNode.offsetHeight / 2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', x1); tl.setAttribute('y1', y1); tl.setAttribute('x2', x1); tl.setAttribute('y2', y1); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = s.querySelectorAll('line'); allLines.forEach(l => { if(l !== tl) { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; } }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetNode = me.target.closest('.n'); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLine = document.getElementById(targetMb.id.replace(/^mb_/, '')); if(mbLine) { targetLine = mbLine; targetNode = null; } } if(targetNode && targetNode.id !== pid) { let existing = document.querySelector('line[data-n1="' + pid + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + pid + '"][data-n1="' + targetNode.id + '"]'); if(!existing) { window.createLine(pid, targetNode.id); window.doSaveState(); } } else if(targetLine && targetLine.id.startsWith('l_') && targetLine.dataset.n1 !== pid && targetLine.dataset.n2 !== pid) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); let j = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(tn1, j.id); window.createLine(j.id, tn2); window.createLine(pid, j.id); window.doSaveState(); } else if(moved) { let nx = (me.clientX - cx) / zoom; let ny = (me.clientY - cy) / zoom; addNode(nx - 50, ny - 30, pid); window.doSaveState(); } else { window.addLink(pid, dir); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
-        window.del = function(id) { let n = document.getElementById(id); if(!n) return; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(l => { let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); l.remove(); }); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } window.doSaveState(); };
+        window.del = function(id) { if(nodeNoteId === id) window.closeNodeNote(); let n = document.getElementById(id); if(!n) return; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(l => { let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); l.remove(); }); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } window.doSaveState(); };
         window.addLink = function(pid, dir) { let p = document.getElementById(pid); if(!p) return; let x = parseFloat(p.style.left); let y = parseFloat(p.style.top); if(dir === 'r') { x += 220; y += (Math.random() * 20 - 10); } else if(dir === 'l') { x -= 220; y += (Math.random() * 20 - 10); } else if(dir === 't') { y -= 160; x += (Math.random() * 20 - 10); } else if(dir === 'b') { y += 160; x += (Math.random() * 20 - 10); } else { x += 220; y += (Math.random() * 20 - 10); } let w = 150, h = 80; let isOverlap = function(nx, ny) { return nodes.some(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top); let nw = n.offsetWidth || 150, nh = n.offsetHeight || 80; return !(nx + w + 20 < nl || nx > nl + nw + 20 || ny + h + 20 < nt || ny > nt + nh + 20); }); }; if(dir === 'l' || dir === 'r') { while(isOverlap(x, y)) y += 100; } else if(dir === 't' || dir === 'b') { while(isOverlap(x, y)) x += 180; } else { while(isOverlap(x, y)) y += 100; } addNode(x, y, pid); window.doSaveState(); };
         function updateLine(l) { let n1 = document.getElementById(l.dataset.n1), n2 = document.getElementById(l.dataset.n2); if(n1 && n2) { let x1 = n1.offsetLeft + n1.offsetWidth / 2; let y1 = n1.offsetTop + n1.offsetHeight / 2; let x2 = n2.offsetLeft + n2.offsetWidth / 2; let y2 = n2.offsetTop + n2.offsetHeight / 2; l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); let mx = (x1 + x2) / 2; let my = (y1 + y2) / 2; let mb = document.getElementById('mb_' + l.id); if(!mb) { mb = document.createElement('div'); mb.id = 'mb_' + l.id; mb.className = 'mb'; mb.innerHTML = '+'; mb.title = "ลากเพื่อแตกแขนง (ไปยังที่ว่าง/Node/เส้นอื่น) หรือคลิกเฉยๆ"; mb.onmousedown = function(e) { window.startLineDragFromMid(e, l.id); }; document.getElementById('b').appendChild(mb); } mb.style.left = mx + 'px'; mb.style.top = my + 'px'; } else { l.remove(); let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); } }
         window.startLineDragFromMid = function(e, lineId) { e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let mb = document.getElementById('mb_' + lineId); let startX = e.clientX, startY = e.clientY; let mx = mb ? parseFloat(mb.style.left) : (parseFloat(line.getAttribute('x1')) + parseFloat(line.getAttribute('x2'))) / 2; let my = mb ? parseFloat(mb.style.top) : (parseFloat(line.getAttribute('y1')) + parseFloat(line.getAttribute('y2'))) / 2; let n1_id = line.dataset.n1, n2_id = line.dataset.n2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', mx); tl.setAttribute('y1', my); tl.setAttribute('x2', mx); tl.setAttribute('y2', my); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = Array.from(s.querySelectorAll('line')).filter(l => l !== tl && l !== line); allLines.forEach(l => { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetNode = me.target.closest('.n'); let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLineId = targetMb.id.replace(/^mb_/, ''); if(mbLineId !== lineId) { let mbLine = document.getElementById(mbLineId); if(mbLine) { targetLine = mbLine; targetNode = null; } } } let dropX = (me.clientX - cx) / zoom, dropY = (me.clientY - cy) / zoom; if(!moved) { let jNode = addNode(mx - 8, my - 8, null, 'j'); addNode(mx + 100, my + 80, jNode.id, 'n'); line.remove(); if(mb) mb.remove(); window.createLine(n1_id, jNode.id); window.createLine(jNode.id, n2_id); window.doSaveState(); return; } if(targetLine && targetLine.id.startsWith('l_') && targetLine.id !== lineId) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); line.remove(); if(mb) mb.remove(); let j1 = addNode(mx - 8, my - 8, null, 'j'); let j2 = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(n1_id, j1.id); window.createLine(j1.id, n2_id); window.createLine(tn1, j2.id); window.createLine(j2.id, tn2); window.createLine(j1.id, j2.id); window.doSaveState(); } else if(targetNode) { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); let existing = document.querySelector('line[data-n1="' + j.id + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + j.id + '"][data-n1="' + targetNode.id + '"]'); if(!existing) window.createLine(j.id, targetNode.id); window.doSaveState(); } else { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); addNode(dropX - 75, dropY - 40, j.id, 'n'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); window.doSaveState(); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
@@ -675,14 +722,14 @@
         function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); }
 
         window.addEventListener('wheel', function(e) {
-            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal')) return;
+            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui')) return;
             e.preventDefault();
             let xs = (e.clientX - cx) / zoom, ys = (e.clientY - cy) / zoom;
             zoom += e.deltaY * -0.001; zoom = Math.min(Math.max(0.1, zoom), 3); cx = e.clientX - xs * zoom; cy = e.clientY - ys * zoom; updateTransform();
         }, {passive: false});
 
         window.addEventListener('mousedown', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('.mb')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('.mb')) return;
             if(e.target.closest('#float-ui-btn')) return;
 
             if(e.button === 1 || e.button === 2) { isPan = true; px = e.clientX; py = e.clientY; }
@@ -711,14 +758,14 @@
         });
 
         window.addEventListener('dblclick', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('.mb') || e.target.closest('#about-btn')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('.mb') || e.target.closest('#about-btn')) return;
             if(e.target.closest('.n')) return; 
             let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; addNode(nx, ny, null); window.doSaveState();
         });
 
         window.addEventListener('dragover', function(e) { e.preventDefault(); });
         window.addEventListener('drop', function(e) {
-            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal')) return;
+            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui')) return;
             e.preventDefault();
             let file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
             if(!file || !file.type.startsWith('image/')) return;
@@ -778,6 +825,7 @@
         }
 
         window.addEventListener('keydown', function(e) {
+            if(e.key === 'Escape' && nodeNoteId) { e.preventDefault(); window.closeNodeNote(); return; }
             if(e.key === 'Tab') {
                 let active = document.activeElement;
                 if(active && active.classList.contains('nt')) { e.preventDefault(); if(!e.shiftKey) { let nd = active.nextElementSibling; if(nd && nd.classList.contains('nd')) nd.focus(); } return; } 
