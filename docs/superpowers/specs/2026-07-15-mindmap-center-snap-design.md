@@ -29,7 +29,7 @@ vertical for equal snapped center X values. Dragging without Snap, Shift axis
 locking, saved data, import/export, and connector behavior remain unchanged.
 
 While a node is being dragged with Snap enabled, apply a temporary `opacity`
-of `0.75` to that node. This makes the grid behind it visible enough to judge
+of `0.5` to that node. This makes the grid behind it visible enough to judge
 the target intersection. Restore its normal opacity on mouse release. The
 opacity is a transient drag-only style and is never written to JSON.
 
