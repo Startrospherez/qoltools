@@ -713,7 +713,17 @@ boot();
 
 /* ---------- PWA service worker ---------- */
 if('serviceWorker' in navigator){
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  window.addEventListener('load', () => {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => reg.update().catch(()=>{}))
+      .catch(()=>{});
+  });
 }
 </script>
 <script src="notebook.js" defer></script><!-- โมดูล: สมุดคำศัพท์ (แยกไฟล์ ไม่ยุ่งกับสคริปต์หลัก) -->

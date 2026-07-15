@@ -1,5 +1,5 @@
 /* Service worker — ทำให้แอพเปิดได้แบบ offline หลังโหลดครั้งแรก */
-const CACHE = 'pali-dict-v27';
+const CACHE = 'pali-dict-v28';
 const ASSETS = [
   './',
   'index.html',
@@ -39,14 +39,28 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// cache-first: เปิดเร็วและทำงาน offline; ถ้าไม่มีใน cache ค่อยไปเน็ต
+function fromNetworkThenCache(request) {
+  return fetch(request).then(resp => {
+    const copy = resp.clone();
+    caches.open(CACHE).then(c => c.put(request, copy)).catch(() => {});
+    return resp;
+  });
+}
+
+// หน้า HTML ใช้ network-first เพื่อไม่เปิดหน้ารุ่นเก่าจาก cache เมื่อออนไลน์
+// asset หนักอย่างฐานข้อมูล/ฟอนต์ยัง cache-first เพื่อเปิดเร็วและใช้งาน offline ได้
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const acceptsHTML = e.request.headers.get('accept')?.includes('text/html');
+  if (e.request.mode === 'navigate' || acceptsHTML) {
+    e.respondWith(
+      fromNetworkThenCache(e.request).catch(() =>
+        caches.match(e.request).then(hit => hit || caches.match('index.html'))
+      )
+    );
+    return;
+  }
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(resp => {
-      const copy = resp.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
-      return resp;
-    }).catch(() => caches.match('index.html')))
+    caches.match(e.request).then(hit => hit || fromNetworkThenCache(e.request))
   );
 });
