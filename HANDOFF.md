@@ -5,11 +5,11 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.80** (route-label interaction fix; awaiting user
-  verification).
-- Latest verified baseline: V3.77 directed connectors, after V3.76 Floating
-  Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
-  annotations.
+- Current MindMap build: **V3.81** (adaptive route-label placement; awaiting
+  user verification).
+- Latest verified baseline: V3.80 route-label interaction fix, after V3.77
+  directed connectors, V3.76 Floating Text, V3.74 image workflow, view/canvas
+  refinements, and V3.75 Line annotations.
 - User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
@@ -110,7 +110,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
   hover, edit, or drag. Labels persist in history, backup, JSON/ZIP, HTML,
   and PNG; old connectors receive empty defaults.
 
-## V3.80: Route Label Interaction Fix (Pending User Verification)
+## V3.80: Route Label Interaction Fix (Verified)
 
 - Prevents redraws from destroying an active label editor, so text entry stays
   focused after mouse release.
@@ -118,6 +118,17 @@ Updated: 2026-07-17 (Asia/Bangkok)
   navigates, double-click edits, and drag moves the normalized position.
 - The label glyph now follows the physical connector direction from its owning
   Node, using all eight cardinal/diagonal arrow glyphs.
+
+## V3.81: Adaptive Route Label Placement (Pending User Verification)
+
+- New route labels are initially placed about 30 screen pixels from the edge
+  of their owning Node instead of at a fixed percentage along the connector.
+- On very short connectors, untouched labels render with opposite small
+  perpendicular offsets, keeping their click targets distinct. Dragging either
+  label removes this automatic offset and preserves the user's chosen
+  normalized position.
+- Existing saved labels retain their prior positions. The `autoPlacement`
+  marker is included wherever connector route-label data is already preserved.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 

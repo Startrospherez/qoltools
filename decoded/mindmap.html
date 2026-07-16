@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.80</title>
+    <title>MindMap V3.81</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -211,7 +211,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.80</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.81</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
@@ -456,6 +456,23 @@
             let selected = nodes.filter(node => node.classList.contains('sel')); return selected.length === 1 ? selected[0] : null;
         }
         function connectorRoutePoint(line, position) { return { x1:parseFloat(line.getAttribute('x1')), y1:parseFloat(line.getAttribute('y1')), x2:parseFloat(line.getAttribute('x2')), y2:parseFloat(line.getAttribute('y2')), position:clampConnectorRoutePosition(position, .5) }; }
+        function connectorRouteLabelPlacement(line, labels, side) {
+            let label = labels[side], point = connectorRoutePoint(line, .5), dx = point.x2 - point.x1, dy = point.y2 - point.y1, length = Math.hypot(dx, dy);
+            if(!Number.isFinite(length) || length < .001) return null;
+            if(!Number.isFinite(label.position)) {
+                let screenLength = length * zoom, distanceRatio = 30 / Math.max(screenLength, 1), nearEndPosition = Math.min(.36, Math.max(.005, distanceRatio));
+                label.position = side === 'n1' ? nearEndPosition : 1 - nearEndPosition;
+                label.autoPlacement = true;
+                setConnectorRouteLabels(line, labels);
+            }
+            point = connectorRoutePoint(line, label.position);
+            let x = point.x1 + (point.x2 - point.x1) * point.position, y = point.y1 + (point.y2 - point.y1) * point.position;
+            if(label.autoPlacement && length * zoom < 120) {
+                let offset = (side === 'n1' ? -12 : 12) / zoom;
+                x += -dy / length * offset; y += dx / length * offset;
+            }
+            return { point:point, x:x, y:y };
+        }
         function connectorRouteDirectionIcon(line, side) { let point = connectorRoutePoint(line, .5), dx = side === 'n1' ? point.x2 - point.x1 : point.x1 - point.x2, dy = side === 'n1' ? point.y2 - point.y1 : point.y1 - point.y2; if(!Number.isFinite(dx) || !Number.isFinite(dy) || (Math.abs(dx) < .001 && Math.abs(dy) < .001)) return '→'; let icons = ['→','↘','↓','↙','←','↖','↑','↗'], index = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)); return icons[(index + 8) % 8]; }
         function connectorRouteTarget(line, side) { return document.getElementById(side === 'n1' ? line.dataset.n2 : line.dataset.n1); }
         function finishConnectorRouteLabelEdit(save) {
@@ -467,7 +484,7 @@
         function beginConnectorRouteLabelPointer(e, lineId, side) {
             e.preventDefault(); e.stopPropagation(); cancelConnectorNavigationHide(); let line = document.getElementById(lineId); if(!line || editingConnectorRouteLabel) return; let labels = connectorRouteLabels(line), label = labels[side];
             let startX = e.clientX, startY = e.clientY, moved = false, key = lineId + ':' + side;
-            function move(event) { if(Math.hypot(event.clientX - startX, event.clientY - startY) > 4) moved = true; if(!moved) return; let point = connectorRoutePoint(line, label.position), dx = point.x2 - point.x1, dy = point.y2 - point.y1, lengthSq = dx * dx + dy * dy; if(lengthSq < .001) return; let x = (event.clientX - cx) / zoom, y = (event.clientY - cy) / zoom, next = Math.min(1, Math.max(0, ((x - point.x1) * dx + (y - point.y1) * dy) / lengthSq)); let latest = connectorRouteLabels(line); latest[side].position = next; setConnectorRouteLabels(line, latest); renderConnectorRouteLabels(); }
+            function move(event) { if(Math.hypot(event.clientX - startX, event.clientY - startY) > 4) moved = true; if(!moved) return; let point = connectorRoutePoint(line, label.position), dx = point.x2 - point.x1, dy = point.y2 - point.y1, lengthSq = dx * dx + dy * dy; if(lengthSq < .001) return; let x = (event.clientX - cx) / zoom, y = (event.clientY - cy) / zoom, next = Math.min(1, Math.max(0, ((x - point.x1) * dx + (y - point.y1) * dy) / lengthSq)); let latest = connectorRouteLabels(line); latest[side].position = next; latest[side].autoPlacement = false; setConnectorRouteLabels(line, latest); renderConnectorRouteLabels(); }
             function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); if(moved) { window.doSaveState(); return; } let now = Date.now(); if(window.__routeLabelLastClick && window.__routeLabelLastClick.key === key && now - window.__routeLabelLastClick.at < 420) { if(connectorRouteClickTimer) clearTimeout(connectorRouteClickTimer); connectorRouteClickTimer = null; window.__routeLabelLastClick = null; window.editConnectorRouteLabel(lineId, side); return; } window.__routeLabelLastClick = { key:key, at:now }; connectorRouteClickTimer = setTimeout(() => { connectorRouteClickTimer = null; if(window.__routeLabelLastClick && window.__routeLabelLastClick.key === key) { window.__routeLabelLastClick = null; jumpToConnectorRouteTarget(lineId, side); } }, 420); }
             document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
         }
@@ -476,8 +493,8 @@
             clearConnectorRouteLabels(); let source = activeConnectorRouteNode(); if(!source) return;
             Array.from(s.querySelectorAll('line[data-n1][data-n2]')).forEach(line => {
                 let side = line.dataset.n1 === source.id ? 'n1' : (line.dataset.n2 === source.id ? 'n2' : null); if(!side) return;
-                let labels = connectorRouteLabels(line), label = labels[side], point = connectorRoutePoint(line, label.position); if(![point.x1,point.y1,point.x2,point.y2].every(Number.isFinite)) return;
-                let x = point.x1 + (point.x2 - point.x1) * point.position, y = point.y1 + (point.y2 - point.y1) * point.position, editing = editingConnectorRouteLabel && editingConnectorRouteLabel.lineId === line.id && editingConnectorRouteLabel.side === side;
+                let labels = connectorRouteLabels(line), label = labels[side], placement = connectorRouteLabelPlacement(line, labels, side); if(!placement || ![placement.point.x1,placement.point.y1,placement.point.x2,placement.point.y2].every(Number.isFinite)) return;
+                let x = placement.x, y = placement.y, editing = editingConnectorRouteLabel && editingConnectorRouteLabel.lineId === line.id && editingConnectorRouteLabel.side === side;
                 let el = document.createElement('div'); el.className = 'connector-route-label' + (!label.text.trim() ? ' empty' : '') + (editing ? ' editing' : ''); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.fontSize = (16 / zoom) + 'px'; el.title = label.text.trim() ? 'คลิกเพื่อไปยัง node อีกฝั่ง • ดับเบิลคลิกเพื่อแก้คำ • ลากเพื่อย้ายตำแหน่ง' : 'คลิกเพื่อเพิ่มคำเรียกเส้นนี้';
                 let arrow = document.createElement('span'); arrow.className = 'connector-route-arrow'; arrow.textContent = connectorRouteDirectionIcon(line, side); let content = document.createElement('span'); content.className = 'connector-route-content'; content.textContent = label.text || '+'; el.append(arrow, content);
                 el.onmouseenter = cancelConnectorNavigationHide; el.onmouseleave = scheduleConnectorNavigationHide; el.ondblclick = event => { event.preventDefault(); event.stopPropagation(); };
@@ -1046,7 +1063,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.80', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.81', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1245,7 +1262,11 @@
         function clampConnectorRoutePosition(value, fallback) { return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback; }
         function normalizeConnectorRouteLabels(value) {
             let n1 = value && value.n1 || {}, n2 = value && value.n2 || {};
-            return { n1:{ text:typeof n1.text === 'string' ? n1.text : '', position:clampConnectorRoutePosition(n1.position, .18) }, n2:{ text:typeof n2.text === 'string' ? n2.text : '', position:clampConnectorRoutePosition(n2.position, .82) } };
+            let endpoint = item => {
+                let hasPosition = Number.isFinite(item.position), autoPlacement = typeof item.autoPlacement === 'boolean' ? item.autoPlacement : !hasPosition;
+                return { text:typeof item.text === 'string' ? item.text : '', position:hasPosition ? clampConnectorRoutePosition(item.position, .5) : null, autoPlacement:autoPlacement };
+            };
+            return { n1:endpoint(n1), n2:endpoint(n2) };
         }
         function connectorRouteLabels(line) { try { return normalizeConnectorRouteLabels(JSON.parse(line.dataset.routeLabels || '')); } catch(e) { return normalizeConnectorRouteLabels(); } }
         function setConnectorRouteLabels(line, value) { line.dataset.routeLabels = JSON.stringify(normalizeConnectorRouteLabels(value)); }
