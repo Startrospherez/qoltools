@@ -16,20 +16,23 @@ connector around the active Node.
    toward `n2`, and one read from `n2` toward `n1`.
 2. When the user hovers or selects a Node, show the route label for that
    Node's side of every attached connector.
-3. A populated label is horizontal floating text in the form `→ label`.
-   Clicking it preserves the current zoom and centres the opposite Node.
-4. Double-click a populated label to edit its text in place. Pressing Enter
+3. Every label, including the empty `→ +` label, preserves the current zoom
+   and centres the opposite Node on a single click.
+4. Double-click any label, including `→ +`, to edit its text in place. Pressing Enter
    saves; Shift+Enter creates a new line only if needed. Escape cancels the
    active edit.
-5. Drag a label to move it anywhere along its connector. The label remains
+5. Drag any label, including `→ +`, to move it anywhere along its connector. The label remains
    horizontally oriented regardless of connector angle.
 6. A side without text shows `→ +` only while its Node is hovered or selected.
-   Clicking this placeholder enters editing to create its first label.
+   It still navigates like a populated label; double-click it to create its
+   first label.
 
 ## Appearance and layout
 
 - Labels have no normal border, fill, or pill background. They read as
   ordinary floating text over the Canvas.
+- Their arrow points from the owning Node along the physical connector using
+  the eight glyphs `← ↖ ↑ ↗ → ↘ ↓ ↙`; the accompanying text remains horizontal.
 - On hover, focus, or drag, a subtle theme-compatible outline/background
   appears solely to reveal the interactive target.
 - Default positions are near their owning Node (18% from `n1`, 82% from
@@ -65,6 +68,8 @@ They are graph content, unlike V3.78's temporary navigation controls.
 - Route labels are rendered above connector lines but below Node interaction
   controls. They do not change connector geometry, Fit bounds, or the existing
   midpoint branch / arrow-mode controls.
+- Editing keeps its focused label DOM intact until completion so redraws do
+  not discard the typing cursor.
 - Navigation continues to use the existing transform model: retain `zoom`,
   centre the target Node in the usable viewport, and clear Fit restore state.
 
