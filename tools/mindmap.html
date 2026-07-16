@@ -72,6 +72,9 @@
         .huge-canvas.show-grid { background-image: linear-gradient(rgba(128,128,128,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,.3) 1px, transparent 1px); background-size: 40px 40px; }
         .huge-canvas.canvas-dark.show-grid { background-image: linear-gradient(rgba(210,210,210,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(210,210,210,.28) 1px, transparent 1px); }
         svg { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        #annotation-layer { pointer-events: auto; }
+        .annotation-line { fill:none; stroke-width:4; cursor:grab; pointer-events:stroke; }
+        .annotation-control { pointer-events:all; cursor:pointer; }
         
         /* Nodes */ 
         .n { 
@@ -192,7 +195,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.74</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.75</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <details>
     <summary>📖 วิธีใช้งาน</summary>
     <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เนื้อหา และข้อมูลประกอบในหน้าเดียว</p>
@@ -208,7 +211,7 @@
 </details>
 <details>
     <summary>✨ นอกจาก node ที่เห็นแล้วมีอะไรอีก?</summary>
-    <ul><li>กด <b>🖼️ IMG</b> หรือวางไฟล์ภาพลงบน Canvas ได้; <b>🌄 ภาพ</b> ใช้ซ่อน/แสดงภาพชั่วคราวเพื่อลดภาระการแสดงผลโดยไม่ลบข้อมูล</li><li>คลิกภาพเพื่อย้าย, ลากจุดมุมเพื่อปรับขนาด; กด <kbd>Shift</kbd> เพื่อรักษาสัดส่วน, <kbd>Ctrl</kbd> เพื่อรักษาจุดศูนย์กลาง, หรือกดทั้งคู่พร้อมกัน</li><li>ดับเบิลคลิกภาพ หรือกด <b>i</b> ข้างภาพ เพื่อดูภาพเต็มและบันทึกคำบรรยาย, แหล่งที่มา, และบันทึกเพิ่มเติม</li><li>กด <b>📝</b> ที่มุมซ้ายล่างของ node เพื่อเปิดพื้นที่บันทึกข้อความหลายบรรทัด</li></ul>
+    <ul><li>กด <b>🖼️ IMG</b> หรือวางไฟล์ภาพลงบน Canvas ได้; <b>🌄 ภาพ</b> ใช้ซ่อน/แสดงภาพชั่วคราวเพื่อลดภาระการแสดงผลโดยไม่ลบข้อมูล</li><li>คลิกภาพเพื่อย้าย, ลากจุดมุมเพื่อปรับขนาด; กด <kbd>Shift</kbd> เพื่อรักษาสัดส่วน, <kbd>Ctrl</kbd> เพื่อรักษาจุดศูนย์กลาง, หรือกดทั้งคู่พร้อมกัน</li><li>ดับเบิลคลิกภาพ หรือกด <b>i</b> ข้างภาพ เพื่อดูภาพเต็มและบันทึกคำบรรยาย, แหล่งที่มา, และบันทึกเพิ่มเติม</li><li>กด <b>📝</b> ที่มุมซ้ายล่างของ node เพื่อเปิดพื้นที่บันทึกข้อความหลายบรรทัด</li><li>กด <b>➖</b> ตำแหน่งสุดท้ายของ Shape เพื่อเพิ่มเส้นแบ่งอิสระ; เลือกเส้นแล้วลากปลายเส้นเพื่อกำหนดมุม, กด <kbd>Shift</kbd> เพื่อล็อกแนวนอนหรือแนวตั้ง, ใช้ <b>🧲 Snap</b> เพื่อล็อกปลายเส้นเข้ากริด และกด <kbd>Delete</kbd> เพื่อลบ</li></ul>
 </details>
 <details>
     <summary>⌨️ Hotkeys</summary>
@@ -285,6 +288,7 @@
                 <button onclick="window.setShape('tag')" title="Tag">🏷️</button>
                 <button onclick="window.setShape('speech-box')" title="Speech Bubble">💬</button>
                 <button onclick="window.setShape('think')" title="Think Bubble">💭</button>
+                <button onclick="window.addAnnotationLine()" title="Line — เส้นแบ่งอิสระบน Canvas">➖</button>
             </div>
             <div class="flex-row" style="justify-content:center;">
                 <button onclick="window.toggleGrid()" title="แสดง/ซ่อนตารางพื้นหลัง" style="flex:1;">▦ Grid</button>
@@ -335,7 +339,7 @@
     </div>
 
     <div id="b" class="huge-canvas" style="transform:translate(-10000px,-10000px) scale(1)" data-cx="-10000" data-cy="-10000" data-zoom="1">
-        <svg id="s"></svg>
+        <svg id="s"><g id="annotation-layer"></g></svg>
         <div id="selBox" class="selBox" style="left: 10811px; top: 10286px; width: 0px; height: 0px; display: none;"></div>
     <div class="n" id="n0" data-shape="box" data-note="" style="left: 10000px; top: 10000px;"><div class="dx" onclick="del('n0')" title="ลบกล่องนี้">x</div><button class="note-btn" type="button" onclick="window.openNodeNote('n0')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, 'n0','r')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, 'n0','l')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, 'n0','t')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, 'n0','b')">+</div></div></div>
 
@@ -355,6 +359,7 @@
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
         let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], images = [];
         let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
+        let annotations = { lines: [] }, selectedAnnotationId = null;
         const imageDomById = new Map(), imageThumbUrlByAsset = new Map();
         let activeProjectId = 'local-' + Date.now().toString(36);
         const MM_PROJECT_FORMAT = 'mindmap-project';
@@ -456,7 +461,7 @@
         }
 
         function fitGraphView() {
-            let elements = nodes.map(el => ({ left: parseFloat(el.style.left) || 0, top: parseFloat(el.style.top) || 0, width: el.offsetWidth, height: el.offsetHeight })).concat(imagePlacements.map(p => { let d = placementDimensions(p); return { left:d.x, top:d.y, width:d.w, height:d.h }; }));
+            let elements = nodes.map(el => ({ left: parseFloat(el.style.left) || 0, top: parseFloat(el.style.top) || 0, width: el.offsetWidth, height: el.offsetHeight })).concat(imagePlacements.map(p => { let d = placementDimensions(p); return { left:d.x, top:d.y, width:d.w, height:d.h }; }), annotations.lines.map(line => ({ left:Math.min(line.x1,line.x2), top:Math.min(line.y1,line.y2), width:Math.max(1,Math.abs(line.x2-line.x1)), height:Math.max(1,Math.abs(line.y2-line.y1)) })));
             if(!elements.length) return false;
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             elements.forEach(el => { minX = Math.min(minX, el.left); minY = Math.min(minY, el.top); maxX = Math.max(maxX, el.left + el.width); maxY = Math.max(maxY, el.top + el.height); });
@@ -752,11 +757,55 @@
                 top: Math.round((top + height / 2) / 40) * 40 - height / 2
             };
         }
+        function normalizedAnnotations(value) {
+            let source = value && Array.isArray(value.lines) ? value.lines : [];
+            return { lines: source.filter(line => line && typeof line.id === 'string' && [line.x1,line.y1,line.x2,line.y2].every(Number.isFinite)).map(line => ({ id: line.id, x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, color: typeof line.color === 'string' ? line.color : 'var(--c9)' })) };
+        }
+        function annotationsFromDom() {
+            return normalizedAnnotations({ lines: Array.from(s.querySelectorAll('.annotation-line')).map(el => ({
+                id: el.dataset.annotationId,
+                x1: parseFloat(el.getAttribute('x1')),
+                y1: parseFloat(el.getAttribute('y1')),
+                x2: parseFloat(el.getAttribute('x2')),
+                y2: parseFloat(el.getAttribute('y2')),
+                color: el.getAttribute('stroke') || 'var(--c9)'
+            })) });
+        }
+        function selectedAnnotation() { return annotations.lines.find(line => line.id === selectedAnnotationId); }
+        function snapPoint(value) { return snapGrid ? Math.round(value / 40) * 40 : value; }
+        function ensureAnnotationLayer() { let layer = s.querySelector('#annotation-layer'); if(!layer) { layer = document.createElementNS('http://www.w3.org/2000/svg', 'g'); layer.id = 'annotation-layer'; s.insertBefore(layer, s.firstChild); } return layer; }
+        function renderAnnotations() {
+            let layer = ensureAnnotationLayer(); layer.innerHTML = '';
+            annotations.lines.forEach(line => {
+                let el = document.createElementNS('http://www.w3.org/2000/svg', 'line'); el.classList.add('annotation-line'); el.dataset.annotationId = line.id; el.setAttribute('x1', line.x1); el.setAttribute('y1', line.y1); el.setAttribute('x2', line.x2); el.setAttribute('y2', line.y2); el.setAttribute('stroke', line.color); el.onmousedown = e => startAnnotationDrag(e, line.id, 'move'); layer.appendChild(el);
+            });
+            let line = selectedAnnotation(); if(!line) return;
+            [['start', line.x1, line.y1], ['end', line.x2, line.y2]].forEach(handle => { let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); circle.classList.add('annotation-control'); circle.dataset.annotationUi = 'true'; circle.setAttribute('cx', handle[1]); circle.setAttribute('cy', handle[2]); circle.setAttribute('r', 9); circle.setAttribute('fill', 'var(--tb)'); circle.setAttribute('stroke', line.color); circle.setAttribute('stroke-width', 3); circle.onmousedown = e => startAnnotationDrag(e, line.id, handle[0]); layer.appendChild(circle); });
+            let remove = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); remove.classList.add('annotation-control'); remove.dataset.annotationUi = 'true'; remove.setAttribute('cx', line.x1); remove.setAttribute('cy', line.y1 - 24); remove.setAttribute('r', 10); remove.setAttribute('fill', 'rgb(255,77,77)'); remove.onmousedown = e => { e.stopPropagation(); window.deleteAnnotationLine(line.id); }; layer.appendChild(remove);
+            let x = document.createElementNS('http://www.w3.org/2000/svg', 'text'); x.classList.add('annotation-control'); x.dataset.annotationUi = 'true'; x.setAttribute('x', line.x1); x.setAttribute('y', line.y1 - 20); x.setAttribute('text-anchor', 'middle'); x.setAttribute('fill', '#fff'); x.setAttribute('font-size', '14'); x.setAttribute('font-weight', 'bold'); x.textContent = '×'; x.onmousedown = e => { e.stopPropagation(); window.deleteAnnotationLine(line.id); }; layer.appendChild(x);
+        }
+        function selectAnnotation(id) { selectedAnnotationId = id; nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); renderAnnotations(); }
+        function startAnnotationDrag(e, id, mode) {
+            e.preventDefault(); e.stopPropagation(); let line = annotations.lines.find(item => item.id === id); if(!line) return; selectAnnotation(id);
+            let startX = e.clientX, startY = e.clientY, original = { x1:line.x1, y1:line.y1, x2:line.x2, y2:line.y2 };
+            document.body.style.userSelect = 'none';
+            function move(event) {
+                let dx = (event.clientX - startX) / zoom, dy = (event.clientY - startY) / zoom;
+                if(event.shiftKey) { if(Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0; }
+                if(mode === 'move') { line.x1 = snapPoint(original.x1 + dx); line.y1 = snapPoint(original.y1 + dy); line.x2 = snapPoint(original.x2 + dx); line.y2 = snapPoint(original.y2 + dy); }
+                else { let x = original[mode === 'start' ? 'x1' : 'x2'] + dx, y = original[mode === 'start' ? 'y1' : 'y2'] + dy, fixedX = original[mode === 'start' ? 'x2' : 'x1'], fixedY = original[mode === 'start' ? 'y2' : 'y1']; if(event.shiftKey) { if(Math.abs(x - fixedX) >= Math.abs(y - fixedY)) y = fixedY; else x = fixedX; } x = snapPoint(x); y = snapPoint(y); if(Math.hypot(x - fixedX, y - fixedY) < 24) return; line[mode === 'start' ? 'x1' : 'x2'] = x; line[mode === 'start' ? 'y1' : 'y2'] = y; }
+                renderAnnotations();
+            }
+            function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; window.doSaveState(); }
+            document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+        }
+        window.addAnnotationLine = function() { let viewport = getUsableViewport(), y = (viewport.centerY - cy) / zoom, x = (viewport.centerX - cx) / zoom; let line = { id: newId('annotation'), x1: x - 200, y1: y, x2: x + 200, y2: y, color:'var(--c9)' }; if(snapGrid) { line.x1=snapPoint(line.x1); line.y1=snapPoint(line.y1); line.x2=snapPoint(line.x2); line.y2=snapPoint(line.y2); } annotations.lines.push(line); selectAnnotation(line.id); window.doSaveState(); };
+        window.deleteAnnotationLine = function(id) { annotations.lines = annotations.lines.filter(line => line.id !== id); if(selectedAnnotationId === id) selectedAnnotationId = null; renderAnnotations(); window.doSaveState(); };
         window.toggleHlMode = function() { bd.classList.toggle('hl-mode'); };
 
         window.saveBackup = function() {
             try {
-                let data = { nodes: mmHistory[curStep]?.nodes || [], lines: mmHistory[curStep]?.lines || [], images: mmHistory[curStep]?.images || [], nid: nid, views: { cx: cx, cy: cy, zoom: zoom } };
+                let data = { nodes: mmHistory[curStep]?.nodes || [], lines: mmHistory[curStep]?.lines || [], images: mmHistory[curStep]?.images || [], annotations: mmHistory[curStep]?.annotations || { lines: [] }, nid: nid, views: { cx: cx, cy: cy, zoom: zoom } };
                 localStorage.setItem('mindmap_backup', JSON.stringify(data));
             } catch(e) {}
         };
@@ -768,6 +817,7 @@
             clone.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
             clone.querySelectorAll('.note-btn.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
             clone.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(clone.ownerDocument.createTextNode(mark.textContent || '')));
+            clone.querySelectorAll('[data-annotation-ui]').forEach(control => control.remove());
             let cloneCanvas = clone.querySelector('#b'); cloneCanvas.querySelectorAll('.img-float').forEach(im => im.remove());
             for(let placement of state.images) {
                 let previewSrc = placement.src || '';
@@ -808,9 +858,9 @@
 
         function cloneMindmapState(state) { return JSON.parse(JSON.stringify(state)); }
         function currentMindmapState() {
-            let state = mmHistory[curStep] || { nodes: [], lines: [], images: [], nid: nid };
+            let state = mmHistory[curStep] || { nodes: [], lines: [], images: [], annotations: { lines: [] }, nid: nid };
             let copy = cloneMindmapState(state);
-            copy.nodes = copy.nodes || []; copy.lines = copy.lines || []; copy.images = copy.images || [];
+            copy.nodes = copy.nodes || []; copy.lines = copy.lines || []; copy.images = copy.images || []; copy.annotations = normalizedAnnotations(copy.annotations);
             copy.nid = typeof copy.nid === 'number' ? copy.nid : nid;
             copy.views = { cx: cx, cy: cy, zoom: zoom };
             return copy;
@@ -892,6 +942,7 @@
             let state = cloneMindmapState(source);
             state.lines = Array.isArray(state.lines) ? state.lines : [];
             state.images = Array.isArray(state.images) ? state.images : [];
+            state.annotations = normalizedAnnotations(state.annotations);
             if(documentData && documentData.views && !state.views) state.views = documentData.views;
             return state;
         }
@@ -997,6 +1048,8 @@
         window.setCol = function(t, i) {
             let v = i === 15 ? 'var(--c15)' : (i === 16 ? 'var(--c16)' : (i ? 'var(--c'+i+')' : ''));
             let rgb = i === 15 ? 'rgb(60,60,60)' : (i === 16 ? 'rgb(220,220,220)' : (i ? 'rgb(255,'+i+',1)' : 'transparent'));
+            let annotation = selectedAnnotation();
+            if(annotation) { annotation.color = v || 'var(--bc)'; renderAnnotations(); window.doSaveState(); return; }
             
             let sel = window.getSelection();
             if((t === 'fg' || t === 'bg') && sel.toString().length > 0) {
@@ -1011,7 +1064,7 @@
             }
 
             let sels = nodes.filter(n => n.classList.contains('sel'));
-            if(sels.length === 0) return window.showToast('⚠️ โปรดคลิกกล่อง หรือคลุมดำเฉพาะข้อความก่อนครับ');
+            if(sels.length === 0) return window.showToast('⚠️ โปรดเลือกกล่องหรือเส้นก่อนครับ');
             sels.forEach(n => {
                 if(t === 'bg') { n.style.background = v || ''; if(v) n.style.setProperty('--n-bg', v); else n.style.removeProperty('--n-bg'); }
                 else if(t === 'fg') { n.style.color = v || 'var(--fg)'; }
@@ -1024,18 +1077,19 @@
         
         window.doSaveState = function() { 
             let state = nodes.map(n => ({ id: n.id, x: n.style.left, y: n.style.top, bg: n.style.background, fg: n.style.color, bd: n.style.borderColor, shape: n.dataset.shape || 'box', fs: n.querySelector('.nt') ? n.querySelector('.nt').style.fontSize : '', dfs: n.querySelector('.nd') ? n.querySelector('.nd').style.fontSize : '', txt: n.querySelector('.nt') ? n.querySelector('.nt').innerHTML : '', desc: n.querySelector('.nd') ? n.querySelector('.nd').innerHTML : '', note: n.dataset.note || '', type: n.classList.contains('j') ? 'j' : 'n' }));
-            let lines = Array.from(s.querySelectorAll('line')).map(l => ({ id: l.id, n1: l.dataset.n1, n2: l.dataset.n2 }));
+            let lines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).map(l => ({ id: l.id, n1: l.dataset.n1, n2: l.dataset.n2 }));
             let imgState = cloneMindmapState(imagePlacements);
             if(curStep < mmHistory.length - 1) mmHistory = mmHistory.slice(0, curStep + 1);
-            mmHistory.push({nodes: state, lines: lines, images: imgState, nid: nid});
-            curStep++; window.saveBackup(); projectStore.saveGraph({nodes: state, lines: lines, images: imgState, nid: nid}).catch(err => console.warn('Image project autosave:', err));
+            let annotationState = normalizedAnnotations(annotations);
+            mmHistory.push({nodes: state, lines: lines, images: imgState, annotations: annotationState, nid: nid});
+            curStep++; window.saveBackup(); projectStore.saveGraph({nodes: state, lines: lines, images: imgState, annotations: annotationState, nid: nid}).catch(err => console.warn('Image project autosave:', err));
         };
         
         window.doUndo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep > 0) window.loadState(curStep - 1); }; window.doRedo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep < mmHistory.length - 1) window.loadState(curStep + 1); };
         
         window.loadState = function(step) { 
             let state = mmHistory[step]; if(!state || !state.nodes) return; 
-            nodes.forEach(n => n.remove()); s.innerHTML = ''; document.querySelectorAll('.mb').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); nid = state.nid || 0;
+            nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; document.querySelectorAll('.mb').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); selectedAnnotationId = null; nid = state.nid || 0;
             state.nodes.forEach(ns => { 
                 let n = document.createElement('div'); n.className = ns.type === 'j' ? 'n j' : 'n'; n.id = ns.id; n.style.left = ns.x; n.style.top = ns.y; n.dataset.note = ns.note || '';
                 if(ns.bg) { n.style.background = ns.bg; n.style.setProperty('--n-bg', ns.bg); } 
@@ -1047,7 +1101,7 @@
                 b.appendChild(n); nodes.push(n); attachNodeEvents(n); 
             }); 
             state.lines.forEach(ls => { let l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.setAttribute('stroke', 'var(--bc)'); l.setAttribute('stroke-width', '3'); l.id = ls.id; l.dataset.n1 = ls.n1; l.dataset.n2 = ls.n2; s.appendChild(l); });
-            updateAll(); curStep = step; renderImageLayer();
+            updateAll(); curStep = step; renderAnnotations(); renderImageLayer();
         };
         
         function updateTransform() { b.style.transform = `translate(${cx}px, ${cy}px) scale(${zoom})`; b.dataset.cx = cx; b.dataset.cy = cy; b.dataset.zoom = zoom; updateZoomStatus(); renderImageLayer(); }
@@ -1102,13 +1156,13 @@
         }
         window.delImage = function(id) { let index = imagePlacements.findIndex(p => p.id === id); if(index < 0) return; imagePlacements.splice(index, 1); removeImageDom(id); window.doSaveState(); };
         window.createLine = function(id1, id2) { let l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.setAttribute('stroke', 'var(--bc)'); l.setAttribute('stroke-width', '3'); l.id = 'l_' + id1 + '_' + id2 + '_' + Date.now(); l.dataset.n1 = id1; l.dataset.n2 = id2; s.appendChild(l); updateLine(l); return l; };
-        window.startLineDrag = function(e, pid, dir) { e.stopPropagation(); let startX = e.clientX; let startY = e.clientY; let pNode = document.getElementById(pid); if(!pNode) return; let x1 = pNode.offsetLeft + pNode.offsetWidth / 2; let y1 = pNode.offsetTop + pNode.offsetHeight / 2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', x1); tl.setAttribute('y1', y1); tl.setAttribute('x2', x1); tl.setAttribute('y2', y1); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = s.querySelectorAll('line'); allLines.forEach(l => { if(l !== tl) { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; } }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetNode = me.target.closest('.n'); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLine = document.getElementById(targetMb.id.replace(/^mb_/, '')); if(mbLine) { targetLine = mbLine; targetNode = null; } } if(targetNode && targetNode.id !== pid) { let existing = document.querySelector('line[data-n1="' + pid + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + pid + '"][data-n1="' + targetNode.id + '"]'); if(!existing) { window.createLine(pid, targetNode.id); window.doSaveState(); } } else if(targetLine && targetLine.id.startsWith('l_') && targetLine.dataset.n1 !== pid && targetLine.dataset.n2 !== pid) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); let j = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(tn1, j.id); window.createLine(j.id, tn2); window.createLine(pid, j.id); window.doSaveState(); } else if(moved) { let nx = (me.clientX - cx) / zoom; let ny = (me.clientY - cy) / zoom; addNode(nx - 50, ny - 30, pid); window.doSaveState(); } else { window.addLink(pid, dir); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
-        window.del = function(id) { if(nodeNoteId === id) window.closeNodeNote(); let n = document.getElementById(id); if(!n) return; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(l => { let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); l.remove(); }); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } window.doSaveState(); };
+        window.startLineDrag = function(e, pid, dir) { e.stopPropagation(); let startX = e.clientX; let startY = e.clientY; let pNode = document.getElementById(pid); if(!pNode) return; let x1 = pNode.offsetLeft + pNode.offsetWidth / 2; let y1 = pNode.offsetTop + pNode.offsetHeight / 2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', x1); tl.setAttribute('y1', y1); tl.setAttribute('x2', x1); tl.setAttribute('y2', y1); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = s.querySelectorAll('line[data-n1][data-n2]'); allLines.forEach(l => { if(l !== tl) { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; } }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetNode = me.target.closest('.n'); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLine = document.getElementById(targetMb.id.replace(/^mb_/, '')); if(mbLine) { targetLine = mbLine; targetNode = null; } } if(targetNode && targetNode.id !== pid) { let existing = document.querySelector('line[data-n1="' + pid + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + pid + '"][data-n1="' + targetNode.id + '"]'); if(!existing) { window.createLine(pid, targetNode.id); window.doSaveState(); } } else if(targetLine && targetLine.id.startsWith('l_') && targetLine.dataset.n1 !== pid && targetLine.dataset.n2 !== pid) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); let j = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(tn1, j.id); window.createLine(j.id, tn2); window.createLine(pid, j.id); window.doSaveState(); } else if(moved) { let nx = (me.clientX - cx) / zoom; let ny = (me.clientY - cy) / zoom; addNode(nx - 50, ny - 30, pid); window.doSaveState(); } else { window.addLink(pid, dir); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
+        window.del = function(id) { if(nodeNoteId === id) window.closeNodeNote(); let n = document.getElementById(id); if(!n) return; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(l => { let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); l.remove(); }); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } window.doSaveState(); };
         window.addLink = function(pid, dir) { let p = document.getElementById(pid); if(!p) return; let x = parseFloat(p.style.left); let y = parseFloat(p.style.top); if(dir === 'r') { x += 220; y += (Math.random() * 20 - 10); } else if(dir === 'l') { x -= 220; y += (Math.random() * 20 - 10); } else if(dir === 't') { y -= 160; x += (Math.random() * 20 - 10); } else if(dir === 'b') { y += 160; x += (Math.random() * 20 - 10); } else { x += 220; y += (Math.random() * 20 - 10); } let w = 150, h = 80; let isOverlap = function(nx, ny) { return nodes.some(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top); let nw = n.offsetWidth || 150, nh = n.offsetHeight || 80; return !(nx + w + 20 < nl || nx > nl + nw + 20 || ny + h + 20 < nt || ny > nt + nh + 20); }); }; if(dir === 'l' || dir === 'r') { while(isOverlap(x, y)) y += 100; } else if(dir === 't' || dir === 'b') { while(isOverlap(x, y)) x += 180; } else { while(isOverlap(x, y)) y += 100; } addNode(x, y, pid); window.doSaveState(); };
         function updateLine(l) { let n1 = document.getElementById(l.dataset.n1), n2 = document.getElementById(l.dataset.n2); if(n1 && n2) { let x1 = n1.offsetLeft + n1.offsetWidth / 2; let y1 = n1.offsetTop + n1.offsetHeight / 2; let x2 = n2.offsetLeft + n2.offsetWidth / 2; let y2 = n2.offsetTop + n2.offsetHeight / 2; l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); let mx = (x1 + x2) / 2; let my = (y1 + y2) / 2; let mb = document.getElementById('mb_' + l.id); if(!mb) { mb = document.createElement('div'); mb.id = 'mb_' + l.id; mb.className = 'mb'; mb.innerHTML = '+'; mb.title = "ลากเพื่อแตกแขนง (ไปยังที่ว่าง/Node/เส้นอื่น) หรือคลิกเฉยๆ"; mb.onmousedown = function(e) { window.startLineDragFromMid(e, l.id); }; document.getElementById('b').appendChild(mb); } mb.style.left = mx + 'px'; mb.style.top = my + 'px'; } else { l.remove(); let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); } }
-        window.startLineDragFromMid = function(e, lineId) { e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let mb = document.getElementById('mb_' + lineId); let startX = e.clientX, startY = e.clientY; let mx = mb ? parseFloat(mb.style.left) : (parseFloat(line.getAttribute('x1')) + parseFloat(line.getAttribute('x2'))) / 2; let my = mb ? parseFloat(mb.style.top) : (parseFloat(line.getAttribute('y1')) + parseFloat(line.getAttribute('y2'))) / 2; let n1_id = line.dataset.n1, n2_id = line.dataset.n2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', mx); tl.setAttribute('y1', my); tl.setAttribute('x2', mx); tl.setAttribute('y2', my); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = Array.from(s.querySelectorAll('line')).filter(l => l !== tl && l !== line); allLines.forEach(l => { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetNode = me.target.closest('.n'); let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLineId = targetMb.id.replace(/^mb_/, ''); if(mbLineId !== lineId) { let mbLine = document.getElementById(mbLineId); if(mbLine) { targetLine = mbLine; targetNode = null; } } } let dropX = (me.clientX - cx) / zoom, dropY = (me.clientY - cy) / zoom; if(!moved) { let jNode = addNode(mx - 8, my - 8, null, 'j'); addNode(mx + 100, my + 80, jNode.id, 'n'); line.remove(); if(mb) mb.remove(); window.createLine(n1_id, jNode.id); window.createLine(jNode.id, n2_id); window.doSaveState(); return; } if(targetLine && targetLine.id.startsWith('l_') && targetLine.id !== lineId) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); line.remove(); if(mb) mb.remove(); let j1 = addNode(mx - 8, my - 8, null, 'j'); let j2 = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(n1_id, j1.id); window.createLine(j1.id, n2_id); window.createLine(tn1, j2.id); window.createLine(j2.id, tn2); window.createLine(j1.id, j2.id); window.doSaveState(); } else if(targetNode) { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); let existing = document.querySelector('line[data-n1="' + j.id + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + j.id + '"][data-n1="' + targetNode.id + '"]'); if(!existing) window.createLine(j.id, targetNode.id); window.doSaveState(); } else { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); addNode(dropX - 75, dropY - 40, j.id, 'n'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); window.doSaveState(); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
-        function updateAll() { s.querySelectorAll('line').forEach(updateLine); }
-        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); }
+        window.startLineDragFromMid = function(e, lineId) { e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let mb = document.getElementById('mb_' + lineId); let startX = e.clientX, startY = e.clientY; let mx = mb ? parseFloat(mb.style.left) : (parseFloat(line.getAttribute('x1')) + parseFloat(line.getAttribute('x2'))) / 2; let my = mb ? parseFloat(mb.style.top) : (parseFloat(line.getAttribute('y1')) + parseFloat(line.getAttribute('y2'))) / 2; let n1_id = line.dataset.n1, n2_id = line.dataset.n2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', mx); tl.setAttribute('y1', my); tl.setAttribute('x2', mx); tl.setAttribute('y2', my); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l !== tl && l !== line); allLines.forEach(l => { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetNode = me.target.closest('.n'); let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLineId = targetMb.id.replace(/^mb_/, ''); if(mbLineId !== lineId) { let mbLine = document.getElementById(mbLineId); if(mbLine) { targetLine = mbLine; targetNode = null; } } } let dropX = (me.clientX - cx) / zoom, dropY = (me.clientY - cy) / zoom; if(!moved) { let jNode = addNode(mx - 8, my - 8, null, 'j'); addNode(mx + 100, my + 80, jNode.id, 'n'); line.remove(); if(mb) mb.remove(); window.createLine(n1_id, jNode.id); window.createLine(jNode.id, n2_id); window.doSaveState(); return; } if(targetLine && targetLine.id.startsWith('l_') && targetLine.id !== lineId) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); line.remove(); if(mb) mb.remove(); let j1 = addNode(mx - 8, my - 8, null, 'j'); let j2 = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(n1_id, j1.id); window.createLine(j1.id, n2_id); window.createLine(tn1, j2.id); window.createLine(j2.id, tn2); window.createLine(j1.id, j2.id); window.doSaveState(); } else if(targetNode) { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); let existing = document.querySelector('line[data-n1="' + j.id + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + j.id + '"][data-n1="' + targetNode.id + '"]'); if(!existing) window.createLine(j.id, targetNode.id); window.doSaveState(); } else { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); addNode(dropX - 75, dropY - 40, j.id, 'n'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); window.doSaveState(); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
+        function updateAll() { s.querySelectorAll('line[data-n1][data-n2]').forEach(updateLine); }
+        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); if(selectedAnnotationId) { selectedAnnotationId = null; renderAnnotations(); } }
 
         window.addEventListener('wheel', function(e) {
             if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('#zoom-status')) return;
@@ -1225,6 +1279,7 @@
             if(e.key === 'Delete') {
                 let ae = document.activeElement;
                 if(ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+                if(selectedAnnotationId) { e.preventDefault(); window.deleteAnnotationLine(selectedAnnotationId); return; }
                 let sels = nodes.filter(n => n.classList.contains('sel'));
                 let imgSels = images.filter(im => im.classList.contains('sel'));
                 if(sels.length || imgSels.length) { e.preventDefault(); sels.forEach(n => window.del(n.id)); imgSels.forEach(im => window.delImage(im.id)); window.doSaveState(); }
@@ -1259,6 +1314,7 @@
             if(isSavedHTML) {
                 let existingNodes = document.querySelectorAll('.n');
                 let existingImgs = document.querySelectorAll('.img-float');
+                annotations = annotationsFromDom();
                 existingImgs.forEach(im => { imagePlacements.push(placementFromElement(im)); im.remove(); });
                 if(existingNodes.length > 0) {
                     existingNodes.forEach(n => { nodes.push(n); attachNodeEvents(n); });
