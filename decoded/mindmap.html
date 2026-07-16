@@ -145,6 +145,7 @@
         .image-detail-fields input, .image-detail-fields textarea { width:100%; box-sizing:border-box; border:1px solid var(--bc); border-radius:5px; padding:8px; color:var(--fg); background:var(--bg); font:14px/1.45 sans-serif; }
         .image-detail-fields textarea { flex:1; min-height:130px; resize:vertical; }
         @media(max-width:700px) { .image-detail-card { grid-template-columns:1fr; grid-template-rows:minmax(180px,45vh) auto; overflow:auto; height:min(860px,94vh); } .image-detail-fields textarea { min-height:120px; } }
+        @media(max-width:620px) { .node-note-head { flex-wrap:wrap; } .node-note-head > div:first-child { flex-basis:calc(100% - 42px); } .node-note-head #note-find-ui { flex:1 1 100% !important; min-width:0 !important; order:3; } }
 
         .selBox { position: absolute; border: 1px dashed rgb(33,150,243); background: rgba(33,150,243,0.1); z-index: 9999; display: none; pointer-events: none; }
         #about-btn { position: fixed; bottom: 25px; right: 25px; width: 36px; height: 36px; background: #2196F3; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; font-family: serif; font-style: italic; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000; border: none; transition: all 0.2s; }
@@ -169,12 +170,11 @@
     </div>
     <div id="node-note-ui" role="dialog" aria-modal="true" aria-labelledby="node-note-title" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000000;display:none;justify-content:center;align-items:center;padding:24px;box-sizing:border-box;">
         <div style="width:min(760px,92vw);height:min(82vh,720px);display:flex;flex-direction:column;background:var(--tb);border:1px solid var(--bc);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.35);padding:18px;color:var(--fg);box-sizing:border-box;">
-            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
+            <div class="node-note-head" style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">
                 <div style="flex:1;min-width:0;text-align:left;"><div id="node-note-title" style="font-size:20px;font-weight:bold;word-break:break-word;"></div><div id="node-note-desc" style="margin-top:4px;font-size:14px;opacity:0.75;white-space:pre-wrap;word-break:break-word;"></div></div>
-                <button type="button" id="node-note-find-toggle" onclick="window.toggleNoteFind()" title="ค้นหาในบันทึก" aria-label="ค้นหาในบันทึก" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:15px;line-height:24px;cursor:pointer;">🔎</button>
+                <div id="note-find-ui" style="display:flex;flex:0 1 330px;min-width:210px;align-items:center;gap:4px;"><input id="note-find-input" type="search" placeholder="ค้นหาในบันทึก…" autocomplete="off" aria-label="ค้นหาในบันทึก" style="flex:1;min-width:0;height:28px;padding:3px 8px;box-sizing:border-box;border:1px solid var(--bc);border-radius:4px;background:var(--bg);color:var(--fg);"><span id="note-find-count" style="min-width:44px;text-align:center;font-size:12px;">0 / 0</span><button id="note-find-prev" type="button" onclick="window.navigateNoteFind(-1)" title="คำก่อนหน้า" style="height:28px;">▲</button><button id="note-find-next" type="button" onclick="window.navigateNoteFind(1)" title="คำถัดไป" style="height:28px;">▼</button><button type="button" onclick="window.clearNoteFind()" title="ล้างคำค้นหา" style="height:28px;">×</button></div>
                 <button type="button" onclick="window.closeNodeNote()" title="ปิดบันทึก (Esc)" aria-label="ปิดบันทึก" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button>
             </div>
-            <div id="note-find-ui" style="display:none;align-items:center;gap:4px;margin:0 0 10px;"><input id="note-find-input" type="search" placeholder="ค้นหาในบันทึก…" autocomplete="off" aria-label="ค้นหาในบันทึก" style="flex:1;min-width:0;height:28px;padding:3px 8px;box-sizing:border-box;border:1px solid var(--bc);border-radius:4px;background:var(--bg);color:var(--fg);"><span id="note-find-count" style="min-width:44px;text-align:center;font-size:12px;">0 / 0</span><button id="note-find-prev" type="button" onclick="window.navigateNoteFind(-1)" title="คำก่อนหน้า" style="height:28px;">▲</button><button id="note-find-next" type="button" onclick="window.navigateNoteFind(1)" title="คำถัดไป" style="height:28px;">▼</button><button type="button" onclick="window.closeNoteFind()" title="ปิดการค้นหา" style="height:28px;">×</button></div>
             <textarea id="node-note-input" aria-label="บันทึกประจำ node" placeholder="เขียนบันทึกเพิ่มเติมที่นี่…" style="flex:1;min-height:220px;width:100%;resize:none;box-sizing:border-box;border:1px solid var(--bc);border-radius:6px;background:var(--bg);color:var(--fg);padding:12px;font:15px/1.6 sans-serif;white-space:pre-wrap;"></textarea>
         </div>
     </div>
@@ -653,9 +653,8 @@
             showNoteFindResult(focusResult);
         };
         window.navigateNoteFind = function(direction) { if(!noteFindMatches.length) return; noteFindIndex = (noteFindIndex + direction + noteFindMatches.length) % noteFindMatches.length; showNoteFindResult(true); };
-        window.toggleNoteFind = function() { let ui = document.getElementById('note-find-ui'); if(ui.style.display === 'flex') return window.closeNoteFind(); ui.style.display = 'flex'; window.refreshNoteFind(); document.getElementById('note-find-input').focus(); };
-        window.openNoteFind = function(query) { let ui = document.getElementById('note-find-ui'); ui.style.display = 'flex'; let input = document.getElementById('note-find-input'); input.value = query || ''; window.refreshNoteFind(true); };
-        window.closeNoteFind = function() { document.getElementById('note-find-ui').style.display = 'none'; document.getElementById('note-find-input').value = ''; noteFindMatches = []; noteFindIndex = -1; updateNoteFindControls(); };
+        window.openNoteFind = function(query) { let input = document.getElementById('note-find-input'); input.value = query || ''; window.refreshNoteFind(true); };
+        window.clearNoteFind = function() { document.getElementById('note-find-input').value = ''; noteFindMatches = []; noteFindIndex = -1; document.getElementById('node-note-input').setSelectionRange(0, 0); updateNoteFindControls(); };
 
         window.openNodeNote = function(id) {
             let node = document.getElementById(id);
@@ -668,7 +667,7 @@
             input.value = node.dataset.note || '';
             document.getElementById('node-note-ui').style.display = 'flex';
             let globalQuery = document.getElementById('find-input').value.trim(), isNoteQuery = globalQuery && document.getElementById('find-scope').value === 'all' && input.value.toLocaleLowerCase().includes(globalQuery.toLocaleLowerCase());
-            if(isNoteQuery) window.openNoteFind(globalQuery); else { window.closeNoteFind(); input.focus(); }
+            if(isNoteQuery) window.openNoteFind(globalQuery); else { window.clearNoteFind(); input.focus(); }
         };
 
         window.openImageDetail = async function(id) {
@@ -690,7 +689,7 @@
 
         window.closeNodeNote = function() {
             saveNodeNote();
-            window.closeNoteFind();
+            window.clearNoteFind();
             nodeNoteId = null;
             document.getElementById('node-note-ui').style.display = 'none';
         };
@@ -698,10 +697,10 @@
         document.getElementById('node-note-input').addEventListener('input', function() {
             if(nodeNoteTimer) clearTimeout(nodeNoteTimer);
             nodeNoteTimer = setTimeout(saveNodeNote, 500);
-            if(document.getElementById('note-find-ui').style.display === 'flex') window.refreshNoteFind();
+            window.refreshNoteFind();
         });
         document.getElementById('note-find-input').addEventListener('input', function() { window.refreshNoteFind(); });
-        document.getElementById('note-find-input').addEventListener('keydown', function(e) { if(e.key === 'Enter') { e.preventDefault(); window.navigateNoteFind(e.shiftKey ? -1 : 1); } if(e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); window.closeNoteFind(); document.getElementById('node-note-input').focus(); } });
+        document.getElementById('note-find-input').addEventListener('keydown', function(e) { if(e.key === 'Enter') { e.preventDefault(); window.navigateNoteFind(e.shiftKey ? -1 : 1); } if(e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); window.clearNoteFind(); document.getElementById('node-note-input').focus(); } });
 
         window.cycleMindmapTheme = function() {
             if(b.classList.contains('canvas-dark')) {
@@ -1193,7 +1192,6 @@
         window.addEventListener('keydown', function(e) {
             if(e.key === 'Escape' && document.getElementById('about-ui').style.display !== 'none') { e.preventDefault(); window.closeAbout(); return; }
             if(e.key === 'Escape' && document.getElementById('image-detail-ui').classList.contains('open')) { e.preventDefault(); window.closeImageDetail(); return; }
-            if(e.key === 'Escape' && document.getElementById('note-find-ui').style.display === 'flex') { e.preventDefault(); window.closeNoteFind(); document.getElementById('node-note-input').focus(); return; }
             if(e.key === 'Escape' && nodeNoteId) { e.preventDefault(); window.closeNodeNote(); return; }
             if(e.key === 'Tab') {
                 let active = document.activeElement;
