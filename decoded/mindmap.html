@@ -80,6 +80,7 @@
         .annotation-text.selected { outline:2px dashed rgb(33,150,243); outline-offset:5px; }
         .annotation-text.editing { cursor:text; user-select:text; outline:2px dashed rgba(33,150,243,.55); outline-offset:5px; }
         .annotation-text-content { outline:none; min-width:20px; }
+        .annotation-text-description { margin-top:4px; min-width:20px; color:var(--fg); font-size:.58em; font-weight:400; line-height:1.35; opacity:.78; outline:none; white-space:pre-wrap; }
         .annotation-text-delete { position:absolute; left:-12px; top:-12px; width:20px; height:20px; padding:0; border:0; border-radius:50%; background:rgb(255,77,77); color:#fff; font:bold 14px/18px sans-serif; cursor:pointer; display:none; z-index:2; }
         .annotation-text.selected .annotation-text-delete { display:block; }
         
@@ -343,7 +344,7 @@
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
         let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], images = [];
         let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
-        let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null;
+        let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null, lastAnnotationTextClick = { id:null, at:0 };
         const imageDomById = new Map(), imageThumbUrlByAsset = new Map();
         let activeProjectId = 'local-' + Date.now().toString(36);
         const MM_PROJECT_FORMAT = 'mindmap-project';
@@ -445,7 +446,7 @@
         }
 
         function fitGraphView() {
-            let elements = nodes.map(el => ({ left: parseFloat(el.style.left) || 0, top: parseFloat(el.style.top) || 0, width: el.offsetWidth, height: el.offsetHeight })).concat(imagePlacements.map(p => { let d = placementDimensions(p); return { left:d.x, top:d.y, width:d.w, height:d.h }; }), annotations.lines.map(line => ({ left:Math.min(line.x1,line.x2), top:Math.min(line.y1,line.y2), width:Math.max(1,Math.abs(line.x2-line.x1)), height:Math.max(1,Math.abs(line.y2-line.y1)) })), annotations.texts.map(text => { let el = b.querySelector('.annotation-text[data-annotation-text-id="' + text.id + '"]'), width = el ? el.offsetWidth : Math.max(20, Math.max(...text.text.split('\n').map(line => line.length || 1)) * text.fontSize * .62), height = el ? el.offsetHeight : Math.max(text.fontSize * 1.2, text.text.split('\n').length * text.fontSize * 1.2); return { left:text.x, top:text.y, width:width, height:height }; }));
+            let elements = nodes.map(el => ({ left: parseFloat(el.style.left) || 0, top: parseFloat(el.style.top) || 0, width: el.offsetWidth, height: el.offsetHeight })).concat(imagePlacements.map(p => { let d = placementDimensions(p); return { left:d.x, top:d.y, width:d.w, height:d.h }; }), annotations.lines.map(line => ({ left:Math.min(line.x1,line.x2), top:Math.min(line.y1,line.y2), width:Math.max(1,Math.abs(line.x2-line.x1)), height:Math.max(1,Math.abs(line.y2-line.y1)) })), annotations.texts.map(text => { let el = b.querySelector('.annotation-text[data-annotation-text-id="' + text.id + '"]'), textLines = (text.text + '\n' + (text.description || '')).split('\n'), width = el ? el.offsetWidth : Math.max(20, Math.max(...textLines.map(line => line.length || 1)) * text.fontSize * .62), height = el ? el.offsetHeight : Math.max(text.fontSize * 1.2, textLines.length * text.fontSize * 1.2); return { left:text.x, top:text.y, width:width, height:height }; }));
             if(!elements.length) return false;
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             elements.forEach(el => { minX = Math.min(minX, el.left); minY = Math.min(minY, el.top); maxX = Math.max(maxX, el.left + el.width); maxY = Math.max(maxY, el.top + el.height); });
@@ -745,13 +746,13 @@
             let lines = value && Array.isArray(value.lines) ? value.lines : [], texts = value && Array.isArray(value.texts) ? value.texts : [];
             return {
                 lines: lines.filter(line => line && typeof line.id === 'string' && [line.x1,line.y1,line.x2,line.y2].every(Number.isFinite)).map(line => ({ id: line.id, x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, color: typeof line.color === 'string' ? line.color : 'var(--c9)' })),
-                texts: texts.filter(text => text && typeof text.id === 'string' && typeof text.text === 'string' && [text.x,text.y].every(Number.isFinite)).map(text => ({ id:text.id, x:text.x, y:text.y, text:text.text, color:typeof text.color === 'string' ? text.color : 'var(--c9)', fontSize:Number.isFinite(text.fontSize) && text.fontSize > 0 ? text.fontSize : 28 }))
+                texts: texts.filter(text => text && typeof text.id === 'string' && typeof text.text === 'string' && [text.x,text.y].every(Number.isFinite)).map(text => ({ id:text.id, x:text.x, y:text.y, text:text.text, description:typeof text.description === 'string' ? text.description : '', color:typeof text.color === 'string' ? text.color : 'var(--c9)', fontSize:Number.isFinite(text.fontSize) && text.fontSize > 0 ? text.fontSize : 28 }))
             };
         }
         function annotationsFromDom() {
             return normalizedAnnotations({
                 lines: Array.from(s.querySelectorAll('.annotation-line')).map(el => ({ id:el.dataset.annotationId, x1:parseFloat(el.getAttribute('x1')), y1:parseFloat(el.getAttribute('y1')), x2:parseFloat(el.getAttribute('x2')), y2:parseFloat(el.getAttribute('y2')), color:el.getAttribute('stroke') || 'var(--c9)' })),
-                texts: Array.from(b.querySelectorAll('.annotation-text')).map(el => { let content = el.querySelector('.annotation-text-content'); return { id:el.dataset.annotationTextId, x:parseFloat(el.style.left), y:parseFloat(el.style.top), text:content ? content.innerText.replace(/\r/g, '') : '', color:el.style.color || 'var(--c9)', fontSize:parseFloat(el.style.fontSize) || 28 }; })
+                texts: Array.from(b.querySelectorAll('.annotation-text')).map(el => { let content = el.querySelector('.annotation-text-content'), description = el.querySelector('.annotation-text-description'); return { id:el.dataset.annotationTextId, x:parseFloat(el.style.left), y:parseFloat(el.style.top), text:content ? content.innerText.replace(/\r/g, '') : '', description:description ? description.innerText.replace(/\r/g, '') : '', color:el.style.color || 'var(--c9)', fontSize:parseFloat(el.style.fontSize) || 28 }; })
             });
         }
         function selectedAnnotation() { return annotations.lines.find(line => line.id === selectedAnnotationId); }
@@ -776,14 +777,18 @@
                 let editing = editingAnnotationTextId === text.id;
                 if(selectedAnnotationTextId === text.id) el.classList.add('selected'); if(editing) { el.classList.add('editing'); el.classList.remove('selected'); }
                 let content = document.createElement('div'); content.className = 'annotation-text-content'; content.textContent = text.text; content.contentEditable = editing ? 'true' : 'false'; content.spellcheck = false;
+                let description = document.createElement('div'); description.className = 'annotation-text-description'; description.textContent = text.description; description.contentEditable = editing ? 'true' : 'false'; description.spellcheck = false;
                 content.onmousedown = e => { e.stopPropagation(); if(!editing) startAnnotationTextDrag(e, text.id); };
+                description.onmousedown = e => { e.stopPropagation(); if(!editing) startAnnotationTextDrag(e, text.id); };
                 content.ondblclick = e => { e.preventDefault(); e.stopPropagation(); window.editAnnotationText(text.id); };
+                description.ondblclick = e => { e.preventDefault(); e.stopPropagation(); window.editAnnotationText(text.id); };
                 if(editing) {
                     content.oninput = () => { text.text = content.innerText.replace(/\r/g, ''); };
-                    content.onkeydown = e => { e.stopPropagation(); if(e.key === 'Escape') { e.preventDefault(); editingAnnotationTextId = null; renderAnnotationTexts(); } else if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); content.blur(); } };
-                    content.onblur = () => { if(editingAnnotationTextId !== text.id) return; text.text = content.innerText.replace(/\r/g, ''); editingAnnotationTextId = null; renderAnnotationTexts(); window.doSaveState(); };
+                    description.oninput = () => { text.description = description.innerText.replace(/\r/g, ''); };
+                    [content, description].forEach(field => { field.onkeydown = e => { e.stopPropagation(); if(e.key === 'Escape') { e.preventDefault(); editingAnnotationTextId = null; renderAnnotationTexts(); } else if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); field.blur(); } }; });
+                    el.onfocusout = () => { setTimeout(() => { if(editingAnnotationTextId !== text.id || el.contains(document.activeElement)) return; text.text = content.innerText.replace(/\r/g, ''); text.description = description.innerText.replace(/\r/g, ''); editingAnnotationTextId = null; renderAnnotationTexts(); window.doSaveState(); }, 0); };
                 }
-                el.appendChild(content);
+                el.append(content, description);
                 if(selectedAnnotationTextId === text.id && !editing) { let remove = document.createElement('button'); remove.type = 'button'; remove.className = 'annotation-text-delete'; remove.dataset.annotationUi = 'true'; remove.textContent = '×'; remove.title = 'ลบข้อความลอย'; remove.onmousedown = e => { e.preventDefault(); e.stopPropagation(); window.deleteAnnotationText(text.id); }; el.appendChild(remove); }
                 layer.appendChild(el);
             });
@@ -793,7 +798,8 @@
         function selectAnnotationText(id, edit) { selectedAnnotationId = null; selectedAnnotationTextId = id; editingAnnotationTextId = edit ? id : null; nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); renderAnnotations(); renderAnnotationTexts(); }
         function startAnnotationTextDrag(e, id) {
             if(editingAnnotationTextId) return;
-            e.preventDefault(); e.stopPropagation(); let text = annotations.texts.find(item => item.id === id); if(!text) return; selectAnnotationText(id, false);
+            e.preventDefault(); e.stopPropagation(); let text = annotations.texts.find(item => item.id === id); if(!text) return;
+            let now = Date.now(); if(lastAnnotationTextClick.id === id && now - lastAnnotationTextClick.at < 500) { lastAnnotationTextClick = { id:null, at:0 }; window.editAnnotationText(id); return; } lastAnnotationTextClick = { id:id, at:now }; selectAnnotationText(id, false);
             let startX = e.clientX, startY = e.clientY, original = { x:text.x, y:text.y }, moved = false; document.body.style.userSelect = 'none';
             function move(event) { let dx = (event.clientX - startX) / zoom, dy = (event.clientY - startY) / zoom; if(Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true; text.x = snapPoint(original.x + dx); text.y = snapPoint(original.y + dy); renderAnnotationTexts(); }
             function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; if(moved) window.doSaveState(); }
@@ -815,7 +821,7 @@
         }
         window.addAnnotationLine = function() { let viewport = getUsableViewport(), y = (viewport.centerY - cy) / zoom, x = (viewport.centerX - cx) / zoom; let line = { id: newId('annotation'), x1: x - 200, y1: y, x2: x + 200, y2: y, color:'var(--c9)' }; if(snapGrid) { line.x1=snapPoint(line.x1); line.y1=snapPoint(line.y1); line.x2=snapPoint(line.x2); line.y2=snapPoint(line.y2); } annotations.lines.push(line); selectAnnotation(line.id); window.doSaveState(); };
         window.deleteAnnotationLine = function(id) { annotations.lines = annotations.lines.filter(line => line.id !== id); if(selectedAnnotationId === id) selectedAnnotationId = null; renderAnnotations(); window.doSaveState(); };
-        window.addAnnotationText = function() { let viewport = getUsableViewport(), x = snapPoint((viewport.centerX - cx) / zoom), y = snapPoint((viewport.centerY - cy) / zoom); let text = { id:newId('annotation_text'), x:x, y:y, text:'หัวข้อช่วงเวลา...', color:'var(--c9)', fontSize:28 }; annotations.texts.push(text); selectAnnotationText(text.id, true); window.doSaveState(); };
+        window.addAnnotationText = function() { let viewport = getUsableViewport(), x = snapPoint((viewport.centerX - cx) / zoom), y = snapPoint((viewport.centerY - cy) / zoom); let text = { id:newId('annotation_text'), x:x, y:y, text:'หัวข้อช่วงเวลา...', description:'คำอธิบายช่วงเวลา...', color:'var(--c9)', fontSize:28 }; annotations.texts.push(text); selectAnnotationText(text.id, true); window.doSaveState(); };
         window.editAnnotationText = function(id) { if(!annotations.texts.some(text => text.id === id)) return; selectAnnotationText(id, true); };
         window.deleteAnnotationText = function(id) { annotations.texts = annotations.texts.filter(text => text.id !== id); if(selectedAnnotationTextId === id) { selectedAnnotationTextId = null; editingAnnotationTextId = null; } renderAnnotationTexts(); window.doSaveState(); };
         window.toggleHlMode = function() { bd.classList.toggle('hl-mode'); };

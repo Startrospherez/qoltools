@@ -15,14 +15,15 @@ but this first version must not impose a timeline-only model.
 
 1. Add a `T` button immediately after `➖` in the Shapes area.
 2. Clicking `T` creates one Floating Text object at the centre of the usable
-   viewport, with the default text `หัวข้อช่วงเวลา...`, C9 blue colour, and
-   a large heading font size. The default text is selected so typing replaces
-   it immediately.
+   viewport, with the default title `หัวข้อช่วงเวลา...`, the default
+   description `คำอธิบายช่วงเวลา...`, C9 blue colour, and a large heading
+   font size. The title is selected so typing replaces it immediately.
 3. Text has no visible box, background, or permanent controls.
 4. Outside editing mode, drag a text object to move it. If `🧲 Snap` is on,
    its anchor position snaps to the existing 40px grid.
-5. Double-click a text object to edit it again. The editable text supports
-   multiple lines through `Shift+Enter` and preserves line breaks.
+5. Double-click a text object to edit it again. It exposes its title and a
+   smaller Description beneath it; both fields are plain multi-line text and
+   preserve `Shift+Enter` line breaks.
 6. Selecting text shows only a subtle dashed outline and a small `×` delete
    control. It deliberately has no resize handles or directional arrows.
 7. The existing `A+` and `A-` controls change the selected Floating Text font
@@ -48,12 +49,12 @@ but this first version must not impose a timeline-only model.
 `annotations` gains a `texts` array alongside `lines`:
 
 ```js
-{ id, x, y, text, color, fontSize }
+{ id, x, y, text, description, color, fontSize }
 ```
 
 - `x` and `y` are Canvas coordinates for the text's top-left anchor.
-- `text` is plain text containing optional newline characters. No HTML markup
-  is stored or interpreted.
+- `text` and `description` are plain text containing optional newline
+  characters. No HTML markup is stored or interpreted.
 - Missing `annotations.texts` remains valid for old maps. Invalid imported
   records (missing string id/text or non-finite coordinates) are ignored.
 - Text records participate in history, autosave, local backup, JSON import,
@@ -72,8 +73,9 @@ but this first version must not impose a timeline-only model.
 
 ## Verification
 
-1. Create a Text object, replace its default text, insert a line break, move
-   it, edit it again, recolour it, resize its font, and delete it.
+1. Create a Text object, replace its default title and Description, insert a
+   line break, move it, double-click to edit it again, recolour it, resize its
+   font, and delete it.
 2. Check Snap while moving and verify that selecting Text, Line, node, and
    image clears the appropriate prior selection.
 3. Verify Undo/Redo, local reload, legacy JSON, Project ZIP export/import,

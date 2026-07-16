@@ -9,8 +9,8 @@
 
 1. Change annotation normalization to always produce `{ lines, texts }`.
 2. Validate text records: string `id`, finite `x`/`y`, string `text`, valid
-   string colour, and a finite positive `fontSize`; default missing legacy
-   properties safely.
+   string title/Description, string colour, and a finite positive `fontSize`;
+   default missing legacy properties safely.
 3. Include `texts` automatically in current state, history, backup, imported
    JSON, Project ZIP, and autosave through the existing annotation state path.
 4. Add selected Floating Text state separately from selected Line state, and
@@ -20,8 +20,9 @@
 
 1. Insert a dedicated Canvas overlay for Floating Text that is visually above
    the SVG annotation lines and below nodes/images.
-2. Render each record as an absolutely positioned, plain-text `div` with
-   `white-space: pre-wrap`; never inject stored text as HTML.
+2. Render each record as an absolutely positioned, plain-text title plus a
+   smaller Description beneath it, using `white-space: pre-wrap`; never inject
+   stored text as HTML.
 3. Render the dashed selection outline and delete `×` as transient controls
    only while a text object is selected and not editing.
 4. Add DOM hydration for saved standalone HTML, analogous to Line hydration,
@@ -31,8 +32,9 @@
 
 1. Add `T` after `➖` in Shapes. Create C9-blue heading text at the usable
    viewport centre and enter edit mode with the default value selected.
-2. Implement input/blur persistence for plain multi-line text and double-click
-   re-entry into edit mode. Preserve `Shift+Enter` line breaks.
+2. Implement input/blur persistence for the plain multi-line title and
+   Description, with reliable repeated-click/double-click re-entry into edit
+   mode. Preserve `Shift+Enter` line breaks.
 3. Implement non-editing drag movement with the existing 40px Snap behavior.
 4. Make Text selection clear selected nodes, images, and Lines; make other
    object selections clear selected Text.
