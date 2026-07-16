@@ -5,8 +5,8 @@ Updated: 2026-07-16 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap release in development: **V3.74**
-- Latest completed MindMap baseline: **V3.74 Phase 1** (`daa61c7 Add Mindmap project ZIP import and export`), followed by view/canvas refinements (`7319ea9`).
+- Current MindMap release: **V3.75** (`4680105 Add Mindmap line annotations`)
+- Latest completed baseline: V3.74 image workflow and its related view/canvas refinements, followed by V3.75 Line annotations.
 - User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
@@ -30,7 +30,7 @@ Updated: 2026-07-16 (Asia/Bangkok)
 - `📥 Import` accepts both legacy JSON and Project ZIP and detects ZIP from its
   bytes plus `manifest.json`, not filename alone. It validates/reads the whole
   package before replacing the active map.
-- **Phase 2 implemented, pending user test:** originals and thumbnails are now
+- **Phase 2 verified by the user:** originals and thumbnails are now
   stored outside history in IndexedDB. Canvas rendering is viewport-aware and
   only creates DOM thumbnail elements near the view. `🌄 ภาพ` suppresses that
   rendering without deleting data. `🖼️ IMG` inserts one or more files; drop
@@ -48,10 +48,21 @@ Updated: 2026-07-16 (Asia/Bangkok)
   it with the global query; it selects the first match and provides previous/
   next controls for additional matches. This UI is not duplicated per node.
 - Browser automation cannot open the local `file://` page under current tool
-  policy; static checks and JSZip round-trip passed. User interaction testing
-  is still required after refresh.
+  policy; static checks passed and the user verified interaction behavior.
 
-## User-Test Feedback: V3.73 Revision (Implemented, Pending User Verification)
+## V3.75: Line Annotations (Verified)
+
+- The final Shape slot now has `➖`, which creates a free Canvas divider at the
+  visible center in blue (`C9`).
+- The line is independent of node connectors. Drag its body to move it; drag
+  either endpoint for free-angle resizing. Hold `Shift` to lock to horizontal
+  or vertical, and turn on `🧲 Snap` to place positions on the 40px grid.
+- Selecting a Line exposes endpoints and an `×` delete control. The colour
+  palettes recolour the selected line; `Delete` removes it.
+- Lines are part of Undo/Redo, local backup, imported JSON/Project ZIP,
+  standalone HTML, PNG output, and Zoom to fit. The user tested this feature.
+
+## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
 ### View control
 
@@ -109,7 +120,7 @@ The editable source is now `content/mindmap-info.html`. `build-tools.js`
 injects it at a stable marker while generating `tools/mindmap.html`; the
 generated page and saved standalone HTML therefore stay self-contained.
 
-## View / Canvas Refinements (Implemented, Pending User Verification)
+## View / Canvas Refinements (Implemented and Verified)
 
 1. The former `Sepia` and `Dark` controls are now one `Theme` button. Each
    press cycles: **Sepia → Dark → Sepia with Dark Canvas → Sepia**.
@@ -124,21 +135,18 @@ generated page and saved standalone HTML therefore stay self-contained.
    percentage around the current mouse position instead. Wheel zoom still
    starts a fresh Fit/return cycle.
 
-## Planned V3.74: Image Workflow (Approved Earlier, Not Implemented)
+## V3.74 Image Workflow (Completed)
 
-- Add `🖼️ IMG` beside `🔎 Find` to open an image-only file picker and insert at
-  the visible canvas center. Drag-and-drop image insertion remains supported.
-- Resize handle modifiers:
-  - none: free resize;
-  - Shift: preserve aspect ratio;
-  - Ctrl: retain original image center;
-  - Shift+Ctrl: preserve aspect ratio and original center.
+- `🖼️ IMG` is beside `🔎 Find`; it opens an image-only picker and inserts at
+  the visible canvas center. Drag-and-drop remains supported.
+- Resize handle modifiers are complete: none = free resize; `Shift` = preserve
+  aspect ratio; `Ctrl` = retain original image center; `Shift` + `Ctrl` = both.
 
 ## Later Roadmap (Not Implemented)
 
 1. Canvas annotations shared architecture:
-   - resizable `Line` divider for timelines;
-   - Floating Text that is independent of nodes.
+   - `Line` divider for timelines is complete;
+   - Floating Text that is independent of nodes is the next feature.
 2. Long-connection navigation: show jump affordances only near a visible line
    end when the opposite node is offscreen; avoid permanent clutter.
 3. Connector labels: future standalone feature. Store `label` in line state,
