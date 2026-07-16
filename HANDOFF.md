@@ -52,8 +52,8 @@ Updated: 2026-07-16 (Asia/Bangkok)
 
 ## V3.75: Line Annotations (Verified)
 
-- The final Shape slot now has `➖`, which creates a free Canvas divider at the
-  visible center in blue (`C9`).
+- The final Shape slot now has `│`, which creates a vertical free Canvas
+  divider at the visible center in blue (`C9`).
 - The line is independent of node connectors. Drag its body to move it; drag
   either endpoint for free-angle resizing. Hold `Shift` to lock to horizontal
   or vertical, and turn on `🧲 Snap` to place positions on the 40px grid.
@@ -61,6 +61,16 @@ Updated: 2026-07-16 (Asia/Bangkok)
   palettes recolour the selected line; `Delete` removes it.
 - Lines are part of Undo/Redo, local backup, imported JSON/Project ZIP,
   standalone HTML, PNG output, and Zoom to fit. The user tested this feature.
+
+## V3.76: Floating Text (Verified)
+
+- `T` creates a free timeline heading with a title and a smaller Description
+  beneath it. It is independent of nodes and Lines while sharing annotation
+  persistence.
+- The Text can be moved with Snap, recoloured, font-sized with A+/A-, deleted,
+  and re-entered for editing by clicking it twice quickly.
+- It is included in Undo/Redo, backup, ZIP, HTML, PNG, and Zoom to fit. The
+  user tested the feature successfully.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
@@ -144,15 +154,12 @@ generated page and saved standalone HTML therefore stay self-contained.
 
 ## Later Roadmap (Not Implemented)
 
-1. Canvas annotations shared architecture:
-   - `Line` divider for timelines is complete;
-   - Floating Text that is independent of nodes is the next feature.
-2. Long-connection navigation: show jump affordances only near a visible line
+1. Long-connection navigation: show jump affordances only near a visible line
    end when the opposite node is offscreen; avoid permanent clutter.
-3. Connector labels: future standalone feature. Store `label` in line state,
+2. Connector labels: future standalone feature. Store `label` in line state,
    decide horizontal orientation and midpoint placement, preserve in history,
    JSON, HTML, exports, and avoid conflict with the mid-line branch control.
-4. GitHub release practice: repository currently has only tag `v0.9`. When a
+3. GitHub release practice: repository currently has only tag `v0.9`. When a
    MindMap release is ready to publish, propose a tag such as
    `mindmap-v3.73` and a GitHub Release; do not create/push one without user
    authorization.
