@@ -5,9 +5,10 @@ Updated: 2026-07-16 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.77** (directed connectors; awaiting user verification).
-- Latest verified baseline: V3.76 Floating Text, after V3.74 image workflow,
-  view/canvas refinements, and V3.75 Line annotations.
+- Current MindMap release: **V3.77** (directed connectors; user verified).
+- Latest verified baseline: V3.77 directed connectors, after V3.76 Floating
+  Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
+  annotations.
 - User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
@@ -73,7 +74,7 @@ Updated: 2026-07-16 (Asia/Bangkok)
 - It is included in Undo/Redo, backup, ZIP, HTML, PNG, and Zoom to fit. The
   user tested the feature successfully.
 
-## V3.77: Directed Connectors (Pending User Verification)
+## V3.77: Directed Connectors (Verified)
 
 - Node-to-node connectors now start and end at the bounding-box edge of each
   Node, so large Nodes no longer hide part of a connector. The existing `+`
@@ -82,8 +83,8 @@ Updated: 2026-07-16 (Asia/Bangkok)
   forward, reverse, and two-headed arrows. Existing maps remain plain lines.
 - Arrow mode is preserved by history, autosave, JSON/ZIP, and standalone HTML;
   splits create plain replacement segments rather than copying arrow meaning.
-- Run the manual geometry, cycle, persistence, and branching checks before
-  calling this release verified.
+- The user tested geometry, all arrow modes, and the existing interaction;
+  everything passed.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
