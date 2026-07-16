@@ -5,7 +5,8 @@ Updated: 2026-07-16 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap release: **V3.77** (directed connectors; user verified).
+- Current MindMap build: **V3.78** (long-connector navigation; awaiting user
+  verification).
 - Latest verified baseline: V3.77 directed connectors, after V3.76 Floating
   Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
   annotations.
@@ -85,6 +86,17 @@ Updated: 2026-07-16 (Asia/Bangkok)
   splits create plain replacement segments rather than copying arrow meaning.
 - The user tested geometry, all arrow modes, and the existing interaction;
   everything passed.
+
+## V3.78: Long-Connector Navigation (Pending User Verification)
+
+- Hover or select a visible Node with a connector whose opposite Node is fully
+  outside the usable viewport. A compact direction button appears near the
+  visible Node edge, pointing toward the remote Node.
+- Clicking the button keeps the zoom percentage and centres the target Node.
+  Partly visible targets and connections with both endpoints outside the view
+  intentionally receive no button.
+- The controls are temporary, grouped with perpendicular offsets for
+  same-direction connectors, and are not persisted or exported.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 

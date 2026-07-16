@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.77</title>
+    <title>MindMap V3.78</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -139,6 +139,8 @@
         .ma { position:absolute; left:22px; top:50%; width:19px; height:19px; padding:0; border:2px solid var(--bc); border-radius:50%; background:var(--tb); color:var(--fg); font:700 13px/14px sans-serif; cursor:pointer; transform:translateY(-50%); opacity:0; transition:opacity .2s, background .2s; }
         .mb:hover .ma, .ma:hover { opacity:1; }
         .ma:hover { background:var(--c6); color:#000; }
+        .connector-nav { position:absolute; z-index:4; padding:0; border:2px solid var(--bc); border-radius:50%; background:var(--c8); color:#fff; font-weight:700; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,.28); transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; }
+        .connector-nav:hover { background:var(--c9); color:#000; transform:translate(-50%,-50%) scale(1.12); }
         
         .img-float { position: absolute; cursor: grab; z-index: 2; }
         .img-float img { width: 100%; height: 100%; display: block; pointer-events: none; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
@@ -206,7 +208,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.77</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.78</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
@@ -347,7 +349,7 @@
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
         let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], images = [];
         let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
-        let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null, lastAnnotationTextClick = { id:null, at:0 };
+        let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null, lastAnnotationTextClick = { id:null, at:0 }, connectorNavHoverId = null, connectorNavHideTimer = null;
         const imageDomById = new Map(), imageThumbUrlByAsset = new Map();
         let activeProjectId = 'local-' + Date.now().toString(36);
         const MM_PROJECT_FORMAT = 'mindmap-project';
@@ -439,6 +441,37 @@
             let top = !uiHidden && toolbar.style.display !== 'none' ? toolbar.getBoundingClientRect().bottom : 0;
             return { left: 0, top: top, width: window.innerWidth, height: Math.max(1, window.innerHeight - top), centerX: window.innerWidth / 2, centerY: top + Math.max(1, window.innerHeight - top) / 2 };
         }
+
+        function nodeCanvasBounds(node) { return { left:node.offsetLeft, top:node.offsetTop, right:node.offsetLeft + node.offsetWidth, bottom:node.offsetTop + node.offsetHeight }; }
+        function nodeIsOutsideViewport(node) {
+            if(!node || !node.isConnected) return true;
+            let bounds = nodeCanvasBounds(node), viewport = getUsableViewport(), left = bounds.left * zoom + cx, right = bounds.right * zoom + cx, top = bounds.top * zoom + cy, bottom = bounds.bottom * zoom + cy;
+            return right <= viewport.left || left >= viewport.left + viewport.width || bottom <= viewport.top || top >= viewport.top + viewport.height;
+        }
+        function connectorDirectionIcon(dx, dy) { let icons = ['→','↘','↓','↙','←','↖','↑','↗'], index = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)); return icons[(index + 8) % 8]; }
+        function cancelConnectorNavigationHide() { if(connectorNavHideTimer) { clearTimeout(connectorNavHideTimer); connectorNavHideTimer = null; } }
+        function scheduleConnectorNavigationHide() { cancelConnectorNavigationHide(); connectorNavHideTimer = setTimeout(() => { connectorNavHoverId = null; renderConnectorNavigation(); }, 120); }
+        function clearConnectorNavigation() { document.querySelectorAll('.connector-nav').forEach(button => button.remove()); }
+        function activeConnectorNavigationNode() {
+            let hovered = connectorNavHoverId && document.getElementById(connectorNavHoverId); if(hovered && !nodeIsOutsideViewport(hovered)) return hovered;
+            let selected = nodes.filter(node => node.classList.contains('sel')); return selected.length === 1 && !nodeIsOutsideViewport(selected[0]) ? selected[0] : null;
+        }
+        function renderConnectorNavigation() {
+            clearConnectorNavigation(); let source = activeConnectorNavigationNode(); if(!source) return;
+            let candidates = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).map(line => {
+                if(line.dataset.n1 !== source.id && line.dataset.n2 !== source.id) return null;
+                let targetId = line.dataset.n1 === source.id ? line.dataset.n2 : line.dataset.n1, target = document.getElementById(targetId);
+                if(!target || !nodeIsOutsideViewport(target)) return null;
+                let points = connectorPointsAtNodeEdges(source, target), sourceAtStart = line.dataset.n1 === source.id, x = sourceAtStart ? points.x1 : points.x2, y = sourceAtStart ? points.y1 : points.y2, targetBounds = nodeCanvasBounds(target), tx = (targetBounds.left + targetBounds.right) / 2, ty = (targetBounds.top + targetBounds.bottom) / 2, dx = tx - x, dy = ty - y, length = Math.hypot(dx, dy);
+                if(!Number.isFinite(length) || length < .001) return null;
+                return { target, x, y, dx:dx / length, dy:dy / length, icon:connectorDirectionIcon(dx, dy) };
+            }).filter(Boolean);
+            let groups = new Map(); candidates.forEach(item => { let group = groups.get(item.icon) || []; group.push(item); groups.set(item.icon, group); });
+            groups.forEach(group => group.forEach((item, index) => {
+                let offset = (index - (group.length - 1) / 2) * 18 / zoom, distance = 30 / zoom, button = document.createElement('button'); button.type = 'button'; button.className = 'connector-nav'; button.textContent = item.icon; button.title = 'กระโดดไปยัง ' + ((item.target.querySelector('.nt') && item.target.querySelector('.nt').innerText.trim()) || 'node ที่เชื่อมอยู่'); button.style.left = (item.x + item.dx * distance - item.dy * offset) + 'px'; button.style.top = (item.y + item.dy * distance + item.dx * offset) + 'px'; button.style.width = (24 / zoom) + 'px'; button.style.height = (24 / zoom) + 'px'; button.style.fontSize = (15 / zoom) + 'px'; button.onmouseenter = cancelConnectorNavigationHide; button.onmouseleave = scheduleConnectorNavigationHide; button.onmousedown = event => window.jumpToConnectorNode(event, item.target.id); b.appendChild(button);
+            }));
+        }
+        window.jumpToConnectorNode = function(e, targetId) { e.preventDefault(); e.stopPropagation(); let target = document.getElementById(targetId); if(!target) return; let viewport = getUsableViewport(), bounds = nodeCanvasBounds(target); cx = viewport.centerX - (bounds.left + bounds.right) / 2 * zoom; cy = viewport.centerY - (bounds.top + bounds.bottom) / 2 * zoom; updateTransform(); clearFitRestore(); window.showToast('🧭 ไปยัง node ที่เชื่อมอยู่'); };
 
         function updateZoomStatus() { let control = document.getElementById('zoom-status'); if(control) control.textContent = Math.round(zoom * 100) + '%'; }
         function clearFitRestore() { fitRestoreView = null; }
@@ -843,7 +876,7 @@
             clone.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
             clone.querySelectorAll('.note-btn.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
             clone.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(clone.ownerDocument.createTextNode(mark.textContent || '')));
-            clone.querySelectorAll('[data-annotation-ui], .mb').forEach(control => control.remove());
+            clone.querySelectorAll('[data-annotation-ui], .mb, .connector-nav').forEach(control => control.remove());
             clone.querySelectorAll('.annotation-text.selected').forEach(text => text.classList.remove('selected'));
             clone.querySelectorAll('.annotation-text.editing').forEach(text => text.classList.remove('editing'));
             clone.querySelectorAll('.annotation-text-content[contenteditable="true"]').forEach(content => content.contentEditable = 'false');
@@ -995,7 +1028,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.77', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.78', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1137,7 +1170,7 @@
             updateAll(); curStep = step; renderAnnotations(); renderAnnotationTexts(); renderImageLayer();
         };
         
-        function updateTransform() { b.style.transform = `translate(${cx}px, ${cy}px) scale(${zoom})`; b.dataset.cx = cx; b.dataset.cy = cy; b.dataset.zoom = zoom; updateZoomStatus(); renderImageLayer(); }
+        function updateTransform() { b.style.transform = `translate(${cx}px, ${cy}px) scale(${zoom})`; b.dataset.cx = cx; b.dataset.cy = cy; b.dataset.zoom = zoom; updateZoomStatus(); renderImageLayer(); renderConnectorNavigation(); }
         function attachNodeEvents(n) { 
             n.onmousedown = function(e) { 
                 e.stopPropagation(); 
@@ -1147,8 +1180,10 @@
                 dragStartX = e.clientX; dragStartY = e.clientY;
                 dragStartPos = nodes.filter(x => x.classList.contains('sel')).map(x => ({ node: x, left: parseFloat(x.style.left) || 0, top: parseFloat(x.style.top) || 0 }));
                 if(snapGrid) dragStartPos.forEach(p => p.node.classList.add('snap-dragging'));
-                document.body.style.userSelect = 'none';
+                document.body.style.userSelect = 'none'; renderConnectorNavigation();
             }; 
+            n.onmouseenter = function() { cancelConnectorNavigationHide(); connectorNavHoverId = n.id; renderConnectorNavigation(); };
+            n.onmouseleave = function() { scheduleConnectorNavigationHide(); };
         }
         function addNode(x, y, pid, type = 'n') { let id = 'n' + nid++; let n = document.createElement('div'); n.className = type === 'j' ? 'n j' : 'n'; n.id = id; n.style.left = x + 'px'; n.style.top = y + 'px'; n.dataset.shape = 'box'; n.dataset.note = ''; n.innerHTML = '<div class="dx" onclick="del(\'' + id + '\')" title="ลบกล่องนี้">x</div><button class="note-btn" type="button" onclick="window.openNodeNote(\'' + id + '\')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, \'' + id + '\',\'r\')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, \'' + id + '\',\'l\')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, \'' + id + '\',\'t\')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, \'' + id + '\',\'b\')">+</div>'; b.appendChild(n); nodes.push(n); attachNodeEvents(n); if(pid) { window.createLine(pid, id); } return n; }
 
@@ -1216,8 +1251,8 @@
         window.addLink = function(pid, dir) { let p = document.getElementById(pid); if(!p) return; let x = parseFloat(p.style.left); let y = parseFloat(p.style.top); if(dir === 'r') { x += 220; y += (Math.random() * 20 - 10); } else if(dir === 'l') { x -= 220; y += (Math.random() * 20 - 10); } else if(dir === 't') { y -= 160; x += (Math.random() * 20 - 10); } else if(dir === 'b') { y += 160; x += (Math.random() * 20 - 10); } else { x += 220; y += (Math.random() * 20 - 10); } let w = 150, h = 80; let isOverlap = function(nx, ny) { return nodes.some(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top); let nw = n.offsetWidth || 150, nh = n.offsetHeight || 80; return !(nx + w + 20 < nl || nx > nl + nw + 20 || ny + h + 20 < nt || ny > nt + nh + 20); }); }; if(dir === 'l' || dir === 'r') { while(isOverlap(x, y)) y += 100; } else if(dir === 't' || dir === 'b') { while(isOverlap(x, y)) x += 180; } else { while(isOverlap(x, y)) y += 100; } addNode(x, y, pid); window.doSaveState(); };
         function updateLine(l) { let n1 = document.getElementById(l.dataset.n1), n2 = document.getElementById(l.dataset.n2); if(n1 && n2) { let points = connectorPointsAtNodeEdges(n1, n2); l.setAttribute('x1', points.x1); l.setAttribute('y1', points.y1); l.setAttribute('x2', points.x2); l.setAttribute('y2', points.y2); applyConnectorArrow(l); let mx = (points.x1 + points.x2) / 2, my = (points.y1 + points.y2) / 2; let mb = document.getElementById('mb_' + l.id); if(!mb) { mb = document.createElement('div'); mb.id = 'mb_' + l.id; mb.className = 'mb'; mb.innerHTML = '+'; mb.title = "ลากเพื่อแตกแขนง (ไปยังที่ว่าง/Node/เส้นอื่น) หรือคลิกเฉยๆ"; mb.onmousedown = function(e) { window.startLineDragFromMid(e, l.id); }; let ma = document.createElement('button'); ma.type = 'button'; ma.className = 'ma'; ma.onmousedown = function(e) { window.cycleConnectorArrow(e, l.id); }; mb.appendChild(ma); document.getElementById('b').appendChild(mb); } let ma = mb.querySelector('.ma'), meta = connectorArrowMeta(l.dataset.arrow); if(ma) { ma.textContent = meta.icon; ma.title = meta.title; } mb.style.left = mx + 'px'; mb.style.top = my + 'px'; } else { l.remove(); let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); } }
         window.startLineDragFromMid = function(e, lineId) { e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let mb = document.getElementById('mb_' + lineId); let startX = e.clientX, startY = e.clientY; let mx = mb ? parseFloat(mb.style.left) : (parseFloat(line.getAttribute('x1')) + parseFloat(line.getAttribute('x2'))) / 2; let my = mb ? parseFloat(mb.style.top) : (parseFloat(line.getAttribute('y1')) + parseFloat(line.getAttribute('y2'))) / 2; let n1_id = line.dataset.n1, n2_id = line.dataset.n2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', mx); tl.setAttribute('y1', my); tl.setAttribute('x2', mx); tl.setAttribute('y2', my); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l !== tl && l !== line); allLines.forEach(l => { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetNode = me.target.closest('.n'); let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLineId = targetMb.id.replace(/^mb_/, ''); if(mbLineId !== lineId) { let mbLine = document.getElementById(mbLineId); if(mbLine) { targetLine = mbLine; targetNode = null; } } } let dropX = (me.clientX - cx) / zoom, dropY = (me.clientY - cy) / zoom; if(!moved) { let jNode = addNode(mx - 8, my - 8, null, 'j'); addNode(mx + 100, my + 80, jNode.id, 'n'); line.remove(); if(mb) mb.remove(); window.createLine(n1_id, jNode.id); window.createLine(jNode.id, n2_id); window.doSaveState(); return; } if(targetLine && targetLine.id.startsWith('l_') && targetLine.id !== lineId) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); line.remove(); if(mb) mb.remove(); let j1 = addNode(mx - 8, my - 8, null, 'j'); let j2 = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(n1_id, j1.id); window.createLine(j1.id, n2_id); window.createLine(tn1, j2.id); window.createLine(j2.id, tn2); window.createLine(j1.id, j2.id); window.doSaveState(); } else if(targetNode) { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); let existing = document.querySelector('line[data-n1="' + j.id + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + j.id + '"][data-n1="' + targetNode.id + '"]'); if(!existing) window.createLine(j.id, targetNode.id); window.doSaveState(); } else { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); addNode(dropX - 75, dropY - 40, j.id, 'n'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); window.doSaveState(); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
-        function updateAll() { s.querySelectorAll('line[data-n1][data-n2]').forEach(updateLine); }
-        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); }
+        function updateAll() { s.querySelectorAll('line[data-n1][data-n2]').forEach(updateLine); renderConnectorNavigation(); }
+        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorNavigation(); }
 
         window.addEventListener('wheel', function(e) {
             if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('#zoom-status')) return;
@@ -1227,7 +1262,7 @@
         }, {passive: false});
 
         window.addEventListener('mousedown', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('.connector-nav')) return;
             if(e.target.closest('#float-ui-btn')) return;
 
             if(e.button === 1 || e.button === 2) { isPan = true; px = e.clientX; py = e.clientY; }
@@ -1237,7 +1272,7 @@
             }
         });
 
-        window.addEventListener('contextmenu', function(e) { if(!e.target.closest('.n') && !e.target.closest('.mb')) e.preventDefault(); });
+        window.addEventListener('contextmenu', function(e) { if(!e.target.closest('.n') && !e.target.closest('.mb') && !e.target.closest('.connector-nav')) e.preventDefault(); });
 
         window.addEventListener('mousemove', function(e) {
             lastCanvasPointer = { x: e.clientX, y: e.clientY };
@@ -1253,11 +1288,11 @@
             document.body.style.userSelect = '';
             if(crDrag) crDrag = false; if(crResize) crResize = false;
             if(drag) { drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); drag = null; if(isMoved) { window.doSaveState(); isMoved = false; } }
-            isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none';
+            isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none'; renderConnectorNavigation();
         });
 
         window.addEventListener('dblclick', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('#about-btn')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('.connector-nav') || e.target.closest('#about-btn')) return;
             if(e.target.closest('.n') || e.target.closest('.img-float') || e.target.closest('.annotation-text')) return;
             let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; addNode(nx, ny, null); window.doSaveState();
         });
