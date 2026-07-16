@@ -665,20 +665,20 @@
             document.getElementById('note-find-prev').disabled = !hasMatches;
             document.getElementById('note-find-next').disabled = !hasMatches;
         }
-        function showNoteFindResult() {
+        function showNoteFindResult(focusResult) {
             let textarea = document.getElementById('node-note-input'), match = noteFindMatches[noteFindIndex];
-            if(match) { textarea.setSelectionRange(match.start, match.end); let line = textarea.value.slice(0, match.start).split('\n').length - 1, lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 24; textarea.scrollTop = Math.max(0, line * lineHeight - textarea.clientHeight / 3); }
+            if(match) { textarea.setSelectionRange(match.start, match.end); let line = textarea.value.slice(0, match.start).split('\n').length - 1, lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 24; textarea.scrollTop = Math.max(0, line * lineHeight - textarea.clientHeight / 3); if(focusResult) textarea.focus({ preventScroll: true }); }
             updateNoteFindControls();
         }
-        window.refreshNoteFind = function() {
+        window.refreshNoteFind = function(focusResult) {
             let textarea = document.getElementById('node-note-input'), query = document.getElementById('note-find-input').value.trim().toLocaleLowerCase(), text = textarea.value, lower = text.toLocaleLowerCase();
             noteFindMatches = []; noteFindIndex = -1;
             if(query) { let start = lower.indexOf(query); while(start >= 0) { noteFindMatches.push({ start, end: start + query.length }); start = lower.indexOf(query, start + query.length); } if(noteFindMatches.length) noteFindIndex = 0; }
-            showNoteFindResult();
+            showNoteFindResult(focusResult);
         };
-        window.navigateNoteFind = function(direction) { if(!noteFindMatches.length) return; noteFindIndex = (noteFindIndex + direction + noteFindMatches.length) % noteFindMatches.length; showNoteFindResult(); };
+        window.navigateNoteFind = function(direction) { if(!noteFindMatches.length) return; noteFindIndex = (noteFindIndex + direction + noteFindMatches.length) % noteFindMatches.length; showNoteFindResult(true); };
         window.toggleNoteFind = function() { let ui = document.getElementById('note-find-ui'); if(ui.style.display === 'flex') return window.closeNoteFind(); ui.style.display = 'flex'; window.refreshNoteFind(); document.getElementById('note-find-input').focus(); };
-        window.openNoteFind = function(query) { let ui = document.getElementById('note-find-ui'); ui.style.display = 'flex'; let input = document.getElementById('note-find-input'); input.value = query || ''; window.refreshNoteFind(); input.focus(); input.select(); };
+        window.openNoteFind = function(query) { let ui = document.getElementById('note-find-ui'); ui.style.display = 'flex'; let input = document.getElementById('note-find-input'); input.value = query || ''; window.refreshNoteFind(true); };
         window.closeNoteFind = function() { document.getElementById('note-find-ui').style.display = 'none'; document.getElementById('note-find-input').value = ''; noteFindMatches = []; noteFindIndex = -1; updateNoteFindControls(); };
 
         window.openNodeNote = function(id) {
