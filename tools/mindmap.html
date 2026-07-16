@@ -83,6 +83,7 @@
         .n.snap-dragging { opacity: 0.5; }
         .n.find-hit { outline: 4px solid rgb(255,193,7); outline-offset: 5px; box-shadow: 0 0 0 8px rgba(255,193,7,0.25), 0 4px 12px rgba(0,0,0,0.18); }
         .find-text-hit { background: rgba(255,193,7,0.5); border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+        .note-btn.find-note-hit { display: block !important; background: rgb(255,193,7); color: rgb(60,50,0); border-color: rgb(255,193,7); box-shadow: 0 0 0 3px rgba(255,193,7,0.35), 0 2px 4px rgba(0,0,0,0.2); }
         .n.j { min-width: 16px !important; min-height: 16px !important; width: 16px; height: 16px; padding: 0 !important; border-radius: 50% !important; background: var(--fg) !important; border: 2px solid var(--bg) !important; box-shadow: none; resize: none; overflow: visible; }
         .n.j .nt, .n.j .nd, .n.j .p { display: none !important; }
         
@@ -197,7 +198,7 @@
 </details>
 <details>
     <summary>🧩 ใช้งานยังไง?</summary>
-    <ul><li>ดับเบิลคลิกพื้นที่ว่างเพื่อสร้าง node</li><li>แก้ไขหัวข้อและรายละเอียดในกล่องได้โดยตรง</li><li>ลากปุ่ม <b>+</b> รอบ node เพื่อเชื่อม, แตกแขนง หรือสร้าง node ใหม่</li><li>ใช้ <b>🔎 Find</b> ค้นหาหัวข้อ, รายละเอียด, และ Note; ข้อความที่พบในหัวข้อ/รายละเอียดจะถูกเน้นสี ส่วนที่พบเฉพาะ Note จะเน้นเฉพาะ node โดยไม่แสดง Note บน Canvas</li><li>ลากพื้นที่ว่างเพื่อเลือกหลายรายการ; ลาก node เพื่อย้าย; คลิกขวาหรือกดเมาส์กลางค้างเพื่อเลื่อนมุมมอง</li></ul>
+    <ul><li>ดับเบิลคลิกพื้นที่ว่างเพื่อสร้าง node</li><li>แก้ไขหัวข้อและรายละเอียดในกล่องได้โดยตรง</li><li>ลากปุ่ม <b>+</b> รอบ node เพื่อเชื่อม, แตกแขนง หรือสร้าง node ใหม่</li><li>ใช้ <b>🔎 Find</b> ค้นหาหัวข้อ, รายละเอียด, และ Note; ข้อความที่พบในหัวข้อ/รายละเอียดจะถูกเน้นสี ส่วนที่พบใน Note จะทำให้ปุ่ม <b>📝</b> ของ node แสดงและถูกเน้น โดยไม่แสดงข้อความ Note บน Canvas</li><li>ลากพื้นที่ว่างเพื่อเลือกหลายรายการ; ลาก node เพื่อย้าย; คลิกขวาหรือกดเมาส์กลางค้างเพื่อเลื่อนมุมมอง</li></ul>
 </details>
 <details>
     <summary>🧭 ทำยังไง?</summary>
@@ -493,6 +494,7 @@
 
         function clearFindHighlight() {
             document.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
+            document.querySelectorAll('.note-btn.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
             document.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(document.createTextNode(mark.textContent || '')));
         }
 
@@ -535,9 +537,10 @@
             clearFindHighlight();
             if(findIndex < 0 || !findMatches[findIndex]) { updateFindControls(); return; }
             let match = findMatches[findIndex], node = match.node;
-            node.classList.add('find-hit');
+            if(match.title || match.detail) node.classList.add('find-hit');
             if(match.title) markTextMatches(node.querySelector('.nt'), match.query);
             if(match.detail) markTextMatches(node.querySelector('.nd'), match.query);
+            if(match.note) { let noteButton = node.querySelector('.note-btn'); if(noteButton) noteButton.classList.add('find-note-hit'); }
             centerFindNode(node);
             updateFindControls();
         }
@@ -733,6 +736,7 @@
             let state = currentMindmapState();
             let clone = document.documentElement.cloneNode(true);
             clone.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
+            clone.querySelectorAll('.note-btn.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
             clone.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(clone.ownerDocument.createTextNode(mark.textContent || '')));
             let cloneCanvas = clone.querySelector('#b'); cloneCanvas.querySelectorAll('.img-float').forEach(im => im.remove());
             for(let placement of state.images) {

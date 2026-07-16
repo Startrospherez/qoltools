@@ -41,8 +41,9 @@ Updated: 2026-07-16 (Asia/Bangkok)
 - Legacy JSON/HTML image data remains readable. It is migrated to managed
   assets when the first managed image is inserted or a Project ZIP is made.
 - Find now searches title, description, and per-node Note in its `all` scope.
-  Title/description hits receive temporary text highlighting; Note-only hits
-  highlight and center their node without leaking Note text onto the Canvas.
+  Title/description hits receive temporary text highlighting. A Note hit
+  instead reveals and highlights the node's `📝` button without leaking Note
+  text onto the Canvas.
 - Browser automation cannot open the local `file://` page under current tool
   policy; static checks and JSZip round-trip passed. User interaction testing
   is still required after refresh.
