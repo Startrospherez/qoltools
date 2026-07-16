@@ -82,6 +82,7 @@
         .n.sel { border-color: rgb(33,150,243) !important; --n-bd: rgb(33,150,243) !important; box-shadow: 0 0 0 3px rgba(33,150,243,0.3); }
         .n.snap-dragging { opacity: 0.5; }
         .n.find-hit { outline: 4px solid rgb(255,193,7); outline-offset: 5px; box-shadow: 0 0 0 8px rgba(255,193,7,0.25), 0 4px 12px rgba(0,0,0,0.18); }
+        .find-text-hit { background: rgba(255,193,7,0.5); border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
         .n.j { min-width: 16px !important; min-height: 16px !important; width: 16px; height: 16px; padding: 0 !important; border-radius: 50% !important; background: var(--fg) !important; border: 2px solid var(--bg) !important; box-shadow: none; resize: none; overflow: visible; }
         .n.j .nt, .n.j .nd, .n.j .p { display: none !important; }
         
@@ -298,7 +299,7 @@
         <input id="find-input" type="search" placeholder="ค้นหา…" autocomplete="off" aria-label="คำค้นหา">
         <select id="find-scope" aria-label="ขอบเขตการค้นหา" title="เลือกขอบเขตการค้นหา">
             <option value="title">หัวข้อ</option>
-            <option value="all">หัวข้อ + รายละเอียด</option>
+            <option value="all">หัวข้อ + รายละเอียด + Note</option>
         </select>
         <span id="find-count" aria-live="polite">0 / 0</span>
         <button id="find-prev" onclick="window.navigateFind(-1)" title="ผลก่อนหน้า (Shift+Enter)" aria-label="ผลก่อนหน้า">▲</button>
@@ -468,6 +469,21 @@
 
         function clearFindHighlight() {
             document.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
+            document.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(document.createTextNode(mark.textContent || '')));
+        }
+
+        function markTextMatches(element, query) {
+            if(!element || !query) return;
+            let walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT), textNodes = [];
+            while(walker.nextNode()) textNodes.push(walker.currentNode);
+            textNodes.forEach(textNode => {
+                let text = textNode.nodeValue || '', lower = text.toLocaleLowerCase(), start = lower.indexOf(query);
+                if(start < 0) return;
+                let fragment = document.createDocumentFragment(), cursor = 0;
+                while(start >= 0) { if(start > cursor) fragment.appendChild(document.createTextNode(text.slice(cursor, start))); let mark = document.createElement('span'); mark.className = 'find-text-hit'; mark.textContent = text.slice(start, start + query.length); fragment.appendChild(mark); cursor = start + query.length; start = lower.indexOf(query, cursor); }
+                if(cursor < text.length) fragment.appendChild(document.createTextNode(text.slice(cursor)));
+                textNode.replaceWith(fragment);
+            });
         }
 
         function updateFindControls() {
@@ -494,8 +510,10 @@
         function showFindResult() {
             clearFindHighlight();
             if(findIndex < 0 || !findMatches[findIndex]) { updateFindControls(); return; }
-            let node = findMatches[findIndex];
+            let match = findMatches[findIndex], node = match.node;
             node.classList.add('find-hit');
+            if(match.title) markTextMatches(node.querySelector('.nt'), match.query);
+            if(match.detail) markTextMatches(node.querySelector('.nd'), match.query);
             centerFindNode(node);
             updateFindControls();
         }
@@ -507,23 +525,23 @@
             if(!query) {
                 findMatches = []; findIndex = -1; updateFindControls(); return;
             }
-            findMatches = nodes.filter(n => {
-                if(!n.isConnected || n.classList.contains('j')) return false;
-                let title = n.querySelector('.nt');
-                let detail = n.querySelector('.nd');
-                return (title && title.textContent.toLocaleLowerCase().includes(query)) || (includeDetails && detail && detail.textContent.toLocaleLowerCase().includes(query));
-            });
-            findIndex = preferredNode ? findMatches.indexOf(preferredNode) : 0;
+            findMatches = nodes.reduce((matches, n) => {
+                if(!n.isConnected || n.classList.contains('j')) return matches;
+                let title = n.querySelector('.nt'), detail = n.querySelector('.nd'), titleMatch = !!(title && title.textContent.toLocaleLowerCase().includes(query)), detailMatch = !!(includeDetails && detail && detail.textContent.toLocaleLowerCase().includes(query)), noteMatch = !!(includeDetails && (n.dataset.note || '').toLocaleLowerCase().includes(query));
+                if(titleMatch || detailMatch || noteMatch) matches.push({ node: n, title: titleMatch, detail: detailMatch, note: noteMatch, query: query });
+                return matches;
+            }, []);
+            findIndex = preferredNode ? findMatches.findIndex(match => match.node === preferredNode) : 0;
             if(findIndex < 0 && findMatches.length) findIndex = 0;
             if(!findMatches.length) findIndex = -1;
             showFindResult();
         };
 
         window.navigateFind = function(direction) {
-            let current = findMatches[findIndex];
+            let current = findMatches[findIndex] && findMatches[findIndex].node;
             window.refreshFind(current);
             if(!findMatches.length) return;
-            let currentIndex = current ? findMatches.indexOf(current) : -1;
+            let currentIndex = current ? findMatches.findIndex(match => match.node === current) : -1;
             findIndex = currentIndex < 0 ? (direction > 0 ? 0 : findMatches.length - 1) : (currentIndex + direction + findMatches.length) % findMatches.length;
             showFindResult();
         };
@@ -533,7 +551,7 @@
             let input = document.getElementById('find-input');
             findUI.style.display = 'flex';
             updateFindPosition();
-            window.refreshFind(findMatches[findIndex]);
+            window.refreshFind(findMatches[findIndex] && findMatches[findIndex].node);
             input.focus(); input.select();
         };
 
@@ -546,7 +564,7 @@
         };
 
         document.getElementById('find-input').addEventListener('input', function() { window.refreshFind(); });
-        document.getElementById('find-scope').addEventListener('change', function() { window.refreshFind(findMatches[findIndex]); });
+        document.getElementById('find-scope').addEventListener('change', function() { window.refreshFind(findMatches[findIndex] && findMatches[findIndex].node); });
         document.getElementById('find-input').addEventListener('keydown', function(e) {
             if(e.key === 'Enter') { e.preventDefault(); window.navigateFind(e.shiftKey ? -1 : 1); }
         });
@@ -691,6 +709,7 @@
             let state = currentMindmapState();
             let clone = document.documentElement.cloneNode(true);
             clone.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
+            clone.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(clone.ownerDocument.createTextNode(mark.textContent || '')));
             let cloneCanvas = clone.querySelector('#b'); cloneCanvas.querySelectorAll('.img-float').forEach(im => im.remove());
             for(let placement of state.images) {
                 let previewSrc = placement.src || '';
