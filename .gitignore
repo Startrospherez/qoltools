@@ -4,6 +4,8 @@ node_modules/
 Thumbs.db
 .agents/
 .claude/
+AGENTS.md
+CLAUDE.md
 
 # Original bookmark exports (data: URIs) still embed Firebase apiKey + JWT
 # from Google AI Studio. Keep them LOCAL — never push.
