@@ -9,15 +9,23 @@ the V3.74 Project ZIP format or image-library implementation.
 
 ## Canvas Dark
 
-Mindmap's toolbar `Dark` control becomes a local **Canvas Dark** toggle. It
-changes only the working-canvas background to a near-black color. The toolbar,
-buttons, nodes, Info dialog, and shared Hub theme remain in their existing
-colors.
+The existing `Dark` theme remains available. Its toolbar button cycles through
+three explicit states:
 
-- Canvas Dark is off when a Mindmap opens, preventing an unintended black
-  startup screen.
-- It is independent from the global `hub_theme` state and does not write to
-  that state, so turning it on does not change the other tools.
+1. **Sepia / normal** → full **Dark theme**, exactly as the current button
+   does.
+2. **Full Dark theme** → **Canvas Dark**: reset the interface, nodes, dialogs,
+   and controls to normal Sepia, while changing only the working-canvas
+   background to a near-black color.
+3. **Canvas Dark** → normal **Sepia / normal**.
+
+Canvas Dark is therefore a useful second press of the existing Dark button,
+not a replacement for the original full Dark theme. The second transition also
+sets the shared base theme back to Sepia, preserving the existing global theme
+model; only the Canvas-black state itself is Mindmap-local.
+
+- Canvas Dark is off when a Mindmap opens unless a user explicitly reaches it
+  through this button cycle, preventing an unintended black startup screen.
 - It must remain usable with Grid, Snap, selection, PNG export, and standalone
   HTML. Grid lines remain visible against the dark canvas.
 
@@ -52,7 +60,8 @@ The toast should distinguish exact restore from cursor-centered zoom restore.
 ## Verification
 
 1. Open `tools/mindmap.html` directly: Canvas starts in normal light/sepia
-   mode, not black. Toggle Dark and verify only Canvas changes.
+   mode, not black. Press Dark once for the full Dark theme, press it again
+   for Canvas Dark with Sepia UI, then press it once more to return to Sepia.
 2. Toggle Grid and Canvas Dark together; verify grid and node readability.
 3. Check Note button normal and hover colors on selected and hovered nodes.
 4. At 80%, press `Alt+R`, then press again without moving: exact original view
