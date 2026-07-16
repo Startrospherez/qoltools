@@ -95,6 +95,21 @@ The editable source is now `content/mindmap-info.html`. `build-tools.js`
 injects it at a stable marker while generating `tools/mindmap.html`; the
 generated page and saved standalone HTML therefore stay self-contained.
 
+## View / Canvas Refinements (Implemented, Pending User Verification)
+
+1. The former `Sepia` and `Dark` controls are now one `Theme` button. Each
+   press cycles: **Sepia → Dark → Sepia with Dark Canvas → Sepia**.
+   - `Dark` retains the original full dark theme.
+   - `Sepia with Dark Canvas` keeps the normal Sepia UI, nodes, and dialogs,
+     while making only the working canvas black. This state does not persist
+     when a map is newly opened.
+2. The node `📝` button now uses its light accent colour normally and changes
+   to blue on hover.
+3. `Alt+R` keeps the original exact return when the view has not moved after
+   Fit. If the user pans after Fit, the next `Alt+R` restores the pre-Fit zoom
+   percentage around the current mouse position instead. Wheel zoom still
+   starts a fresh Fit/return cycle.
+
 ## Planned V3.74: Image Workflow (Approved Earlier, Not Implemented)
 
 - Add `🖼️ IMG` beside `🔎 Find` to open an image-only file picker and insert at

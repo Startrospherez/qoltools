@@ -68,7 +68,9 @@
         #float-ui-btn:hover { background: rgb(238,238,238); }
         
         .huge-canvas { position: absolute; width: 20000px; height: 20000px; transform-origin: 0 0; }
+        .huge-canvas.canvas-dark { background-color: rgb(24,24,24); }
         .huge-canvas.show-grid { background-image: linear-gradient(rgba(128,128,128,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,.3) 1px, transparent 1px); background-size: 40px 40px; }
+        .huge-canvas.canvas-dark.show-grid { background-image: linear-gradient(rgba(210,210,210,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(210,210,210,.28) 1px, transparent 1px); }
         svg { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
         
         /* Nodes */ 
@@ -112,7 +114,8 @@
         .p-l { left: -15px; top: 50%; transform: translateY(-50%); }
         .p-t { top: -15px; left: 50%; transform: translateX(-50%); }
         .p-b { bottom: -15px; left: 50%; transform: translateX(-50%); }
-        .note-btn { position: absolute; left: -10px; bottom: -10px; width: 22px; height: 22px; padding: 0; border: 1px solid var(--bc); border-radius: 50%; background: var(--c9); color: var(--fg); cursor: pointer; font-size: 12px; line-height: 20px; display: none; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+        .note-btn { position: absolute; left: -10px; bottom: -10px; width: 22px; height: 22px; padding: 0; border: 1px solid var(--c9); border-radius: 50%; background: var(--tb); color: var(--c9); cursor: pointer; font-size: 12px; line-height: 20px; display: none; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+        .note-btn:hover { background: var(--c9); color: #fff; border-color: var(--c9); }
         .n:hover .note-btn, .n.sel .note-btn { display: block; }
         .n.j .note-btn { display: none !important; }
         .dx { position: absolute; left: -10px; top: -10px; background: rgb(255,77,77); color: rgb(255,255,255); border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 18px; cursor: pointer; font-size: 12px; display: none; z-index: 4; }
@@ -207,10 +210,9 @@
         <!-- Block 3: Themes & History -->
         <div class="ui-col" style="justify-content:center;">
             <div class="flex-row" style="margin-bottom:4px; justify-content:center;">
-                <button onclick="window.setTheme('sepia')" style="flex:1;">Sepia</button>
-                <button onclick="window.setTheme('dark')" style="flex:1;">Dark</button>
+                <button onclick="window.cycleMindmapTheme()" title="Sepia → Dark → Sepia with Dark Canvas" style="flex:1;">Theme</button>
             </div>
-            <button onclick="window.setTheme('shader')" title="Screen Shader (Alt+M)" style="margin-bottom:4px; width:100%;">🕶️ Shader</button>
+            <button onclick="window.setTheme('shader')" title="Screen Shader" style="margin-bottom:4px; width:100%;">🕶️ Shader</button>
             <div class="flex-row" style="justify-content:center;">
                 <button onclick="window.doUndo()" title="Undo (Alt+Z)" style="flex:1;">↩️ Undo</button>
                 <button onclick="window.doRedo()" title="Redo (Alt+Y)" style="flex:1;">↪️ Redo</button>
@@ -314,6 +316,7 @@
         let nodeNoteId = null;
         let nodeNoteTimer = null;
         let fitRestoreView = null;
+        let lastCanvasPointer = null;
 
         function getUsableViewport() {
             let toolbar = document.getElementById('mm-ui');
@@ -323,6 +326,11 @@
 
         function updateZoomStatus() { let control = document.getElementById('zoom-status'); if(control) control.textContent = Math.round(zoom * 100) + '%'; }
         function clearFitRestore() { fitRestoreView = null; }
+        function currentCanvasPointer() {
+            let viewport = getUsableViewport();
+            if(lastCanvasPointer && lastCanvasPointer.x >= 0 && lastCanvasPointer.x <= window.innerWidth && lastCanvasPointer.y >= viewport.top && lastCanvasPointer.y <= window.innerHeight) return lastCanvasPointer;
+            return { x: viewport.centerX, y: viewport.centerY };
+        }
 
         function fitGraphView() {
             let elements = nodes.concat(images);
@@ -343,9 +351,16 @@
 
         window.toggleFitView = function() {
             if(fitRestoreView) {
-                cx = fitRestoreView.cx; cy = fitRestoreView.cy; zoom = fitRestoreView.zoom; updateTransform(); clearFitRestore(); window.showToast('↩️ กลับมุมมองเดิม');
+                let restore = fitRestoreView;
+                if(restore.wasPanned) {
+                    let pointer = currentCanvasPointer(), canvasX = (pointer.x - cx) / zoom, canvasY = (pointer.y - cy) / zoom;
+                    zoom = restore.zoom; cx = pointer.x - canvasX * zoom; cy = pointer.y - canvasY * zoom;
+                    updateTransform(); clearFitRestore(); window.showToast('↩️ กลับ Zoom ' + Math.round(zoom * 100) + '% ที่ตำแหน่งเมาส์');
+                } else {
+                    cx = restore.cx; cy = restore.cy; zoom = restore.zoom; updateTransform(); clearFitRestore(); window.showToast('↩️ กลับมุมมองเดิม');
+                }
             } else {
-                fitRestoreView = { cx: cx, cy: cy, zoom: zoom };
+                fitRestoreView = { cx: cx, cy: cy, zoom: zoom, wasPanned: false };
                 if(fitGraphView()) window.showToast('🗺️ แสดงภาพรวมกราฟ'); else { clearFitRestore(); window.showToast('⚠️ ยังไม่มีข้อมูลสำหรับ Fit graph'); }
             }
         };
@@ -526,9 +541,20 @@
             nodeNoteTimer = setTimeout(saveNodeNote, 500);
         });
 
+        window.cycleMindmapTheme = function() {
+            if(b.classList.contains('canvas-dark')) {
+                b.classList.remove('canvas-dark');
+                if(window.setBaseTheme) window.setBaseTheme('sepia'); else { bd.classList.remove('dark', 'white'); }
+            } else if(bd.classList.contains('dark')) {
+                if(window.setBaseTheme) window.setBaseTheme('sepia'); else { bd.classList.remove('dark', 'white'); }
+                b.classList.add('canvas-dark');
+            } else {
+                if(window.setBaseTheme) window.setBaseTheme('dark'); else { bd.classList.remove('white'); bd.classList.add('dark'); }
+            }
+        };
         window.setTheme = function(t) {
-            if(t === 'sepia') window.toggleSepia();
-            else if(t === 'dark') window.toggleDark();
+            if(t === 'sepia') { b.classList.remove('canvas-dark'); if(window.setBaseTheme) window.setBaseTheme('sepia'); else bd.classList.remove('dark', 'white'); }
+            else if(t === 'dark') window.cycleMindmapTheme();
             else if(t === 'shader') bd.classList.toggle('shader');
         };
         window.toggleGrid = function() { b.classList.toggle('show-grid'); };
@@ -854,11 +880,12 @@
         window.addEventListener('contextmenu', function(e) { if(!e.target.closest('.n') && !e.target.closest('.mb')) e.preventDefault(); });
 
         window.addEventListener('mousemove', function(e) {
+            lastCanvasPointer = { x: e.clientX, y: e.clientY };
             if(crDrag) { let cb = document.getElementById('cropBox'); cb.style.left = (crL + e.clientX - crPx) + 'px'; cb.style.top = (crT + e.clientY - crPy) + 'px'; return; }
             if(crResize) { let cb = document.getElementById('cropBox'); let nw = Math.max(50, crW + e.clientX - crPx); let nh = Math.max(50, crH + e.clientY - crPy); if(currentCropRatio) nh = nw / currentCropRatio; cb.style.width = nw + 'px'; cb.style.height = nh + 'px'; return; }
             
             if(drag) { isMoved = true; let tdx = (e.clientX - dragStartX) / zoom, tdy = (e.clientY - dragStartY) / zoom; if(e.shiftKey) { if(Math.abs(tdx) > Math.abs(tdy)) tdy = 0; else tdx = 0; } dragStartPos.forEach(p => { let nl = p.left + tdx, nt = p.top + tdy; if(snapGrid) { let snapped = snapNodeToGrid(p.node, nl, nt); nl = snapped.left; nt = snapped.top; } p.node.style.left = nl + 'px'; p.node.style.top = nt + 'px'; }); px = e.clientX; py = e.clientY; updateAll(); }
-            else if(isPan) { cx += e.clientX - px; cy += e.clientY - py; px = e.clientX; py = e.clientY; updateTransform(); clearFitRestore(); }
+            else if(isPan) { cx += e.clientX - px; cy += e.clientY - py; px = e.clientX; py = e.clientY; if(fitRestoreView) fitRestoreView.wasPanned = true; updateTransform(); }
             else if(isSel) { let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; let rx = Math.min(sx, nx), ry = Math.min(sy, ny), rw = Math.abs(nx - sx), rh = Math.abs(ny - sy); sb.style.left = rx + 'px'; sb.style.top = ry + 'px'; sb.style.width = rw + 'px'; sb.style.height = rh + 'px'; nodes.forEach(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top), nw = n.offsetWidth, nh = n.offsetHeight; let inBox = (nl < rx + rw && nl + nw > rx && nt < ry + rh && nt + nh > ry); if(inBox || (isAddSel && preSel.has(n))) n.classList.add('sel'); else n.classList.remove('sel'); }); }
         });
 
@@ -975,6 +1002,7 @@
         window.onbeforeunload = function(e) { if(nodes.length > 0) { e.preventDefault(); e.returnValue = ''; } };
 
         function init() {
+            b.classList.remove('canvas-dark');
             let isSavedHTML = document.querySelectorAll('.n').length > 0;
             
             if(isSavedHTML) {
