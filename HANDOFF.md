@@ -43,7 +43,9 @@ Updated: 2026-07-16 (Asia/Bangkok)
 - Find now searches title, description, and per-node Note in its `all` scope.
   Title/description hits receive temporary text highlighting. A Note hit
   instead reveals and highlights the node's `📝` button without leaking Note
-  text onto the Canvas.
+  text onto the Canvas. Opening that Note seeds the one shared `🔎` Note-search
+  bar with the global query; it selects the first match and provides previous/
+  next controls for additional matches. This UI is not duplicated per node.
 - Browser automation cannot open the local `file://` page under current tool
   policy; static checks and JSZip round-trip passed. User interaction testing
   is still required after refresh.
