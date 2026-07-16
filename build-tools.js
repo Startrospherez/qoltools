@@ -14,9 +14,11 @@ const path = require("path");
 const ROOT = __dirname;
 const SRC = path.join(ROOT, "decoded");
 const OUT = path.join(ROOT, "tools");
+const CONTENT = path.join(ROOT, "content");
 
 const BARD = /<script[^>]*\bdata-bard-injected="true"[^>]*>[\s\S]*?<\/script>/g;
 const SHARED_TAG = '<script src="../assets/shared.js"></script>';
+const MINDMAP_INFO_MARKER = "<!-- MINDMAP_INFO_CONTENT -->";
 
 const tools = [
   { src: "scratchpad.html", out: "scratchpad.html", ns: "sp_" },
@@ -30,6 +32,12 @@ fs.mkdirSync(OUT, { recursive: true });
 for (const t of tools) {
   let html = fs.readFileSync(path.join(SRC, t.src), "utf8");
   const before = html.length;
+
+  // Keep the generated page self-contained while making the Info text easy to edit.
+  if (t.src === "mindmap.html") {
+    if (!html.includes(MINDMAP_INFO_MARKER)) throw new Error("MindMap Info marker is missing");
+    html = html.replace(MINDMAP_INFO_MARKER, fs.readFileSync(path.join(CONTENT, "mindmap-info.html"), "utf8").trim());
+  }
 
   // 1. strip bard
   const bardCount = (html.match(BARD) || []).length;

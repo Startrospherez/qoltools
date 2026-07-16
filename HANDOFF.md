@@ -18,7 +18,7 @@ Updated: 2026-07-16 (Asia/Bangkok)
 - V3.73: zoom percentage control; current three-step Reset/Fit/Restore flow;
   `Alt+R`; reorganized About dialog with help, hotkeys, credits, and copyright.
 
-## User-Test Feedback: Next V3.73 Revision (Approved Requirements)
+## User-Test Feedback: V3.73 Revision (Implemented, Pending User Verification)
 
 ### View control
 
@@ -72,13 +72,9 @@ Update all toolbar tooltips and the Help/Hotkeys content to match.
 
 ### Editable Info content
 
-Current Info markup is inline in `decoded/mindmap.html` near `#about-ui`, which
-is inconvenient for the user to edit. Recommended design: create a dedicated
-source fragment such as `content/mindmap-info.html` and have `build-tools.js`
-inject it at a stable marker when generating `tools/mindmap.html`. This keeps
-the standalone HTML output self-contained while giving the user a single,
-easy-to-edit file. **This extraction is proposed and needs final user approval
-before implementing.**
+The editable source is now `content/mindmap-info.html`. `build-tools.js`
+injects it at a stable marker while generating `tools/mindmap.html`; the
+generated page and saved standalone HTML therefore stay self-contained.
 
 ## Planned V3.74: Image Workflow (Approved Earlier, Not Implemented)
 

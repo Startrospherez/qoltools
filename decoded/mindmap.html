@@ -132,11 +132,11 @@
         .selBox { position: absolute; border: 1px dashed rgb(33,150,243); background: rgba(33,150,243,0.1); z-index: 9999; display: none; pointer-events: none; }
         #about-btn { position: fixed; bottom: 25px; right: 25px; width: 36px; height: 36px; background: #2196F3; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; font-family: serif; font-style: italic; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000; border: none; transition: all 0.2s; }
         #about-btn:hover { background: #1976D2; transform: scale(1.1); }
-        #zoom-status { position: fixed; bottom: 25px; left: 25px; z-index: 1000; min-width: 62px; height: 36px; border-radius: 18px; border: 1px solid var(--bc); background: var(--tb); color: var(--fg); box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-weight: bold; font-size: 14px; }
-        #zoom-status:hover { transform: scale(1.06); }
+        #zoom-status { position: fixed; bottom: 25px; left: 25px; z-index: 1000; min-width: 0; height: auto; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--fg); box-shadow: none; font-weight: bold; font-size: 14px; }
+        #zoom-status:hover { background: transparent; text-decoration: underline; }
         #about-ui { position: fixed; inset: 0; z-index: 10000000; display: none; justify-content: center; align-items: center; padding: 24px; box-sizing: border-box; background: rgba(0,0,0,0.6); }
         #about-ui .about-card { width: min(760px, 94vw); max-height: min(84vh, 760px); overflow: auto; box-sizing: border-box; padding: 22px; border: 1px solid var(--bc); border-radius: 10px; background: var(--tb); color: var(--fg); box-shadow: 0 8px 28px rgba(0,0,0,0.35); }
-        #about-ui h2 { margin: 0; } #about-ui h3 { margin: 20px 0 7px; font-size: 16px; } #about-ui p, #about-ui li { line-height: 1.55; } #about-ui ul { margin: 6px 0; padding-left: 22px; } #about-ui kbd { display: inline-block; padding: 1px 5px; border: 1px solid var(--bc); border-radius: 4px; background: var(--bg); font: 12px monospace; }
+        #about-ui h2 { margin: 0; } #about-ui p, #about-ui li { line-height: 1.55; } #about-ui ul { margin: 6px 0; padding-left: 22px; } #about-ui kbd { display: inline-block; padding: 1px 5px; border: 1px solid var(--bc); border-radius: 4px; background: var(--bg); font: 12px monospace; } #about-ui details { margin-top: 10px; border: 1px solid var(--bc); border-radius: 7px; background: var(--bg); } #about-ui summary { cursor: pointer; padding: 10px 12px; font-weight: bold; } #about-ui details > :not(summary) { margin-left: 14px; margin-right: 14px; } #about-ui details[open] summary { border-bottom: 1px solid var(--bc); }
     </style>
 </head>
 <body id="bd" class="" style="cursor: default;">
@@ -162,11 +162,7 @@
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
             <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.73</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
-            <h3>เริ่มต้นใช้งาน</h3><ul><li>ดับเบิลคลิกพื้นที่ว่างเพื่อสร้าง node</li><li>แก้ไขหัวข้อและรายละเอียดในกล่องได้โดยตรง</li><li>ลากปุ่ม <b>+</b> รอบ node เพื่อเชื่อม, แตกแขนง หรือสร้าง node ใหม่</li><li>ลากพื้นที่ว่างเพื่อเลือกหลายรายการ; ลาก node เพื่อย้าย; คลิกขวาหรือล้อเมาส์ค้างเพื่อเลื่อนมุมมอง</li></ul>
-            <h3>มุมมองและการจัดวาง</h3><ul><li>ล้อเมาส์: Zoom ที่ตำแหน่งเมาส์</li><li><b>Grid</b> แสดงตาราง และ <b>Snap</b> ล็อกกึ่งกลาง node ลงกริด</li><li>กดตัวเลขเปอร์เซ็นต์มุมซ้ายล่าง หรือ <kbd>Alt</kbd> + <kbd>R</kbd>: 100% → Fit graph → กลับมุมมองเดิม</li><li>เลือกหลาย node เพื่อใช้ Align และ Dist</li></ul>
-            <h3>รูปภาพและ Node Notes</h3><ul><li>ลากไฟล์ภาพมาวางบน Canvas เพื่อเพิ่มรูป และลาก/ย่อขยายรูปได้</li><li>กด 📝 ที่มุมซ้ายล่างของ node เพื่อบันทึกข้อความหลายบรรทัด; ข้อมูลติดไปกับ Auto-save, JSON และ HTML</li></ul>
-            <h3>Hotkeys</h3><ul><li><kbd>Alt</kbd> + <kbd>S</kbd> บันทึก HTML</li><li><kbd>Alt</kbd> + <kbd>Z</kbd> Undo / <kbd>Alt</kbd> + <kbd>Y</kbd> Redo</li><li><kbd>Alt</kbd> + <kbd>M</kbd> เปิด/ปิด Shader</li><li><kbd>Alt</kbd> + <kbd>B</kbd> คัดลอก Bookmark</li><li><kbd>Alt</kbd> + <kbd>R</kbd> 100% → Fit graph → Restore view</li><li><kbd>Alt</kbd> + <kbd>1</kbd> ถึง <kbd>'</kbd> เลือกสีกรอบ, <kbd>Alt</kbd> + <kbd>\\</kbd> ล้างสีกรอบ</li><li><kbd>Delete</kbd> ลบ node หรือรูปที่เลือก (นอกช่องพิมพ์)</li><li><kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> สลับหัวข้อและรายละเอียด; ใน Find ใช้ <kbd>Enter</kbd> / <kbd>Shift</kbd> + <kbd>Enter</kbd> เปลี่ยนผลค้นหา; <kbd>Esc</kbd> ปิด Find หรือ Note</li></ul>
-            <h3>การแบ่งปัน (เครดิต)</h3><p>สร้างสรรค์สำหรับใช้ส่วนตัว และเผยแผ่เป็นธรรมทานโดย:<br><b style="color:#2196F3;">พระเจตภาณุ สุตธโร (P.Chetphanu Sutadharo)<br>🪷 วัดสวนธรรมพุทธรังสี จ.พระนครศรีอยุธยา (ธรรมอารี)</b></p><p>🙏 ฟังธรรมและปฏิบัติธรรมออนไลน์ร่วมกันได้ที่<br>🔵 Facebook: ธรรมอารี <a href="https://www.facebook.com/dhammaaree/" target="_blank" style="color:#2196F3;text-decoration:underline;">คลิกที่นี่</a><br>🔴 YouTube: ธรรมอารี <a href="https://www.youtube.com/dhamma_aree/" target="_blank" style="color:#2196F3;text-decoration:underline;">คลิกที่นี่</a><br>📅 ทุกวัน เวลา ☀️7.00 น. และ 🌙18.30 น.</p><p>📢 สนใจสมัครคอร์สปฏิบัติธรรม: <a href="https://www.dhammaaree.com/other" target="_blank" style="color:#2196F3;text-decoration:underline;">ลิงก์สมัคร</a><br>🟩 Line OA ธรรมอารี-คอร์สอบรม: <a href="https://line.me/R/ti/p/@course_aree" target="_blank" style="color:#2196F3;text-decoration:underline;">ลิงก์แอด</a><br>หรือพิมพ์เพิ่มเพื่อนในไลน์ว่า @course_aree</p><p style="margin:22px 0 0;text-align:center;opacity:0.7;">© 2026 Chetphanu Sutadharo</p>
+            <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
 
@@ -245,16 +241,16 @@
         <!-- Block 5: Align -->
         <div class="ui-col" style="justify-content:center;">
             <div class="flex-row" style="margin-bottom:4px;">
-                <button onclick="window.doAlign('t')" title="ชิดบน">⊤ T-Align</button>
-                <button onclick="window.doAlign('cy')" title="กึ่งกลางแนวนอน"><span style="display:inline-block;transform:rotate(90deg)">⌽</span> C-Align</button>
-                <button onclick="window.doAlign('b')" title="ชิดล่าง">⊥ B-Align</button>
-                <button onclick="window.doDist('x')" title="กระจายแนวนอน">↔ Dist</button>
+                <button onclick="window.doAlign('t')" title="ชิดบน (Alt+U)">⊤ T-Align</button>
+                <button onclick="window.doAlign('cy')" title="กึ่งกลางแนวนอน (Alt+J)"><span style="display:inline-block;transform:rotate(90deg)">⌽</span> C-Align</button>
+                <button onclick="window.doAlign('b')" title="ชิดล่าง (Alt+M)">⊥ B-Align</button>
+                <button onclick="window.doDist('x')" title="กระจายแนวนอน (Alt+K)">↔ Dist</button>
             </div>
             <div class="flex-row">
-                <button onclick="window.doAlign('l')" title="ชิดซ้าย">├ L-Align</button>
-                <button onclick="window.doAlign('cx')" title="กึ่งกลางแนวตั้ง">⌽ C-Align</button>
-                <button onclick="window.doAlign('r')" title="ชิดขวา">┤ R-Align</button>
-                <button onclick="window.doDist('y')" title="กระจายแนวตั้ง">↕ Dist</button>
+                <button onclick="window.doAlign('l')" title="ชิดซ้าย (Alt+I)">├ L-Align</button>
+                <button onclick="window.doAlign('cx')" title="กึ่งกลางแนวตั้ง (Alt+O)">⌽ C-Align</button>
+                <button onclick="window.doAlign('r')" title="ชิดขวา (Alt+P)">┤ R-Align</button>
+                <button onclick="window.doDist('y')" title="กระจายแนวตั้ง (Alt+L)">↕ Dist</button>
             </div>
         </div>
         
@@ -290,7 +286,7 @@
     <!-- File Input for JSON Import -->
     <input type="file" id="importInput" style="display:none" accept=".json" onchange="window.importJSON(event)">
     <button id="about-btn" onclick="window.showAbout()" title="เกี่ยวกับ &amp; เครดิต">i</button>
-    <button id="zoom-status" onclick="window.doViewCycle()" title="คลิกหรือ Alt+R: 100% → Fit graph → กลับมุมมองเดิม">100%</button>
+    <button id="zoom-status" onclick="window.resetZoom()" title="คลิกเพื่อกลับสู่ 100%">100%</button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
     <script>
@@ -313,8 +309,7 @@
         let findIndex = -1;
         let nodeNoteId = null;
         let nodeNoteTimer = null;
-        let viewCycleStep = 0;
-        let viewCycleRestore = null;
+        let fitRestoreView = null;
 
         function getUsableViewport() {
             let toolbar = document.getElementById('mm-ui');
@@ -323,7 +318,7 @@
         }
 
         function updateZoomStatus() { let control = document.getElementById('zoom-status'); if(control) control.textContent = Math.round(zoom * 100) + '%'; }
-        function clearViewCycle() { viewCycleStep = 0; viewCycleRestore = null; }
+        function clearFitRestore() { fitRestoreView = null; }
 
         function fitGraphView() {
             let elements = nodes.concat(images);
@@ -336,16 +331,18 @@
             updateTransform(); return true;
         }
 
-        window.doViewCycle = function() {
+        window.resetZoom = function() {
             let viewport = getUsableViewport();
-            if(viewCycleStep === 0) {
-                viewCycleRestore = { cx: cx, cy: cy, zoom: zoom };
-                let canvasX = (viewport.centerX - cx) / zoom, canvasY = (viewport.centerY - cy) / zoom;
-                zoom = 1; cx = viewport.centerX - canvasX; cy = viewport.centerY - canvasY; viewCycleStep = 1; updateTransform(); window.showToast('🔎 Zoom 100%');
-            } else if(viewCycleStep === 1) {
-                if(fitGraphView()) { viewCycleStep = 2; window.showToast('🗺️ แสดงภาพรวมกราฟ'); } else { clearViewCycle(); window.showToast('🔎 Zoom 100%'); }
+            let canvasX = (viewport.centerX - cx) / zoom, canvasY = (viewport.centerY - cy) / zoom;
+            zoom = 1; cx = viewport.centerX - canvasX; cy = viewport.centerY - canvasY; updateTransform(); clearFitRestore(); window.showToast('🔎 Zoom 100%');
+        };
+
+        window.toggleFitView = function() {
+            if(fitRestoreView) {
+                cx = fitRestoreView.cx; cy = fitRestoreView.cy; zoom = fitRestoreView.zoom; updateTransform(); clearFitRestore(); window.showToast('↩️ กลับมุมมองเดิม');
             } else {
-                cx = viewCycleRestore.cx; cy = viewCycleRestore.cy; zoom = viewCycleRestore.zoom; updateTransform(); clearViewCycle(); window.showToast('↩️ กลับมุมมองเดิม');
+                fitRestoreView = { cx: cx, cy: cy, zoom: zoom };
+                if(fitGraphView()) window.showToast('🗺️ แสดงภาพรวมกราฟ'); else { clearFitRestore(); window.showToast('⚠️ ยังไม่มีข้อมูลสำหรับ Fit graph'); }
             }
         };
 
@@ -379,7 +376,7 @@
             cx = centerX - nodeX * zoom;
             cy = centerY - nodeY * zoom;
             updateTransform();
-            clearViewCycle();
+            clearFitRestore();
         }
 
         function showFindResult() {
@@ -758,7 +755,7 @@
             if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#zoom-status')) return;
             e.preventDefault();
             let xs = (e.clientX - cx) / zoom, ys = (e.clientY - cy) / zoom;
-            zoom += e.deltaY * -0.001; zoom = Math.min(Math.max(0.1, zoom), 3); cx = e.clientX - xs * zoom; cy = e.clientY - ys * zoom; updateTransform(); clearViewCycle();
+            zoom += e.deltaY * -0.001; zoom = Math.min(Math.max(0.1, zoom), 3); cx = e.clientX - xs * zoom; cy = e.clientY - ys * zoom; updateTransform(); clearFitRestore();
         }, {passive: false});
 
         window.addEventListener('mousedown', function(e) {
@@ -779,7 +776,7 @@
             if(crResize) { let cb = document.getElementById('cropBox'); let nw = Math.max(50, crW + e.clientX - crPx); let nh = Math.max(50, crH + e.clientY - crPy); if(currentCropRatio) nh = nw / currentCropRatio; cb.style.width = nw + 'px'; cb.style.height = nh + 'px'; return; }
             
             if(drag) { isMoved = true; let tdx = (e.clientX - dragStartX) / zoom, tdy = (e.clientY - dragStartY) / zoom; if(e.shiftKey) { if(Math.abs(tdx) > Math.abs(tdy)) tdy = 0; else tdx = 0; } dragStartPos.forEach(p => { let nl = p.left + tdx, nt = p.top + tdy; if(snapGrid) { let snapped = snapNodeToGrid(p.node, nl, nt); nl = snapped.left; nt = snapped.top; } p.node.style.left = nl + 'px'; p.node.style.top = nt + 'px'; }); px = e.clientX; py = e.clientY; updateAll(); }
-            else if(isPan) { cx += e.clientX - px; cy += e.clientY - py; px = e.clientX; py = e.clientY; updateTransform(); clearViewCycle(); }
+            else if(isPan) { cx += e.clientX - px; cy += e.clientY - py; px = e.clientX; py = e.clientY; updateTransform(); clearFitRestore(); }
             else if(isSel) { let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; let rx = Math.min(sx, nx), ry = Math.min(sy, ny), rw = Math.abs(nx - sx), rh = Math.abs(ny - sy); sb.style.left = rx + 'px'; sb.style.top = ry + 'px'; sb.style.width = rw + 'px'; sb.style.height = rh + 'px'; nodes.forEach(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top), nw = n.offsetWidth, nh = n.offsetHeight; let inBox = (nl < rx + rw && nl + nw > rx && nt < ry + rh && nt + nh > ry); if(inBox || (isAddSel && preSel.has(n))) n.classList.add('sel'); else n.classList.remove('sel'); }); }
         });
 
@@ -876,11 +873,18 @@
             if(e.altKey || (e.getModifierState && e.getModifierState('AltGraph'))) {
                 let c = e.code;
                 if(c === 'KeyS') { e.preventDefault(); window.saveFileHTML(); }
-                if(c === 'KeyM') { e.preventDefault(); document.getElementById('bd').classList.toggle('shader'); }
                 if(c === 'KeyB') { e.preventDefault(); window.copyBookmark(); }
-                if(c === 'KeyR') { e.preventDefault(); window.doViewCycle(); }
+                if(c === 'KeyR') { e.preventDefault(); window.toggleFitView(); }
                 if(c === 'KeyZ') { e.preventDefault(); window.doUndo(); }
                 if(c === 'KeyY') { e.preventDefault(); window.doRedo(); }
+                if(c === 'KeyU') { e.preventDefault(); window.doAlign('t'); }
+                if(c === 'KeyJ') { e.preventDefault(); window.doAlign('cy'); }
+                if(c === 'KeyM') { e.preventDefault(); window.doAlign('b'); }
+                if(c === 'KeyI') { e.preventDefault(); window.doAlign('l'); }
+                if(c === 'KeyO') { e.preventDefault(); window.doAlign('cx'); }
+                if(c === 'KeyP') { e.preventDefault(); window.doAlign('r'); }
+                if(c === 'KeyK') { e.preventDefault(); window.doDist('x'); }
+                if(c === 'KeyL') { e.preventDefault(); window.doDist('y'); }
                 let i = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal', 'BracketLeft', 'BracketRight', 'Semicolon', 'Quote', 'Backslash'].indexOf(c);
                 if(i > -1) { e.preventDefault(); window.setCol('bd', i === 16 ? 0 : (i + 1)); }
             }
