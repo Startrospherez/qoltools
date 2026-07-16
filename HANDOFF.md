@@ -6,7 +6,7 @@ Updated: 2026-07-16 (Asia/Bangkok)
 
 - Repository: `Startrospherez/qoltools`
 - Current completed MindMap release: **V3.73**
-- Latest completed commit: `5246f3f Add Mindmap navigation and help center`
+- Latest completed MindMap baseline: **V3.73** (`33ab431 Refine Mindmap navigation and info help`)
 - User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
@@ -15,8 +15,27 @@ Updated: 2026-07-16 (Asia/Bangkok)
 
 - V3.72: center-based Grid Snap, 50% opacity while snapping drag, per-node
   plain-text Notes stored in history/backup/JSON/standalone HTML.
-- V3.73: zoom percentage control; current three-step Reset/Fit/Restore flow;
-  `Alt+R`; reorganized About dialog with help, hotkeys, credits, and copyright.
+- V3.73: zoom percentage control; clicking the percentage resets to 100%, and
+  `Alt+R` toggles Fit graph / exact restore; reorganized About dialog with
+  help, hotkeys, credits, and copyright.
+
+## V3.74: Image Project Foundation (Phase 1 Implemented, Pending User Test)
+
+- Added the locally vendored JSZip 3.10.1 dependency for offline `file://`
+  ZIP support.
+- `📤 Export` now creates one `.mindmap.zip` Project package. A no-image map
+  contains only `manifest.json` and `mindmap.json`; legacy current images are
+  stored once as original assets inside `images/original/` and rehydrated on
+  import.
+- `📥 Import` accepts both legacy JSON and Project ZIP and detects ZIP from its
+  bytes plus `manifest.json`, not filename alone. It validates/reads the whole
+  package before replacing the active map.
+- This phase deliberately keeps the current in-memory image renderer. IndexedDB,
+  thumbnails, `🌄 ภาพ`, image metadata, resize modifiers, HTML thumbnail
+  snapshots, and Find-in-Note belong to later V3.74 checkpoints.
+- Browser automation cannot open the local `file://` page under current tool
+  policy; static checks and JSZip round-trip passed. User interaction testing
+  is still required after refresh.
 
 ## User-Test Feedback: V3.73 Revision (Implemented, Pending User Verification)
 

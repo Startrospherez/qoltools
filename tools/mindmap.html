@@ -281,8 +281,8 @@
         <!-- Block 6: File -->
         <div class="ui-col no-border" style="justify-content:center;">
             <div class="file-grid">
-                <button onclick="document.getElementById('importInput').click()" title="นำเข้าข้อมูล JSON">📥 Import</button>
-                <button onclick="window.exportJSON()" title="ส่งออกข้อมูล JSON">📤 Export</button>
+                <button onclick="document.getElementById('importInput').click()" title="นำเข้า Mindmap JSON หรือ Project ZIP">📥 Import</button>
+                <button onclick="window.exportProjectZip()" title="ส่งออก Mindmap เป็น Project ZIP">📤 Export</button>
                 <button onclick="window.pngBtnClick()" ondblclick="window.pngBtnDbl()" title="บันทึก PNG — คลิก=ครอป | ดับเบิลคลิก=เต็มจอ (ถามพื้นหลัง ทึบ/ใส)">📸 PNG</button>
                 <button onclick="window.saveFileHTML()" title="เซฟเป็นไฟล์ HTML (Alt+S)">💾 HTML</button>
                 <button onclick="window.openFind()" title="ค้นหาข้อความใน Mindmap">🔎 Find</button>
@@ -307,12 +307,13 @@
         <div id="selBox" class="selBox" style="left: 10811px; top: 10286px; width: 0px; height: 0px; display: none;"></div>
     <div class="n" id="n0" data-shape="box" data-note="" style="left: 10000px; top: 10000px;"><div class="dx" onclick="del('n0')" title="ลบกล่องนี้">x</div><button class="note-btn" type="button" onclick="window.openNodeNote('n0')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, 'n0','r')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, 'n0','l')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, 'n0','t')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, 'n0','b')">+</div></div></div>
 
-    <!-- File Input for JSON Import -->
-    <input type="file" id="importInput" style="display:none" accept=".json" onchange="window.importJSON(event)">
+    <!-- One Import entry point: legacy JSON and portable Project ZIP -->
+    <input type="file" id="importInput" style="display:none" accept=".json,.zip,.mindmap.zip,application/json,application/zip" onchange="window.importMindmapFile(event)">
     <button id="about-btn" onclick="window.showAbout()" title="เกี่ยวกับ &amp; เครดิต">i</button>
     <button id="zoom-status" onclick="window.resetZoom()" title="คลิกเพื่อกลับสู่ 100%">100%</button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+    <script src="../assets/vendor/jszip-3.10.1.min.js"></script>
     <script>
         const bd = document.getElementById('bd');
         let uiHidden = false;
@@ -320,6 +321,9 @@
         // Mindmap State
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
         let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], images = [];
+        const MM_PROJECT_FORMAT = 'mindmap-project';
+        const MM_PROJECT_VERSION = 1;
+        const MM_PROJECT_EXTENSION = '.mindmap.zip';
         
         // Selection variables
         let isAddSel = false;
@@ -605,39 +609,117 @@
             document.body.removeChild(tempInput);
         };
 
-        window.exportJSON = function() {
-            let data = { nodes: mmHistory[curStep]?.nodes || [], lines: mmHistory[curStep]?.lines || [], images: mmHistory[curStep]?.images || [], nid: nid, views: { cx: cx, cy: cy, zoom: zoom } };
-            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-            let a = document.createElement('a'); a.href = dataStr; a.download = "mindmap_data_" + Date.now() + ".json"; a.click();
-            window.showToast('📤 ส่งออกไฟล์ JSON สำเร็จ!');
+        function cloneMindmapState(state) { return JSON.parse(JSON.stringify(state)); }
+        function currentMindmapState() {
+            let state = mmHistory[curStep] || { nodes: [], lines: [], images: [], nid: nid };
+            let copy = cloneMindmapState(state);
+            copy.nodes = copy.nodes || []; copy.lines = copy.lines || []; copy.images = copy.images || [];
+            copy.nid = typeof copy.nid === 'number' ? copy.nid : nid;
+            copy.views = { cx: cx, cy: cy, zoom: zoom };
+            return copy;
+        }
+        function isZipBytes(bytes) { return bytes && bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && (bytes[2] === 0x03 || bytes[2] === 0x05 || bytes[2] === 0x07) && (bytes[3] === 0x04 || bytes[3] === 0x06 || bytes[3] === 0x08); }
+        function extensionForMime(mime) {
+            let known = { 'image/jpeg':'jpg', 'image/png':'png', 'image/gif':'gif', 'image/webp':'webp', 'image/svg+xml':'svg', 'image/bmp':'bmp', 'image/avif':'avif' };
+            return known[mime] || 'bin';
+        }
+        function mimeFromDataUrl(src) { let m = /^data:([^;,]+)[;,]/i.exec(src || ''); return m ? m[1] : ''; }
+        function blobFromDataUrl(src) {
+            let comma = src.indexOf(','); if(comma < 0) throw new Error('ข้อมูลรูปแบบ Data URL ไม่ถูกต้อง');
+            let head = src.slice(0, comma), body = src.slice(comma + 1), mime = mimeFromDataUrl(src) || 'application/octet-stream';
+            let binary = /;base64/i.test(head) ? atob(body) : decodeURIComponent(body), bytes = new Uint8Array(binary.length);
+            for(let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return new Blob([bytes], { type: mime });
+        }
+        async function imageBlobFromSource(src) {
+            if(/^data:/i.test(src || '')) return blobFromDataUrl(src);
+            let response = await fetch(src);
+            if(!response.ok) throw new Error('ไม่สามารถอ่านไฟล์รูปที่แนบอยู่ได้');
+            return response.blob();
+        }
+        function downloadBlob(blob, filename) {
+            let url = URL.createObjectURL(blob), a = document.createElement('a');
+            a.href = url; a.download = filename; a.click();
+            setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+        }
+        function normalizedImportState(documentData) {
+            let source = documentData && documentData.mindmap && documentData.mindmap.nodes ? documentData.mindmap : documentData;
+            if(!source || !Array.isArray(source.nodes)) throw new Error('ไม่พบข้อมูล node ของ Mindmap ในไฟล์นี้');
+            let state = cloneMindmapState(source);
+            state.lines = Array.isArray(state.lines) ? state.lines : [];
+            state.images = Array.isArray(state.images) ? state.images : [];
+            if(documentData && documentData.views && !state.views) state.views = documentData.views;
+            return state;
+        }
+        function applyImportedState(state) {
+            clearFitRestore();
+            if(state.views) {
+                if(Number.isFinite(state.views.cx)) cx = state.views.cx;
+                if(Number.isFinite(state.views.cy)) cy = state.views.cy;
+                if(Number.isFinite(state.views.zoom)) zoom = state.views.zoom;
+            }
+            mmHistory = [state]; curStep = 0; window.loadState(0); window.saveBackup();
+        }
+        async function buildProjectZip() {
+            if(typeof JSZip !== 'function') throw new Error('ไม่พบตัวช่วยสร้างไฟล์ ZIP กรุณาเปิดหน้า Mindmap จากโฟลเดอร์ tools อีกครั้ง');
+            let zip = new JSZip(), state = currentMindmapState(), assets = [], sourceAssets = new Map(), assetNumber = 0;
+            for(let i = 0; i < state.images.length; i++) {
+                let placement = state.images[i], source = placement.src;
+                if(!source) throw new Error('พบรูปที่ไม่มีข้อมูลต้นฉบับ จึงยังสร้าง Project ZIP ไม่ได้');
+                let asset = sourceAssets.get(source);
+                if(!asset) {
+                    let blob = await imageBlobFromSource(source), mimeType = blob.type || mimeFromDataUrl(source) || 'application/octet-stream';
+                    let assetId = 'asset_' + (++assetNumber).toString().padStart(4, '0');
+                    asset = { assetId: assetId, originalPath: 'images/original/' + assetId + '.' + extensionForMime(mimeType), mimeType: mimeType };
+                    sourceAssets.set(source, asset); assets.push(asset); zip.file(asset.originalPath, blob);
+                }
+                delete placement.src; placement.assetId = asset.assetId;
+            }
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.74', createdAt: new Date().toISOString(), assets: assets, thumbnails: [] };
+            zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+            zip.file('mindmap.json', JSON.stringify(state));
+            return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        }
+        window.exportProjectZip = async function() {
+            try {
+                window.showToast('📦 กำลังสร้าง Project ZIP…');
+                let blob = await buildProjectZip();
+                downloadBlob(blob, 'mindmap_' + Date.now() + MM_PROJECT_EXTENSION);
+                window.showToast('📤 ส่งออก Project ZIP เรียบร้อยครับ!');
+            } catch(err) { console.error(err); window.showAlert('ไม่สามารถส่งออก Project ZIP ได้<br><br>รายละเอียด Error: ' + err.message); }
         };
-
-        window.importJSON = function(e) {
-            let file = e.target.files[0]; if (!file) return;
-            let reader = new FileReader();
-            reader.onload = function(evt) {
-                try {
-                    let text = evt.target.result;
-                    let data = JSON.parse(text);
-                    
-                    let migratedMindmap = null;
-                    if (data.mindmap && data.mindmap.nodes) { migratedMindmap = data.mindmap; } 
-                    else if (data.nodes) { migratedMindmap = data; }
-
-                    if (migratedMindmap) { 
-                        mmHistory.push(migratedMindmap); curStep = mmHistory.length - 1; 
-                        if (data.views) { cx = data.views.cx || cx; cy = data.views.cy || cy; zoom = data.views.zoom || zoom; }
-                        window.loadState(curStep); 
-                    } else {
-                        window.showToast("⚠️ ไม่พบข้อมูล Mindmap ในไฟล์นี้"); return;
-                    }
-                    
-                    window.saveBackup();
-                    window.showToast("✅ อิมพอร์ตข้อมูลสำเร็จเรียบร้อยครับ!");
-                } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาดในการอ่านไฟล์<br><br>รายละเอียด Error: " + err.message); }
-            };
-            reader.readAsText(file); e.target.value = ""; 
+        async function readProjectZip(file) {
+            if(typeof JSZip !== 'function') throw new Error('ไม่พบตัวช่วยอ่านไฟล์ ZIP กรุณาเปิดหน้า Mindmap จากโฟลเดอร์ tools อีกครั้ง');
+            let zip = await JSZip.loadAsync(file, { checkCRC32: true }), manifestEntry = zip.file('manifest.json'), mapEntry = zip.file('mindmap.json');
+            if(!manifestEntry || !mapEntry) throw new Error('ZIP นี้ไม่ใช่ Mindmap Project: ไม่พบ manifest.json หรือ mindmap.json');
+            let manifest = JSON.parse(await manifestEntry.async('text'));
+            if(manifest.format !== MM_PROJECT_FORMAT) throw new Error('ZIP นี้ไม่ใช่ Mindmap Project ที่รองรับ');
+            if(!Number.isInteger(manifest.formatVersion) || manifest.formatVersion > MM_PROJECT_VERSION) throw new Error('Project ZIP นี้เป็นรุ่นใหม่กว่าที่ Mindmap ปัจจุบันรองรับ');
+            let state = normalizedImportState(JSON.parse(await mapEntry.async('text'))), assets = new Map((manifest.assets || []).map(function(asset){ return [asset.assetId, asset]; }));
+            let hydratedImages = [];
+            for(let i = 0; i < state.images.length; i++) {
+                let placement = state.images[i];
+                if(placement.src) { hydratedImages.push(placement); continue; }
+                let asset = assets.get(placement.assetId), entry = asset && zip.file(asset.originalPath);
+                if(!asset || !entry) throw new Error('Project ZIP มีรูปที่หาไม่พบ: ' + (placement.assetId || 'ไม่ทราบรหัส'));
+                let base64 = await entry.async('base64');
+                hydratedImages.push(Object.assign({}, placement, { src: 'data:' + (asset.mimeType || 'application/octet-stream') + ';base64,' + base64 }));
+            }
+            state.images = hydratedImages;
+            return state;
+        }
+        window.importMindmapFile = async function(e) {
+            let file = e.target.files[0]; e.target.value = ''; if(!file) return;
+            try {
+                window.showToast('📥 กำลังตรวจสอบไฟล์…');
+                let bytes = new Uint8Array(await file.arrayBuffer()), state;
+                if(isZipBytes(bytes)) state = await readProjectZip(bytes);
+                else state = normalizedImportState(JSON.parse(new TextDecoder().decode(bytes).replace(/^\uFEFF/, '')));
+                applyImportedState(state);
+                window.showToast('✅ อิมพอร์ต Mindmap เรียบร้อยครับ!');
+            } catch(err) { console.error(err); window.showAlert('ไม่สามารถอิมพอร์ตไฟล์ได้<br><br>รายละเอียด Error: ' + err.message); }
         };
+        window.importJSON = window.importMindmapFile;
 
         window.changeFontSize = function(action) {
             let sels = nodes.filter(n => n.classList.contains('sel'));
