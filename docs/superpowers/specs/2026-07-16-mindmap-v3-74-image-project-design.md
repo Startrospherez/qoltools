@@ -16,14 +16,13 @@ bulk import queues belong to V3.75.
 
 - `decoded/mindmap.html` remains the source; `node build-tools.js` generates
   `tools/mindmap.html`.
-- Existing `.json` Mindmaps must import and work without conversion.
-- Existing JSON export remains available for legacy/small maps. A project with
-  managed images must clearly direct the user to Project ZIP instead, so image
-  data is never silently omitted.
+- Existing `.json` Mindmaps must import and work without conversion. JSON is
+  retained as a legacy/data interchange input, but is not a normal export
+  choice for end users.
 - `💾 HTML` remains an interactive Mindmap export. In Project mode it is a
-  lightweight structural snapshot: nodes, connectors, text, and image
-  placements remain, but it does not embed image files. Project ZIP is the
-  only complete editable backup for a map with managed images.
+  lightweight interactive snapshot: nodes, connectors, text, and image
+  thumbnails remain, but it does not embed original image files. Project ZIP
+  is the only complete editable backup for a map with managed images.
 - Existing drag-and-drop image insertion remains supported.
 - `content/mindmap-info.html` remains the editable source of the Info dialog.
 
@@ -72,26 +71,31 @@ cleaned during Project ZIP export or by a later library-maintenance command.
 
 ## Import, Export, and Autosave
 
-`📥 Import` accepts both `.json` and `.mindmap.zip`:
+`📥 Import` is the only import entry point and accepts both `.json` and
+`.mindmap.zip`:
 
-- JSON follows the present import path.
+- JSON follows the present import path as legacy/data input.
 - Project ZIP is validated before the active map is replaced. The app reads
   the manifest, graph state, asset records, and thumbnails, then reports any
   missing or unreadable assets while still opening the rest of the graph.
 - Import must show progress and leave the current active map intact if parsing,
   validation, or storage fails.
+- The app detects the package from its contents rather than trusting only its
+  extension: it validates JSON structure or ZIP structure plus `manifest.json`.
 
-The existing `📤 Export` stays JSON-focused. In Project mode it warns that
-JSON is not suitable for the managed image library and points to `📦 Project
-ZIP`. `📦 Project ZIP` creates the complete portable package with the map,
-originals, and thumbnails.
+`📤 Export` is the only normal data-export action and always creates the
+complete `.mindmap.zip` package. If a map has no images, the package contains
+only its manifest and compact `mindmap.json`, so it remains lightweight. If it
+has images, it additionally contains originals and thumbnails. This eliminates
+the confusing choice between JSON and ZIP while preserving JSON inside every
+package as the graph's data layer.
 
 `💾 HTML` keeps its present role for a single-file interactive Mindmap. In
 Project mode it exports the graph structure and the visual placements of
-images, but omits the image files themselves to remain lightweight. The
-exported HTML must identify this as a snapshot and direct users to Project ZIP
-when they need a complete, editable image project. `📸 PNG` remains the option
-for a flat visual capture that includes whatever is currently rendered.
+images, embeds their compact thumbnails, and omits the original image files.
+The exported HTML must identify this as a snapshot and direct users to Project
+ZIP when they need a complete, editable image project. `📸 PNG` remains the
+option for a flat visual capture that includes whatever is currently rendered.
 
 When a legacy JSON map first receives a managed image, it enters Project mode
 and creates its local IndexedDB project data automatically. The user can then
@@ -100,7 +104,8 @@ not a replacement for regular Project ZIP backups.
 
 ## Toolbar and Canvas Interaction
 
-- Add `🖼️ IMG` beside `🔎 Find`. It opens an image picker and inserts selected
+- Keep one `📤 Export` action that creates Project ZIP. Add `🖼️ IMG` beside
+  `🔎 Find`; it opens an image picker and inserts selected
   images at the visible Canvas center. Drag-and-drop continues to insert at
   the drop position.
 - Add one toggle button named `🌄 ภาพ` immediately to the right of `🧲 Snap`.
@@ -167,7 +172,8 @@ note marker.
 
 ## Acceptance Checks
 
-1. Import an old JSON map and edit/export it as before.
+1. Import an old JSON map and edit it; `📤 Export` produces a compact Project
+   ZIP when it contains no images.
 2. Create a Project ZIP containing images; import it into a fresh browser
    session and verify all placements, originals, thumbnails, captions, sources,
    and notes survive.
@@ -182,4 +188,7 @@ note marker.
 6. Search title, description, and Note text. Verify visible matches highlight
    their field, Note-only results highlight only the owning node, and duplicate
    field matches do not duplicate results.
-7. Run JavaScript syntax checks, `node build-tools.js`, and `git diff --check`.
+7. Export HTML from a project with images: it opens independently with
+   thumbnails but no original image files; Project ZIP restores the full
+   originals.
+8. Run JavaScript syntax checks, `node build-tools.js`, and `git diff --check`.
