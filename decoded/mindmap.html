@@ -131,6 +131,18 @@
         .img-float .ifr { position: absolute; right: -7px; bottom: -7px; width: 16px; height: 16px; background: var(--bc); border: 2px solid var(--tb,#fff); border-radius: 50%; cursor: nwse-resize; display: none; z-index: 4; }
         .img-float:hover .ifr, .img-float.sel .ifr { display: block; }
         .img-float.sel { outline: 2px dashed rgb(33,150,243); outline-offset: 2px; }
+        .img-float .if-info { position:absolute; left:-8px; bottom:-30px; width:24px; height:24px; border:0; border-radius:50%; background:rgb(33,150,243); color:#fff; font-size:14px; cursor:pointer; display:none; z-index:4; }
+        .img-float:hover .if-info, .img-float.sel .if-info { display:block; }
+        #image-detail-ui { position:fixed; inset:0; z-index:10000000; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); padding:24px; box-sizing:border-box; }
+        #image-detail-ui.open { display:flex; }
+        .image-detail-card { width:min(1080px,96vw); height:min(760px,92vh); display:grid; grid-template-columns:minmax(0,1fr) minmax(270px,340px); gap:16px; padding:16px; box-sizing:border-box; border:1px solid var(--bc); border-radius:10px; background:var(--tb); color:var(--fg); box-shadow:0 16px 48px rgba(0,0,0,.45); }
+        .image-detail-preview { min-width:0; min-height:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.08); border-radius:6px; overflow:auto; }
+        .image-detail-preview img { max-width:100%; max-height:100%; object-fit:contain; }
+        .image-detail-fields { min-height:0; display:flex; flex-direction:column; gap:8px; }
+        .image-detail-fields label { font-size:13px; font-weight:bold; }
+        .image-detail-fields input, .image-detail-fields textarea { width:100%; box-sizing:border-box; border:1px solid var(--bc); border-radius:5px; padding:8px; color:var(--fg); background:var(--bg); font:14px/1.45 sans-serif; }
+        .image-detail-fields textarea { flex:1; min-height:130px; resize:vertical; }
+        @media(max-width:700px) { .image-detail-card { grid-template-columns:1fr; grid-template-rows:minmax(180px,45vh) auto; overflow:auto; height:min(860px,94vh); } .image-detail-fields textarea { min-height:120px; } }
 
         .selBox { position: absolute; border: 1px dashed rgb(33,150,243); background: rgba(33,150,243,0.1); z-index: 9999; display: none; pointer-events: none; }
         #about-btn { position: fixed; bottom: 25px; right: 25px; width: 36px; height: 36px; background: #2196F3; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; font-family: serif; font-style: italic; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000; border: none; transition: all 0.2s; }
@@ -162,9 +174,21 @@
             <textarea id="node-note-input" aria-label="บันทึกประจำ node" placeholder="เขียนบันทึกเพิ่มเติมที่นี่…" style="flex:1;min-height:220px;width:100%;resize:none;box-sizing:border-box;border:1px solid var(--bc);border-radius:6px;background:var(--bg);color:var(--fg);padding:12px;font:15px/1.6 sans-serif;white-space:pre-wrap;"></textarea>
         </div>
     </div>
+    <div id="image-detail-ui" role="dialog" aria-modal="true" aria-labelledby="image-detail-title" onclick="if(event.target===this)window.closeImageDetail()">
+        <div class="image-detail-card">
+            <div class="image-detail-preview"><img id="image-detail-preview" alt="ภาพเต็ม"></div>
+            <div class="image-detail-fields">
+                <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong id="image-detail-title">รายละเอียดภาพ</strong><button type="button" onclick="window.closeImageDetail()" title="ปิด (Esc)" style="border:1px solid var(--bc);border-radius:50%;background:transparent;color:var(--fg);font-size:18px;width:30px;height:30px;cursor:pointer;">×</button></div>
+                <label for="image-caption-input">คำบรรยาย</label><input id="image-caption-input" type="text" placeholder="คำบรรยายภาพ">
+                <label for="image-source-input">แหล่งที่มา / URL</label><input id="image-source-input" type="text" placeholder="เช่น หนังสือ, เว็บไซต์ หรือ URL">
+                <label for="image-note-input">บันทึกเพิ่มเติม</label><textarea id="image-note-input" placeholder="บันทึกเกี่ยวกับภาพนี้…"></textarea>
+                <button type="button" onclick="window.saveImageDetail()">💾 บันทึก</button>
+            </div>
+        </div>
+    </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.73</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.74</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
@@ -237,6 +261,7 @@
             <div class="flex-row" style="justify-content:center;">
                 <button onclick="window.toggleGrid()" title="แสดง/ซ่อนตารางพื้นหลัง" style="flex:1;">▦ Grid</button>
                 <button onclick="window.toggleSnapGrid(event)" title="ล็อกตำแหน่งกล่องให้ตรงตาราง" style="flex:1;">🧲 Snap</button>
+                <button id="image-layer-btn" onclick="window.toggleImageLayer(event)" title="แสดง/ซ่อนภาพบน Canvas" style="flex:1;">🌄 ภาพ</button>
             </div>
         </div>
         
@@ -264,6 +289,7 @@
                 <button onclick="window.pngBtnClick()" ondblclick="window.pngBtnDbl()" title="บันทึก PNG — คลิก=ครอป | ดับเบิลคลิก=เต็มจอ (ถามพื้นหลัง ทึบ/ใส)">📸 PNG</button>
                 <button onclick="window.saveFileHTML()" title="เซฟเป็นไฟล์ HTML (Alt+S)">💾 HTML</button>
                 <button onclick="window.openFind()" title="ค้นหาข้อความใน Mindmap">🔎 Find</button>
+                <button onclick="document.getElementById('imageInput').click()" title="เพิ่มรูปภาพลงบน Canvas">🖼️ IMG</button>
             </div>
         </div>
     </div>
@@ -287,6 +313,7 @@
 
     <!-- One Import entry point: legacy JSON and portable Project ZIP -->
     <input type="file" id="importInput" style="display:none" accept=".json,.zip,.mindmap.zip,application/json,application/zip" onchange="window.importMindmapFile(event)">
+    <input type="file" id="imageInput" style="display:none" accept="image/*" multiple onchange="window.importImageFiles(event)">
     <button id="about-btn" onclick="window.showAbout()" title="เกี่ยวกับ &amp; เครดิต">i</button>
     <button id="zoom-status" onclick="window.resetZoom()" title="คลิกเพื่อกลับสู่ 100%">100%</button>
 
@@ -299,9 +326,13 @@
         // Mindmap State
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
         let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], images = [];
+        let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
+        const imageDomById = new Map(), imageThumbUrlByAsset = new Map();
+        let activeProjectId = 'local-' + Date.now().toString(36);
         const MM_PROJECT_FORMAT = 'mindmap-project';
         const MM_PROJECT_VERSION = 1;
         const MM_PROJECT_EXTENSION = '.mindmap.zip';
+        const MM_THUMB_MAX = 480;
         
         // Selection variables
         let isAddSel = false;
@@ -318,6 +349,68 @@
         let fitRestoreView = null;
         let lastCanvasPointer = null;
 
+        // Image bytes live outside graph/history.  This keeps Undo, autosave,
+        // and panning light even when a project contains many large originals.
+        const projectStore = {
+            dbName: 'mindmap-project-images-v1', db: null,
+            open() {
+                if(this.db) return Promise.resolve(this.db);
+                return new Promise((resolve, reject) => {
+                    if(!window.indexedDB) return reject(new Error('เบราว์เซอร์นี้ไม่รองรับที่เก็บรูปภาพ (IndexedDB)'));
+                    let request = indexedDB.open(this.dbName, 1);
+                    request.onupgradeneeded = () => {
+                        let db = request.result;
+                        ['projects', 'graphs', 'assets', 'thumbnails'].forEach(name => { if(!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: name === 'projects' ? 'id' : name === 'graphs' ? 'projectId' : 'assetId' }); });
+                        let assetStore = request.transaction.objectStore('assets');
+                        if(!assetStore.indexNames.contains('checksum')) assetStore.createIndex('checksum', 'checksum', { unique: false });
+                    };
+                    request.onsuccess = () => { this.db = request.result; this.db.onversionchange = () => this.db.close(); resolve(this.db); };
+                    request.onerror = () => reject(request.error || new Error('เปิดที่เก็บรูปภาพไม่สำเร็จ'));
+                });
+            },
+            async put(store, value) { let db = await this.open(); return new Promise((resolve, reject) => { let r = db.transaction(store, 'readwrite').objectStore(store).put(value); r.onsuccess = () => resolve(value); r.onerror = () => reject(r.error || new Error('บันทึกข้อมูลรูปภาพไม่สำเร็จ')); }); },
+            async get(store, key) { let db = await this.open(); return new Promise((resolve, reject) => { let r = db.transaction(store).objectStore(store).get(key); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error || new Error('อ่านข้อมูลรูปภาพไม่สำเร็จ')); }); },
+            async allByChecksum(checksum) { let db = await this.open(); return new Promise((resolve, reject) => { let r = db.transaction('assets').objectStore('assets').index('checksum').getAll(checksum); r.onsuccess = () => resolve(r.result || []); r.onerror = () => reject(r.error || new Error('ค้นหารูปเดิมไม่สำเร็จ')); }); },
+            async saveGraph(state) { await this.put('projects', { id: activeProjectId, formatVersion: MM_PROJECT_VERSION, updatedAt: new Date().toISOString() }); return this.put('graphs', { projectId: activeProjectId, state: cloneMindmapState(state), updatedAt: new Date().toISOString() }); }
+        };
+
+        function newId(prefix) { return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8); }
+        function placementFromElement(im) { return { id: im.id, x: im.style.left, y: im.style.top, w: im.style.width, h: im.style.height, src: im.querySelector('img') ? im.querySelector('img').src : '', caption: '', source: '', note: '' }; }
+        function imagePlacementById(id) { return imagePlacements.find(p => p.id === id); }
+        function placementDimensions(p) { return { x: parseFloat(p.x) || 0, y: parseFloat(p.y) || 0, w: Math.max(30, parseFloat(p.w) || 30), h: Math.max(20, parseFloat(p.h) || 20) }; }
+        function revokeImageThumbUrls() { imageThumbUrlByAsset.forEach(url => URL.revokeObjectURL(url)); imageThumbUrlByAsset.clear(); }
+        async function thumbnailUrlFor(placement) {
+            if(placement.src) return placement.src;
+            if(!placement.assetId) return '';
+            if(imageThumbUrlByAsset.has(placement.assetId)) return imageThumbUrlByAsset.get(placement.assetId);
+            let record = await projectStore.get('thumbnails', placement.assetId);
+            if(!record || !record.blob) return '';
+            let url = URL.createObjectURL(record.blob); imageThumbUrlByAsset.set(placement.assetId, url); return url;
+        }
+        async function originalUrlFor(placement) {
+            if(placement.src) return placement.src;
+            let record = placement.assetId && await projectStore.get('assets', placement.assetId);
+            if(!record || !record.blob) throw new Error('ไม่พบไฟล์ภาพต้นฉบับในเครื่องนี้');
+            return URL.createObjectURL(record.blob);
+        }
+        function removeImageDom(id) { let im = imageDomById.get(id); if(im) im.remove(); imageDomById.delete(id); images = Array.from(imageDomById.values()); }
+        function isPlacementNearViewport(p) {
+            let d = placementDimensions(p), view = getUsableViewport(), margin = 360 / zoom;
+            let left = (-cx) / zoom - margin, top = (view.top - cy) / zoom - margin, right = (view.width - cx) / zoom + margin, bottom = (window.innerHeight - cy) / zoom + margin;
+            return d.x + d.w >= left && d.x <= right && d.y + d.h >= top && d.y <= bottom;
+        }
+        function renderImageLayer() {
+            let wanted = new Set(imageLayerVisible ? imagePlacements.filter(isPlacementNearViewport).map(p => p.id) : []);
+            Array.from(imageDomById.keys()).forEach(id => { if(!wanted.has(id)) removeImageDom(id); });
+            imagePlacements.forEach(p => {
+                if(!wanted.has(p.id)) return;
+                let d = placementDimensions(p), im = imageDomById.get(p.id);
+                if(!im) { im = createImageElement(p); imageDomById.set(p.id, im); b.appendChild(im); thumbnailUrlFor(p).then(url => { if(imageDomById.get(p.id) === im && url) im.querySelector('img').src = url; }).catch(err => console.warn(err)); }
+                im.style.left = d.x + 'px'; im.style.top = d.y + 'px'; im.style.width = d.w + 'px'; im.style.height = d.h + 'px';
+            });
+            images = Array.from(imageDomById.values());
+        }
+
         function getUsableViewport() {
             let toolbar = document.getElementById('mm-ui');
             let top = !uiHidden && toolbar.style.display !== 'none' ? toolbar.getBoundingClientRect().bottom : 0;
@@ -333,10 +426,10 @@
         }
 
         function fitGraphView() {
-            let elements = nodes.concat(images);
+            let elements = nodes.map(el => ({ left: parseFloat(el.style.left) || 0, top: parseFloat(el.style.top) || 0, width: el.offsetWidth, height: el.offsetHeight })).concat(imagePlacements.map(p => { let d = placementDimensions(p); return { left:d.x, top:d.y, width:d.w, height:d.h }; }));
             if(!elements.length) return false;
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            elements.forEach(el => { let left = parseFloat(el.style.left) || 0, top = parseFloat(el.style.top) || 0; minX = Math.min(minX, left); minY = Math.min(minY, top); maxX = Math.max(maxX, left + el.offsetWidth); maxY = Math.max(maxY, top + el.offsetHeight); });
+            elements.forEach(el => { minX = Math.min(minX, el.left); minY = Math.min(minY, el.top); maxX = Math.max(maxX, el.left + el.width); maxY = Math.max(maxY, el.top + el.height); });
             let viewport = getUsableViewport(), padding = 56, width = Math.max(1, maxX - minX), height = Math.max(1, maxY - minY);
             zoom = Math.min(Math.max(0.1, Math.min((viewport.width - padding * 2) / width, (viewport.height - padding * 2) / height)), 3);
             cx = viewport.centerX - (minX + width / 2) * zoom; cy = viewport.centerY - (minY + height / 2) * zoom;
@@ -530,6 +623,23 @@
             input.focus();
         };
 
+        window.openImageDetail = async function(id) {
+            let placement = imagePlacementById(id); if(!placement) return;
+            try {
+                activeImageDetailId = id;
+                document.getElementById('image-caption-input').value = placement.caption || '';
+                document.getElementById('image-source-input').value = placement.source || '';
+                document.getElementById('image-note-input').value = placement.note || '';
+                document.getElementById('image-detail-title').textContent = placement.caption || 'รายละเอียดภาพ';
+                let preview = document.getElementById('image-detail-preview'); preview.removeAttribute('src');
+                let url = await originalUrlFor(placement); if(activeImageDetailId !== id) { if(url.startsWith('blob:')) URL.revokeObjectURL(url); return; }
+                preview.src = url; preview.dataset.objectUrl = url.startsWith('blob:') ? url : '';
+                document.getElementById('image-detail-ui').classList.add('open');
+            } catch(err) { console.error(err); window.showAlert('ไม่สามารถเปิดภาพเต็มได้<br><br>รายละเอียด Error: ' + err.message); }
+        };
+        window.closeImageDetail = function() { let preview = document.getElementById('image-detail-preview'); if(preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl); preview.removeAttribute('src'); preview.dataset.objectUrl = ''; activeImageDetailId = null; document.getElementById('image-detail-ui').classList.remove('open'); };
+        window.saveImageDetail = function() { let placement = imagePlacementById(activeImageDetailId); if(!placement) return window.closeImageDetail(); placement.caption = document.getElementById('image-caption-input').value.trim(); placement.source = document.getElementById('image-source-input').value.trim(); placement.note = document.getElementById('image-note-input').value; window.doSaveState(); window.closeImageDetail(); window.showToast('💾 บันทึกรายละเอียดภาพแล้ว'); };
+
         window.closeNodeNote = function() {
             saveNodeNote();
             nodeNoteId = null;
@@ -576,10 +686,18 @@
             } catch(e) {}
         };
 
-        window.saveFileHTML = function() {
+        window.saveFileHTML = async function() {
             updateTransform();
+            let state = currentMindmapState();
             let clone = document.documentElement.cloneNode(true);
             clone.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
+            let cloneCanvas = clone.querySelector('#b'); cloneCanvas.querySelectorAll('.img-float').forEach(im => im.remove());
+            for(let placement of state.images) {
+                let previewSrc = placement.src || '';
+                if(!previewSrc && placement.assetId) { let thumb = await projectStore.get('thumbnails', placement.assetId); if(thumb && thumb.blob) previewSrc = await blobToDataUrl(thumb.blob); }
+                if(!previewSrc) continue;
+                let d = placementDimensions(placement), im = document.createElement('div'); im.className = 'img-float'; im.id = placement.id; im.dataset.placementId = placement.id; im.style.left = d.x + 'px'; im.style.top = d.y + 'px'; im.style.width = d.w + 'px'; im.style.height = d.h + 'px'; im.innerHTML = '<img src="' + previewSrc + '" draggable="false" alt=""><div class="ifx">x</div><div class="ifr"></div><button class="if-info" type="button">i</button>'; cloneCanvas.appendChild(im);
+            }
             let clonedFindUI = clone.querySelector('#find-ui');
             if(clonedFindUI) {
                 clonedFindUI.style.display = 'none'; clonedFindUI.style.top = '12px';
@@ -589,10 +707,10 @@
                 if(clonedScope) { clonedScope.querySelectorAll('option').forEach(o => o.removeAttribute('selected')); clonedScope.querySelector('option[value="title"]').setAttribute('selected', 'selected'); }
             }
             let a = document.createElement('a');
-            a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent('<!DOCTYPE html>\n' + clone.outerHTML);
+            a.href = URL.createObjectURL(new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], {type:'text/html;charset=utf-8'}));
             a.download = 'mindmap_' + Date.now() + '.html';
-            a.click();
-            window.showToast('💾 เซฟไฟล์ HTML เรียบร้อยครับ!');
+            a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+            window.showToast('💾 เซฟ HTML พร้อม thumbnail แล้ว (ภาพต้นฉบับอยู่ใน Project ZIP)');
         };
 
         window.copyBookmark = function() {
@@ -639,6 +757,53 @@
             if(!response.ok) throw new Error('ไม่สามารถอ่านไฟล์รูปที่แนบอยู่ได้');
             return response.blob();
         }
+        function blobToDataUrl(blob) { return new Promise((resolve, reject) => { let reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(reader.error || new Error('แปลงข้อมูลรูปไม่สำเร็จ')); reader.readAsDataURL(blob); }); }
+        async function checksumBlob(blob) {
+            let buffer = await blob.arrayBuffer();
+            if(window.crypto && crypto.subtle) { let digest = new Uint8Array(await crypto.subtle.digest('SHA-256', buffer)); return [...digest].map(x => x.toString(16).padStart(2, '0')).join(''); }
+            let bytes = new Uint8Array(buffer), hash = 2166136261;
+            for(let i = 0; i < bytes.length; i++) { hash ^= bytes[i]; hash = Math.imul(hash, 16777619); }
+            return (hash >>> 0).toString(16).padStart(8, '0') + '-' + bytes.length;
+        }
+        async function makeThumbnail(blob) {
+            let url = URL.createObjectURL(blob);
+            try {
+                let img = await new Promise((resolve, reject) => { let i = new Image(); i.onload = () => resolve(i); i.onerror = () => reject(new Error('ไฟล์ภาพนี้ไม่สามารถอ่านได้')); i.src = url; });
+                let scale = Math.min(1, MM_THUMB_MAX / Math.max(img.naturalWidth || 1, img.naturalHeight || 1)), width = Math.max(1, Math.round(img.naturalWidth * scale)), height = Math.max(1, Math.round(img.naturalHeight * scale));
+                let canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                let thumb = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', .82));
+                return thumb || await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            } finally { URL.revokeObjectURL(url); }
+        }
+        async function putManagedAsset(blob, originalName) {
+            let checksum = await checksumBlob(blob), existing = await projectStore.allByChecksum(checksum);
+            if(existing.length) return { asset: existing[0], duplicate: true };
+            let assetId = newId('asset'), thumb = await makeThumbnail(blob), asset = { assetId, checksum, blob, mimeType: blob.type || 'application/octet-stream', originalName: originalName || '', createdAt: new Date().toISOString() };
+            await projectStore.put('assets', asset); await projectStore.put('thumbnails', { assetId, blob: thumb, mimeType: thumb.type || 'image/png' });
+            return { asset, duplicate: false };
+        }
+        function placementSizeForImage(blob) {
+            return new Promise((resolve, reject) => { let url = URL.createObjectURL(blob), img = new Image(); img.onload = () => { let w = Math.min(img.naturalWidth || 320, 320); resolve({ w, h: Math.max(20, w * (img.naturalHeight || 1) / (img.naturalWidth || 1)) }); URL.revokeObjectURL(url); }; img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ไม่สามารถอ่านขนาดรูปภาพ')); }; img.src = url; });
+        }
+        function placementsForAsset(assetId) { return imagePlacements.filter(p => p.assetId === assetId); }
+        async function askMetadataSource(assetId) {
+            let matches = placementsForAsset(assetId).filter(p => p.caption || p.source || p.note);
+            if(!matches.length) return null;
+            let rows = matches.map((p, i) => (i + 1) + '. ' + (p.caption || p.source || 'ตำแหน่งรูปเดิม')).join('\n');
+            return new Promise(resolve => window.showPrompt('พบรูปเดิมที่มีรายละเอียดแล้ว\n' + rows + '\n\nพิมพ์หมายเลขเพื่อคัดลอกข้อมูล หรือเว้นว่างเพื่อไม่คัดลอก:', '', val => { let n = parseInt(val, 10); resolve(Number.isInteger(n) && n >= 1 && n <= matches.length ? matches[n - 1] : null); }));
+        }
+        async function insertImageFile(file, centerX, centerY) {
+            await migrateLegacyState({ images: imagePlacements });
+            let blob = file instanceof Blob ? file : await imageBlobFromSource(file.src), size = await placementSizeForImage(blob), result = await putManagedAsset(blob, file.name || ''), metadataSource = result.duplicate ? await askMetadataSource(result.asset.assetId) : null;
+            let placement = { id: 'im' + nid++, assetId: result.asset.assetId, x: (centerX - size.w / 2) + 'px', y: (centerY - size.h / 2) + 'px', w: size.w + 'px', h: size.h + 'px', caption: metadataSource ? metadataSource.caption || '' : '', source: metadataSource ? metadataSource.source || '' : '', note: metadataSource ? metadataSource.note || '' : '' };
+            imagePlacements.push(placement); renderImageLayer(); return placement;
+        }
+        async function migrateLegacyState(state) {
+            let legacy = (state.images || []).filter(p => p.src && !p.assetId); if(!legacy.length) return state;
+            window.showToast('🖼️ กำลังย้ายรูปเดิมเข้าสู่ระบบ Project…');
+            for(let p of legacy) { let result = await putManagedAsset(await imageBlobFromSource(p.src), 'legacy-image'); p.assetId = result.asset.assetId; delete p.src; }
+            return state;
+        }
         function downloadBlob(blob, filename) {
             let url = URL.createObjectURL(blob), a = document.createElement('a');
             a.href = url; a.download = filename; a.click();
@@ -655,6 +820,7 @@
         }
         function applyImportedState(state) {
             clearFitRestore();
+            activeProjectId = newId('project'); revokeImageThumbUrls();
             if(state.views) {
                 if(Number.isFinite(state.views.cx)) cx = state.views.cx;
                 if(Number.isFinite(state.views.cy)) cy = state.views.cy;
@@ -664,20 +830,15 @@
         }
         async function buildProjectZip() {
             if(typeof JSZip !== 'function') throw new Error('ไม่พบตัวช่วยสร้างไฟล์ ZIP กรุณาเปิดหน้า Mindmap จากโฟลเดอร์ tools อีกครั้ง');
-            let zip = new JSZip(), state = currentMindmapState(), assets = [], sourceAssets = new Map(), assetNumber = 0;
-            for(let i = 0; i < state.images.length; i++) {
-                let placement = state.images[i], source = placement.src;
-                if(!source) throw new Error('พบรูปที่ไม่มีข้อมูลต้นฉบับ จึงยังสร้าง Project ZIP ไม่ได้');
-                let asset = sourceAssets.get(source);
-                if(!asset) {
-                    let blob = await imageBlobFromSource(source), mimeType = blob.type || mimeFromDataUrl(source) || 'application/octet-stream';
-                    let assetId = 'asset_' + (++assetNumber).toString().padStart(4, '0');
-                    asset = { assetId: assetId, originalPath: 'images/original/' + assetId + '.' + extensionForMime(mimeType), mimeType: mimeType };
-                    sourceAssets.set(source, asset); assets.push(asset); zip.file(asset.originalPath, blob);
-                }
-                delete placement.src; placement.assetId = asset.assetId;
+            let zip = new JSZip(), state = await migrateLegacyState(currentMindmapState()), assets = [], usedIds = [...new Set(state.images.map(p => p.assetId).filter(Boolean))];
+            for(let i = 0; i < usedIds.length; i++) {
+                let asset = await projectStore.get('assets', usedIds[i]), thumb = await projectStore.get('thumbnails', usedIds[i]);
+                if(!asset || !asset.blob) throw new Error('ไม่พบไฟล์ภาพต้นฉบับของ ' + usedIds[i] + ' ในเครื่องนี้ — โปรด Import Project ZIP ฉบับเต็มอีกครั้ง');
+                let originalPath = 'images/original/' + asset.assetId + '.' + extensionForMime(asset.mimeType), thumbnailPath = 'images/thumbs/' + asset.assetId + '.' + extensionForMime(thumb && thumb.mimeType || 'image/png');
+                assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
+                zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.74', createdAt: new Date().toISOString(), assets: assets, thumbnails: [] };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.74', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -698,16 +859,15 @@
             if(manifest.format !== MM_PROJECT_FORMAT) throw new Error('ZIP นี้ไม่ใช่ Mindmap Project ที่รองรับ');
             if(!Number.isInteger(manifest.formatVersion) || manifest.formatVersion > MM_PROJECT_VERSION) throw new Error('Project ZIP นี้เป็นรุ่นใหม่กว่าที่ Mindmap ปัจจุบันรองรับ');
             let state = normalizedImportState(JSON.parse(await mapEntry.async('text'))), assets = new Map((manifest.assets || []).map(function(asset){ return [asset.assetId, asset]; }));
-            let hydratedImages = [];
             for(let i = 0; i < state.images.length; i++) {
-                let placement = state.images[i];
-                if(placement.src) { hydratedImages.push(placement); continue; }
-                let asset = assets.get(placement.assetId), entry = asset && zip.file(asset.originalPath);
-                if(!asset || !entry) throw new Error('Project ZIP มีรูปที่หาไม่พบ: ' + (placement.assetId || 'ไม่ทราบรหัส'));
-                let base64 = await entry.async('base64');
-                hydratedImages.push(Object.assign({}, placement, { src: 'data:' + (asset.mimeType || 'application/octet-stream') + ';base64,' + base64 }));
+                let placement = state.images[i]; if(placement.src) continue;
+                let asset = assets.get(placement.assetId), original = asset && zip.file(asset.originalPath), thumb = asset && asset.thumbnailPath && zip.file(asset.thumbnailPath);
+                if(!asset || !original) throw new Error('Project ZIP มีรูปที่หาไม่พบ: ' + (placement.assetId || 'ไม่ทราบรหัส'));
+                window.showToast('📥 กำลังอ่านรูป ' + (i + 1) + '/' + state.images.length + '…');
+                let originalBlob = await original.async('blob'), thumbnailBlob = thumb ? await thumb.async('blob') : await makeThumbnail(originalBlob);
+                await projectStore.put('assets', { assetId: asset.assetId, checksum: asset.checksum || await checksumBlob(originalBlob), blob: originalBlob, mimeType: asset.mimeType || originalBlob.type, originalName: asset.originalName || '', createdAt: new Date().toISOString() });
+                await projectStore.put('thumbnails', { assetId: asset.assetId, blob: thumbnailBlob, mimeType: asset.thumbnailMimeType || thumbnailBlob.type });
             }
-            state.images = hydratedImages;
             return state;
         }
         window.importMindmapFile = async function(e) {
@@ -788,17 +948,17 @@
         window.doSaveState = function() { 
             let state = nodes.map(n => ({ id: n.id, x: n.style.left, y: n.style.top, bg: n.style.background, fg: n.style.color, bd: n.style.borderColor, shape: n.dataset.shape || 'box', fs: n.querySelector('.nt') ? n.querySelector('.nt').style.fontSize : '', dfs: n.querySelector('.nd') ? n.querySelector('.nd').style.fontSize : '', txt: n.querySelector('.nt') ? n.querySelector('.nt').innerHTML : '', desc: n.querySelector('.nd') ? n.querySelector('.nd').innerHTML : '', note: n.dataset.note || '', type: n.classList.contains('j') ? 'j' : 'n' }));
             let lines = Array.from(s.querySelectorAll('line')).map(l => ({ id: l.id, n1: l.dataset.n1, n2: l.dataset.n2 }));
-            let imgState = images.map(im => ({ id: im.id, x: im.style.left, y: im.style.top, w: im.style.width, h: im.style.height, src: im.querySelector('img').src }));
+            let imgState = cloneMindmapState(imagePlacements);
             if(curStep < mmHistory.length - 1) mmHistory = mmHistory.slice(0, curStep + 1);
             mmHistory.push({nodes: state, lines: lines, images: imgState, nid: nid});
-            curStep++; window.saveBackup(); 
+            curStep++; window.saveBackup(); projectStore.saveGraph({nodes: state, lines: lines, images: imgState, nid: nid}).catch(err => console.warn('Image project autosave:', err));
         };
         
         window.doUndo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep > 0) window.loadState(curStep - 1); }; window.doRedo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep < mmHistory.length - 1) window.loadState(curStep + 1); };
         
         window.loadState = function(step) { 
             let state = mmHistory[step]; if(!state || !state.nodes) return; 
-            nodes.forEach(n => n.remove()); s.innerHTML = ''; document.querySelectorAll('.mb').forEach(el => el.remove()); nodes = []; images.forEach(im => im.remove()); images = []; nid = state.nid || 0;
+            nodes.forEach(n => n.remove()); s.innerHTML = ''; document.querySelectorAll('.mb').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); nid = state.nid || 0;
             state.nodes.forEach(ns => { 
                 let n = document.createElement('div'); n.className = ns.type === 'j' ? 'n j' : 'n'; n.id = ns.id; n.style.left = ns.x; n.style.top = ns.y; n.dataset.note = ns.note || '';
                 if(ns.bg) { n.style.background = ns.bg; n.style.setProperty('--n-bg', ns.bg); } 
@@ -810,11 +970,10 @@
                 b.appendChild(n); nodes.push(n); attachNodeEvents(n); 
             }); 
             state.lines.forEach(ls => { let l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.setAttribute('stroke', 'var(--bc)'); l.setAttribute('stroke-width', '3'); l.id = ls.id; l.dataset.n1 = ls.n1; l.dataset.n2 = ls.n2; s.appendChild(l); });
-            (state.images || []).forEach(is => { addImage(parseFloat(is.x), parseFloat(is.y), parseFloat(is.w), parseFloat(is.h), is.src, is.id); });
-            updateAll(); curStep = step;
+            updateAll(); curStep = step; renderImageLayer();
         };
         
-        function updateTransform() { b.style.transform = `translate(${cx}px, ${cy}px) scale(${zoom})`; b.dataset.cx = cx; b.dataset.cy = cy; b.dataset.zoom = zoom; updateZoomStatus(); }
+        function updateTransform() { b.style.transform = `translate(${cx}px, ${cy}px) scale(${zoom})`; b.dataset.cx = cx; b.dataset.cy = cy; b.dataset.zoom = zoom; updateZoomStatus(); renderImageLayer(); }
         function attachNodeEvents(n) { 
             n.onmousedown = function(e) { 
                 e.stopPropagation(); 
@@ -829,27 +988,42 @@
         }
         function addNode(x, y, pid, type = 'n') { let id = 'n' + nid++; let n = document.createElement('div'); n.className = type === 'j' ? 'n j' : 'n'; n.id = id; n.style.left = x + 'px'; n.style.top = y + 'px'; n.dataset.shape = 'box'; n.dataset.note = ''; n.innerHTML = '<div class="dx" onclick="del(\'' + id + '\')" title="ลบกล่องนี้">x</div><button class="note-btn" type="button" onclick="window.openNodeNote(\'' + id + '\')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, \'' + id + '\',\'r\')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, \'' + id + '\',\'l\')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, \'' + id + '\',\'t\')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, \'' + id + '\',\'b\')">+</div>'; b.appendChild(n); nodes.push(n); attachNodeEvents(n); if(pid) { window.createLine(pid, id); } return n; }
 
-        function addImage(x, y, w, h, src, id) { if(!id) id = 'im' + nid++; let im = document.createElement('div'); im.className = 'img-float'; im.id = id; im.style.left = x + 'px'; im.style.top = y + 'px'; im.style.width = w + 'px'; im.style.height = h + 'px'; im.innerHTML = '<img src="' + src + '" draggable="false"><div class="ifx" title="ลบรูปนี้" onmousedown="event.stopPropagation()" onclick="window.delImage(\'' + id + '\')">x</div><div class="ifr" title="ลากเพื่อย่อ/ขยาย"></div>'; b.appendChild(im); images.push(im); attachImgEvents(im); return im; }
+        function createImageElement(placement) {
+            let im = document.createElement('div'); im.className = 'img-float'; im.id = placement.id; im.dataset.placementId = placement.id;
+            im.innerHTML = '<img draggable="false" alt=""><div class="ifx" title="ลบรูปนี้" onmousedown="event.stopPropagation()">x</div><div class="ifr" title="ลากเพื่อย่อ/ขยาย — Shift รักษาสัดส่วน, Ctrl รักษาจุดศูนย์กลาง"></div><button class="if-info" type="button" title="ดูภาพใหญ่และรายละเอียด">i</button>';
+            attachImgEvents(im); return im;
+        }
+        function updatePlacementStyle(im, p) { let d = placementDimensions(p); im.style.left = d.x + 'px'; im.style.top = d.y + 'px'; im.style.width = d.w + 'px'; im.style.height = d.h + 'px'; }
         function attachImgEvents(im) {
+            let id = im.dataset.placementId;
             im.onmousedown = function(e) {
-                if(e.target.closest('.ifx') || e.target.closest('.ifr')) return;
-                e.stopPropagation();
-                if(!im.classList.contains('sel')) { clearSel(); im.classList.add('sel'); }
-                let startX = e.clientX, startY = e.clientY; let startLeft = parseFloat(im.style.left), startTop = parseFloat(im.style.top); let moved = false;
+                if(e.target.closest('.ifx') || e.target.closest('.ifr') || e.target.closest('.if-info')) return;
+                e.stopPropagation(); if(!im.classList.contains('sel')) { clearSel(); im.classList.add('sel'); }
+                let p = imagePlacementById(id); if(!p) return; let startX = e.clientX, startY = e.clientY, d = placementDimensions(p), moved = false;
                 document.body.style.userSelect = 'none'; im.style.cursor = 'grabbing';
-                function mm(me) { moved = true; let dx = (me.clientX - startX) / zoom, dy = (me.clientY - startY) / zoom; let nl = startLeft + dx, nt = startTop + dy; if(snapGrid) { nl = Math.round(nl / 40) * 40; nt = Math.round(nt / 40) * 40; } im.style.left = nl + 'px'; im.style.top = nt + 'px'; }
+                function mm(me) { moved = true; let nl = d.x + (me.clientX - startX) / zoom, nt = d.y + (me.clientY - startY) / zoom; if(snapGrid) { nl = Math.round(nl / 40) * 40; nt = Math.round(nt / 40) * 40; } p.x = nl + 'px'; p.y = nt + 'px'; updatePlacementStyle(im, p); }
                 function mu() { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); document.body.style.userSelect = ''; im.style.cursor = 'grab'; if(moved) window.doSaveState(); }
                 document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
             };
+            im.querySelector('.ifx').onmousedown = e => e.stopPropagation();
+            im.querySelector('.ifx').onclick = () => window.delImage(id);
+            im.querySelector('.if-info').onmousedown = e => e.stopPropagation();
+            im.querySelector('.if-info').onclick = () => window.openImageDetail(id);
+            im.ondblclick = e => { e.stopPropagation(); window.openImageDetail(id); };
             im.querySelector('.ifr').onmousedown = function(e) {
-                e.stopPropagation(); e.preventDefault();
-                let startX = e.clientX, startY = e.clientY; let startW = parseFloat(im.style.width), startH = parseFloat(im.style.height);
-                function mm(me) { let dw = (me.clientX - startX) / zoom, dh = (me.clientY - startY) / zoom; im.style.width = Math.max(30, startW + dw) + 'px'; im.style.height = Math.max(20, startH + dh) + 'px'; }
+                e.stopPropagation(); e.preventDefault(); let p = imagePlacementById(id); if(!p) return;
+                let startX = e.clientX, startY = e.clientY, d = placementDimensions(p), ratio = d.w / d.h;
+                function mm(me) {
+                    let dw = (me.clientX - startX) / zoom, dh = (me.clientY - startY) / zoom, w = Math.max(30, d.w + dw), h = Math.max(20, d.h + dh);
+                    if(me.shiftKey) { if(Math.abs(dw) >= Math.abs(dh)) h = Math.max(20, w / ratio); else w = Math.max(30, h * ratio); }
+                    let x = d.x, y = d.y; if(me.ctrlKey) { x = d.x + (d.w - w) / 2; y = d.y + (d.h - h) / 2; }
+                    p.x = x + 'px'; p.y = y + 'px'; p.w = w + 'px'; p.h = h + 'px'; updatePlacementStyle(im, p);
+                }
                 function mu() { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); window.doSaveState(); }
                 document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
             };
         }
-        window.delImage = function(id) { let im = document.getElementById(id); if(!im) return; images = images.filter(x => x.id !== id); im.remove(); window.doSaveState(); };
+        window.delImage = function(id) { let index = imagePlacements.findIndex(p => p.id === id); if(index < 0) return; imagePlacements.splice(index, 1); removeImageDom(id); window.doSaveState(); };
         window.createLine = function(id1, id2) { let l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.setAttribute('stroke', 'var(--bc)'); l.setAttribute('stroke-width', '3'); l.id = 'l_' + id1 + '_' + id2 + '_' + Date.now(); l.dataset.n1 = id1; l.dataset.n2 = id2; s.appendChild(l); updateLine(l); return l; };
         window.startLineDrag = function(e, pid, dir) { e.stopPropagation(); let startX = e.clientX; let startY = e.clientY; let pNode = document.getElementById(pid); if(!pNode) return; let x1 = pNode.offsetLeft + pNode.offsetWidth / 2; let y1 = pNode.offsetTop + pNode.offsetHeight / 2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', x1); tl.setAttribute('y1', y1); tl.setAttribute('x2', x1); tl.setAttribute('y2', y1); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = s.querySelectorAll('line'); allLines.forEach(l => { if(l !== tl) { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; } }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetNode = me.target.closest('.n'); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLine = document.getElementById(targetMb.id.replace(/^mb_/, '')); if(mbLine) { targetLine = mbLine; targetNode = null; } } if(targetNode && targetNode.id !== pid) { let existing = document.querySelector('line[data-n1="' + pid + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + pid + '"][data-n1="' + targetNode.id + '"]'); if(!existing) { window.createLine(pid, targetNode.id); window.doSaveState(); } } else if(targetLine && targetLine.id.startsWith('l_') && targetLine.dataset.n1 !== pid && targetLine.dataset.n2 !== pid) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); let j = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(tn1, j.id); window.createLine(j.id, tn2); window.createLine(pid, j.id); window.doSaveState(); } else if(moved) { let nx = (me.clientX - cx) / zoom; let ny = (me.clientY - cy) / zoom; addNode(nx - 50, ny - 30, pid); window.doSaveState(); } else { window.addLink(pid, dir); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
         window.del = function(id) { if(nodeNoteId === id) window.closeNodeNote(); let n = document.getElementById(id); if(!n) return; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(l => { let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); l.remove(); }); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } window.doSaveState(); };
@@ -860,14 +1034,14 @@
         function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); }
 
         window.addEventListener('wheel', function(e) {
-            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#zoom-status')) return;
+            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('#zoom-status')) return;
             e.preventDefault();
             let xs = (e.clientX - cx) / zoom, ys = (e.clientY - cy) / zoom;
             zoom += e.deltaY * -0.001; zoom = Math.min(Math.max(0.1, zoom), 3); cx = e.clientX - xs * zoom; cy = e.clientY - ys * zoom; updateTransform(); clearFitRestore();
         }, {passive: false});
 
         window.addEventListener('mousedown', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('.mb')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb')) return;
             if(e.target.closest('#float-ui-btn')) return;
 
             if(e.button === 1 || e.button === 2) { isPan = true; px = e.clientX; py = e.clientY; }
@@ -897,30 +1071,29 @@
         });
 
         window.addEventListener('dblclick', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('.mb') || e.target.closest('#about-btn')) return;
-            if(e.target.closest('.n')) return; 
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('#about-btn')) return;
+            if(e.target.closest('.n') || e.target.closest('.img-float')) return;
             let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; addNode(nx, ny, null); window.doSaveState();
         });
 
         window.addEventListener('dragover', function(e) { e.preventDefault(); });
         window.addEventListener('drop', function(e) {
-            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui')) return;
+            if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui')) return;
             e.preventDefault();
-            let file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-            if(!file || !file.type.startsWith('image/')) return;
+            let files = Array.from(e.dataTransfer && e.dataTransfer.files || []).filter(file => file.type.startsWith('image/'));
+            if(!files.length) return;
             let dropX = (e.clientX - cx) / zoom, dropY = (e.clientY - cy) / zoom;
-            let reader = new FileReader();
-            reader.onload = function(ev) {
-                let img = new Image();
-                img.onload = function() {
-                    let w = Math.min(img.naturalWidth, 320); let h = w * img.naturalHeight / img.naturalWidth;
-                    addImage(dropX - w / 2, dropY - h / 2, w, h, ev.target.result);
-                    window.doSaveState();
-                };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
+            window.insertImageFiles(files, dropX, dropY);
         });
+
+        window.importImageFiles = function(e) { let files = Array.from(e.target.files || []); e.target.value = ''; if(!files.length) return; let view = getUsableViewport(); window.insertImageFiles(files, (view.centerX - cx) / zoom, (view.centerY - cy) / zoom); };
+        window.insertImageFiles = async function(files, x, y) {
+            try {
+                for(let i = 0; i < files.length; i++) { window.showToast('🖼️ กำลังเพิ่มรูป ' + (i + 1) + '/' + files.length + '…'); await insertImageFile(files[i], x + i * 28, y + i * 28); }
+                window.doSaveState(); window.showToast('✅ เพิ่มรูป ' + files.length + ' รูปเรียบร้อยครับ');
+            } catch(err) { console.error(err); window.showAlert('ไม่สามารถเพิ่มรูปภาพได้<br><br>รายละเอียด Error: ' + err.message); }
+        };
+        window.toggleImageLayer = function(e) { imageLayerVisible = !imageLayerVisible; let btn = document.getElementById('image-layer-btn'); if(btn) btn.style.background = imageLayerVisible ? 'var(--c9)' : ''; if(!imageLayerVisible) clearSel(); renderImageLayer(); window.showToast(imageLayerVisible ? '🌄 แสดงภาพบน Canvas' : '🌄 ซ่อนภาพบน Canvas — ข้อมูลรูปยังอยู่ครบ'); };
 
         window.doAlign = function(ax) { let sels = nodes.filter(n => n.classList.contains('sel')); if(sels.length < 2) return; if(ax === 't') { let min = Math.min(...sels.map(n => parseFloat(n.style.top))); sels.forEach(n => { n.style.top = min + 'px'; }); } else if(ax === 'b') { let max = Math.max(...sels.map(n => parseFloat(n.style.top) + n.offsetHeight)); sels.forEach(n => { n.style.top = (max - n.offsetHeight) + 'px'; }); } else if(ax === 'cy') { let avg = sels.reduce((s, n) => s + parseFloat(n.style.top) + n.offsetHeight / 2, 0) / sels.length; sels.forEach(n => { n.style.top = (avg - n.offsetHeight / 2) + 'px'; }); } else if(ax === 'l') { let min = Math.min(...sels.map(n => parseFloat(n.style.left))); sels.forEach(n => { n.style.left = min + 'px'; }); } else if(ax === 'r') { let max = Math.max(...sels.map(n => parseFloat(n.style.left) + n.offsetWidth)); sels.forEach(n => { n.style.left = (max - n.offsetWidth) + 'px'; }); } else if(ax === 'cx') { let avg = sels.reduce((s, n) => s + parseFloat(n.style.left) + n.offsetWidth / 2, 0) / sels.length; sels.forEach(n => { n.style.left = (avg - n.offsetWidth / 2) + 'px'; }); } updateAll(); window.doSaveState(); };
         window.doDist = function(ax) { let sels = nodes.filter(n => n.classList.contains('sel')); if(sels.length < 3) return; if(ax === 'x') { sels.sort((a, b) => parseFloat(a.style.left) - parseFloat(b.style.left)); let min = parseFloat(sels[0].style.left), max = parseFloat(sels[sels.length - 1].style.left), totalWidth = sels.slice(0, -1).reduce((sum, n) => sum + (n.offsetWidth || 150), 0), step = (max - min - totalWidth) / (sels.length - 1); let curX = min; sels.forEach((n, i) => { n.style.left = curX + 'px'; curX += (n.offsetWidth || 150) + step; }); } else { sels.sort((a, b) => parseFloat(a.style.top) - parseFloat(b.style.top)); let min = parseFloat(sels[0].style.top), max = parseFloat(sels[sels.length - 1].style.top), totalHeight = sels.slice(0, -1).reduce((sum, n) => sum + (n.offsetHeight || 80), 0), step = (max - min - totalHeight) / (sels.length - 1); let curY = min; sels.forEach((n, i) => { n.style.top = curY + 'px'; curY += (n.offsetHeight || 80) + step; }); } updateAll(); window.doSaveState(); };
@@ -965,6 +1138,7 @@
 
         window.addEventListener('keydown', function(e) {
             if(e.key === 'Escape' && document.getElementById('about-ui').style.display !== 'none') { e.preventDefault(); window.closeAbout(); return; }
+            if(e.key === 'Escape' && document.getElementById('image-detail-ui').classList.contains('open')) { e.preventDefault(); window.closeImageDetail(); return; }
             if(e.key === 'Escape' && nodeNoteId) { e.preventDefault(); window.closeNodeNote(); return; }
             if(e.key === 'Tab') {
                 let active = document.activeElement;
@@ -1008,10 +1182,10 @@
             if(isSavedHTML) {
                 let existingNodes = document.querySelectorAll('.n');
                 let existingImgs = document.querySelectorAll('.img-float');
-                existingImgs.forEach(im => { images.push(im); attachImgEvents(im); });
+                existingImgs.forEach(im => { imagePlacements.push(placementFromElement(im)); im.remove(); });
                 if(existingNodes.length > 0) {
                     existingNodes.forEach(n => { nodes.push(n); attachNodeEvents(n); });
-                    let maxId = 0; nodes.forEach(n => { let num = parseInt(n.id.replace('n', '')); if(num > maxId) maxId = num; }); images.forEach(im => { let num = parseInt(im.id.replace('im', '')); if(!isNaN(num) && num > maxId) maxId = num; }); nid = maxId + 1;
+                    let maxId = 0; nodes.forEach(n => { let num = parseInt(n.id.replace('n', '')); if(num > maxId) maxId = num; }); imagePlacements.forEach(im => { let num = parseInt(im.id.replace('im', '')); if(!isNaN(num) && num > maxId) maxId = num; }); nid = maxId + 1;
                     if(b.dataset.cx) { cx = parseFloat(b.dataset.cx); cy = parseFloat(b.dataset.cy); zoom = parseFloat(b.dataset.zoom); }
                     // #11: pristine baked default (single n0 + sentinel transform) lands top-left;
                     // recenter it on the viewport (account for node size). Leaves user-arranged exports untouched.

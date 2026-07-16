@@ -5,8 +5,8 @@ Updated: 2026-07-16 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current completed MindMap release: **V3.73**
-- Latest completed MindMap baseline: **V3.73** (`33ab431 Refine Mindmap navigation and info help`)
+- Current MindMap release in development: **V3.74**
+- Latest completed MindMap baseline: **V3.74 Phase 1** (`daa61c7 Add Mindmap project ZIP import and export`), followed by view/canvas refinements (`7319ea9`).
 - User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
@@ -19,7 +19,7 @@ Updated: 2026-07-16 (Asia/Bangkok)
   `Alt+R` toggles Fit graph / exact restore; reorganized About dialog with
   help, hotkeys, credits, and copyright.
 
-## V3.74: Image Project Foundation (Phase 1 Implemented, Pending User Test)
+## V3.74: Image Project Foundation
 
 - Added the locally vendored JSZip 3.10.1 dependency for offline `file://`
   ZIP support.
@@ -30,9 +30,17 @@ Updated: 2026-07-16 (Asia/Bangkok)
 - `📥 Import` accepts both legacy JSON and Project ZIP and detects ZIP from its
   bytes plus `manifest.json`, not filename alone. It validates/reads the whole
   package before replacing the active map.
-- This phase deliberately keeps the current in-memory image renderer. IndexedDB,
-  thumbnails, `🌄 ภาพ`, image metadata, resize modifiers, HTML thumbnail
-  snapshots, and Find-in-Note belong to later V3.74 checkpoints.
+- **Phase 2 implemented, pending user test:** originals and thumbnails are now
+  stored outside history in IndexedDB. Canvas rendering is viewport-aware and
+  only creates DOM thumbnail elements near the view. `🌄 ภาพ` suppresses that
+  rendering without deleting data. `🖼️ IMG` inserts one or more files; drop
+  insertion remains available. Image moves support Snap; resize supports
+  Shift, Ctrl, and Shift+Ctrl; double-click opens full image with editable
+  caption, source, and Note. `💾 HTML` embeds thumbnails while `📤 Export`
+  preserves originals and thumbnails in the Project ZIP.
+- Legacy JSON/HTML image data remains readable. It is migrated to managed
+  assets when the first managed image is inserted or a Project ZIP is made.
+- Find-in-Note is still a later V3.74 checkpoint.
 - Browser automation cannot open the local `file://` page under current tool
   policy; static checks and JSZip round-trip passed. User interaction testing
   is still required after refresh.
