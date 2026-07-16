@@ -20,6 +20,10 @@ bulk import queues belong to V3.75.
 - Existing JSON export remains available for legacy/small maps. A project with
   managed images must clearly direct the user to Project ZIP instead, so image
   data is never silently omitted.
+- `💾 HTML` remains an interactive Mindmap export. In Project mode it is a
+  lightweight structural snapshot: nodes, connectors, text, and image
+  placements remain, but it does not embed image files. Project ZIP is the
+  only complete editable backup for a map with managed images.
 - Existing drag-and-drop image insertion remains supported.
 - `content/mindmap-info.html` remains the editable source of the Info dialog.
 
@@ -81,6 +85,13 @@ The existing `📤 Export` stays JSON-focused. In Project mode it warns that
 JSON is not suitable for the managed image library and points to `📦 Project
 ZIP`. `📦 Project ZIP` creates the complete portable package with the map,
 originals, and thumbnails.
+
+`💾 HTML` keeps its present role for a single-file interactive Mindmap. In
+Project mode it exports the graph structure and the visual placements of
+images, but omits the image files themselves to remain lightweight. The
+exported HTML must identify this as a snapshot and direct users to Project ZIP
+when they need a complete, editable image project. `📸 PNG` remains the option
+for a flat visual capture that includes whatever is currently rendered.
 
 When a legacy JSON map first receives a managed image, it enters Project mode
 and creates its local IndexedDB project data automatically. The user can then
