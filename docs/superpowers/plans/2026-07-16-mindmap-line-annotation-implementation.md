@@ -24,7 +24,7 @@
 
 ## 3. Build Line creation and editing interaction
 
-1. Add the final Shapes button and create a C9-blue 400px horizontal line at
+1. Add the final Shapes button and create a C9-blue 400px vertical line at
    the usable viewport centre.
 2. Clicking an annotation selects it; clicking other Canvas content clears the
    selection.

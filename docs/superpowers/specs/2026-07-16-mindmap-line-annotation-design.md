@@ -12,7 +12,7 @@ establishes the annotation data path first.
 ## User interaction
 
 1. Add a Line button in the final empty position of the Shapes area.
-2. Clicking it creates a horizontal line, approximately 400 Canvas pixels
+2. Clicking it creates a vertical line, approximately 400 Canvas pixels
    long, centred in the usable viewport. Its initial stroke colour is `C9`
    blue.
 3. Clicking a line selects it. Selection shows a delete control and two end
