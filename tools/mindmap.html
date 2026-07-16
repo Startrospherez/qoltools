@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.79</title>
+    <title>MindMap V3.80</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -211,7 +211,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.79</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.80</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <details>
     <summary>📖 วิธีใช้งาน</summary>
     <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เนื้อหา และข้อมูลประกอบในหน้าเดียว</p>
@@ -223,7 +223,7 @@
 </details>
 <details>
     <summary>🧭 ทำยังไง?</summary>
-    <ul><li>ใช้เมาส์เพื่อ Zoom เข้า-ออก ได้</li><li><b>Theme</b> วน Sepia → Dark → Sepia with Dark Canvas</li><li><b>▦ Grid</b> แสดงตาราง และ <b>🧲 Snap</b> ล็อกกึ่งกลาง node ลงกริด</li><li>กดตัวเลขเปอร์เซ็นต์มุมซ้ายล่างเพื่อกลับสู่ 100%</li><li>กด <kbd>Alt</kbd> + <kbd>R</kbd> เพื่อ Fit graph; กดซ้ำเพื่อกลับมุมเดิม หรือหลังเลื่อนมุมมองให้กลับระดับ Zoom เดิมที่ตำแหน่งเมาส์</li><li>ชี้หรือเลือก node เพื่อเห็น <b>→ +</b> ของทุกเส้นรอบ node; คลิกเพื่อพิมพ์ชื่อความสัมพันธ์ เช่น <b>→ อุปัฏฐาก</b>. จากนั้นคลิกข้อความเพื่อไปยัง node อีกฝั่ง, ดับเบิลคลิกเพื่อแก้คำ และลากข้อความเพื่อย้ายตำแหน่งบนเส้น</li><li>เลือกหลาย node เพื่อใช้ T/C/B-Align, L/C/R-Align และ Dist</li></ul>
+    <ul><li>ใช้เมาส์เพื่อ Zoom เข้า-ออก ได้</li><li><b>Theme</b> วน Sepia → Dark → Sepia with Dark Canvas</li><li><b>▦ Grid</b> แสดงตาราง และ <b>🧲 Snap</b> ล็อกกึ่งกลาง node ลงกริด</li><li>กดตัวเลขเปอร์เซ็นต์มุมซ้ายล่างเพื่อกลับสู่ 100%</li><li>กด <kbd>Alt</kbd> + <kbd>R</kbd> เพื่อ Fit graph; กดซ้ำเพื่อกลับมุมเดิม หรือหลังเลื่อนมุมมองให้กลับระดับ Zoom เดิมที่ตำแหน่งเมาส์</li><li>ชี้หรือเลือก node เพื่อเห็นป้ายความสัมพันธ์ของทุกเส้นรอบ node เช่น <b>→ +</b>; คลิกป้ายเพื่อไปยัง node อีกฝั่ง, ดับเบิลคลิกเพื่อพิมพ์หรือแก้คำ และลากเพื่อย้ายตำแหน่งบนเส้น ลูกศรจะชี้ตามทิศที่เส้นออกจาก node</li><li>เลือกหลาย node เพื่อใช้ T/C/B-Align, L/C/R-Align และ Dist</li></ul>
 </details>
 <details>
     <summary>✨ นอกจาก node ที่เห็นแล้วมีอะไรอีก?</summary>
@@ -480,6 +480,7 @@
             let selected = nodes.filter(node => node.classList.contains('sel')); return selected.length === 1 ? selected[0] : null;
         }
         function connectorRoutePoint(line, position) { return { x1:parseFloat(line.getAttribute('x1')), y1:parseFloat(line.getAttribute('y1')), x2:parseFloat(line.getAttribute('x2')), y2:parseFloat(line.getAttribute('y2')), position:clampConnectorRoutePosition(position, .5) }; }
+        function connectorRouteDirectionIcon(line, side) { let point = connectorRoutePoint(line, .5), dx = side === 'n1' ? point.x2 - point.x1 : point.x1 - point.x2, dy = side === 'n1' ? point.y2 - point.y1 : point.y1 - point.y2; if(!Number.isFinite(dx) || !Number.isFinite(dy) || (Math.abs(dx) < .001 && Math.abs(dy) < .001)) return '→'; let icons = ['→','↘','↓','↙','←','↖','↑','↗'], index = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)); return icons[(index + 8) % 8]; }
         function connectorRouteTarget(line, side) { return document.getElementById(side === 'n1' ? line.dataset.n2 : line.dataset.n1); }
         function finishConnectorRouteLabelEdit(save) {
             let edit = editingConnectorRouteLabel; if(!edit) return; let line = document.getElementById(edit.lineId); if(line && !save) { let labels = connectorRouteLabels(line); labels[edit.side].text = edit.originalText; setConnectorRouteLabels(line, labels); }
@@ -489,20 +490,20 @@
         function jumpToConnectorRouteTarget(lineId, side) { let line = document.getElementById(lineId), target = line && connectorRouteTarget(line, side); if(!target) return; let viewport = getUsableViewport(), bounds = nodeCanvasBounds(target); cx = viewport.centerX - (bounds.left + bounds.right) / 2 * zoom; cy = viewport.centerY - (bounds.top + bounds.bottom) / 2 * zoom; updateTransform(); clearFitRestore(); window.showToast('🧭 ไปยัง node ที่เชื่อมอยู่'); }
         function beginConnectorRouteLabelPointer(e, lineId, side) {
             e.preventDefault(); e.stopPropagation(); cancelConnectorNavigationHide(); let line = document.getElementById(lineId); if(!line || editingConnectorRouteLabel) return; let labels = connectorRouteLabels(line), label = labels[side];
-            if(!label.text.trim()) { window.editConnectorRouteLabel(lineId, side); return; }
             let startX = e.clientX, startY = e.clientY, moved = false, key = lineId + ':' + side;
             function move(event) { if(Math.hypot(event.clientX - startX, event.clientY - startY) > 4) moved = true; if(!moved) return; let point = connectorRoutePoint(line, label.position), dx = point.x2 - point.x1, dy = point.y2 - point.y1, lengthSq = dx * dx + dy * dy; if(lengthSq < .001) return; let x = (event.clientX - cx) / zoom, y = (event.clientY - cy) / zoom, next = Math.min(1, Math.max(0, ((x - point.x1) * dx + (y - point.y1) * dy) / lengthSq)); let latest = connectorRouteLabels(line); latest[side].position = next; setConnectorRouteLabels(line, latest); renderConnectorRouteLabels(); }
-            function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); if(moved) { window.doSaveState(); return; } let now = Date.now(); if(window.__routeLabelLastClick && window.__routeLabelLastClick.key === key && now - window.__routeLabelLastClick.at < 360) { if(connectorRouteClickTimer) clearTimeout(connectorRouteClickTimer); connectorRouteClickTimer = null; window.__routeLabelLastClick = null; window.editConnectorRouteLabel(lineId, side); return; } window.__routeLabelLastClick = { key:key, at:now }; connectorRouteClickTimer = setTimeout(() => { connectorRouteClickTimer = null; if(window.__routeLabelLastClick && window.__routeLabelLastClick.key === key) { window.__routeLabelLastClick = null; jumpToConnectorRouteTarget(lineId, side); } }, 280); }
+            function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); if(moved) { window.doSaveState(); return; } let now = Date.now(); if(window.__routeLabelLastClick && window.__routeLabelLastClick.key === key && now - window.__routeLabelLastClick.at < 420) { if(connectorRouteClickTimer) clearTimeout(connectorRouteClickTimer); connectorRouteClickTimer = null; window.__routeLabelLastClick = null; window.editConnectorRouteLabel(lineId, side); return; } window.__routeLabelLastClick = { key:key, at:now }; connectorRouteClickTimer = setTimeout(() => { connectorRouteClickTimer = null; if(window.__routeLabelLastClick && window.__routeLabelLastClick.key === key) { window.__routeLabelLastClick = null; jumpToConnectorRouteTarget(lineId, side); } }, 420); }
             document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
         }
         function renderConnectorRouteLabels() {
+            if(editingConnectorRouteLabel && b.querySelector('.connector-route-label.editing')) return;
             clearConnectorRouteLabels(); let source = activeConnectorRouteNode(); if(!source) return;
             Array.from(s.querySelectorAll('line[data-n1][data-n2]')).forEach(line => {
                 let side = line.dataset.n1 === source.id ? 'n1' : (line.dataset.n2 === source.id ? 'n2' : null); if(!side) return;
                 let labels = connectorRouteLabels(line), label = labels[side], point = connectorRoutePoint(line, label.position); if(![point.x1,point.y1,point.x2,point.y2].every(Number.isFinite)) return;
                 let x = point.x1 + (point.x2 - point.x1) * point.position, y = point.y1 + (point.y2 - point.y1) * point.position, editing = editingConnectorRouteLabel && editingConnectorRouteLabel.lineId === line.id && editingConnectorRouteLabel.side === side;
                 let el = document.createElement('div'); el.className = 'connector-route-label' + (!label.text.trim() ? ' empty' : '') + (editing ? ' editing' : ''); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.fontSize = (16 / zoom) + 'px'; el.title = label.text.trim() ? 'คลิกเพื่อไปยัง node อีกฝั่ง • ดับเบิลคลิกเพื่อแก้คำ • ลากเพื่อย้ายตำแหน่ง' : 'คลิกเพื่อเพิ่มคำเรียกเส้นนี้';
-                let arrow = document.createElement('span'); arrow.className = 'connector-route-arrow'; arrow.textContent = '→'; let content = document.createElement('span'); content.className = 'connector-route-content'; content.textContent = label.text || '+'; el.append(arrow, content);
+                let arrow = document.createElement('span'); arrow.className = 'connector-route-arrow'; arrow.textContent = connectorRouteDirectionIcon(line, side); let content = document.createElement('span'); content.className = 'connector-route-content'; content.textContent = label.text || '+'; el.append(arrow, content);
                 el.onmouseenter = cancelConnectorNavigationHide; el.onmouseleave = scheduleConnectorNavigationHide; el.ondblclick = event => { event.preventDefault(); event.stopPropagation(); };
                 if(editing) {
                     content.contentEditable = 'true'; content.textContent = label.text; content.spellcheck = false; content.onmousedown = event => event.stopPropagation(); content.oninput = () => { let latest = connectorRouteLabels(line); latest[side].text = content.innerText.replace(/\r/g, ''); setConnectorRouteLabels(line, latest); };
@@ -1069,7 +1070,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.79', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.80', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1336,7 +1337,7 @@
             document.body.style.userSelect = '';
             if(crDrag) crDrag = false; if(crResize) crResize = false;
             if(drag) { drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); drag = null; if(isMoved) { window.doSaveState(); isMoved = false; } }
-            isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none'; renderConnectorRouteLabels();
+            isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none'; if(!editingConnectorRouteLabel) renderConnectorRouteLabels();
         });
 
         window.addEventListener('dblclick', function(e) {

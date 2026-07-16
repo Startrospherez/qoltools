@@ -5,7 +5,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.79** (connector route labels; awaiting user
+- Current MindMap build: **V3.80** (route-label interaction fix; awaiting user
   verification).
 - Latest verified baseline: V3.77 directed connectors, after V3.76 Floating
   Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
@@ -109,6 +109,15 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - Labels normally have no frame. A light interaction treatment appears only on
   hover, edit, or drag. Labels persist in history, backup, JSON/ZIP, HTML,
   and PNG; old connectors receive empty defaults.
+
+## V3.80: Route Label Interaction Fix (Pending User Verification)
+
+- Prevents redraws from destroying an active label editor, so text entry stays
+  focused after mouse release.
+- Empty and populated labels now share one interaction model: single-click
+  navigates, double-click edits, and drag moves the normalized position.
+- The label glyph now follows the physical connector direction from its owning
+  Node, using all eight cardinal/diagonal arrow glyphs.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
