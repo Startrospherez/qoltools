@@ -1,11 +1,11 @@
 # MindMap Handoff
 
-Updated: 2026-07-16 (Asia/Bangkok)
+Updated: 2026-07-17 (Asia/Bangkok)
 
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.78** (long-connector navigation; awaiting user
+- Current MindMap build: **V3.79** (connector route labels; awaiting user
   verification).
 - Latest verified baseline: V3.77 directed connectors, after V3.76 Floating
   Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
@@ -87,7 +87,7 @@ Updated: 2026-07-16 (Asia/Bangkok)
 - The user tested geometry, all arrow modes, and the existing interaction;
   everything passed.
 
-## V3.78: Long-Connector Navigation (Pending User Verification)
+## V3.78: Long-Connector Navigation (Superseded)
 
 - Hover or select a visible Node with a connector whose opposite Node is fully
   outside the usable viewport. A compact direction button appears near the
@@ -97,6 +97,18 @@ Updated: 2026-07-16 (Asia/Bangkok)
   intentionally receive no button.
 - The controls are temporary, grouped with perpendicular offsets for
   same-direction connectors, and are not persisted or exported.
+
+## V3.79: Connector Route Labels (Pending User Verification)
+
+- Replaces V3.78's circular jump controls with two persistent, horizontal
+  route labels per connector: one label for each Node endpoint.
+- Hover or select a Node to see every attached label. An empty endpoint shows
+  `→ +`; click it to enter a relationship word or phrase. A populated label
+  navigates to the opposite Node, double-click edits it, and drag repositions
+  it along the edge-to-edge connector.
+- Labels normally have no frame. A light interaction treatment appears only on
+  hover, edit, or drag. Labels persist in history, backup, JSON/ZIP, HTML,
+  and PNG; old connectors receive empty defaults.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
