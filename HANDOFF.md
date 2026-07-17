@@ -5,9 +5,9 @@ Updated: 2026-07-18 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.91** (incremental drag rendering and compatible
-  Undo/Redo state patching; verified by the user with the current real working
-  map on 2026-07-18).
+- Current MindMap build: **V3.92** (structural Undo/Redo reconciliation;
+  automated browser verification passed on 2026-07-18). V3.91 remains the
+  latest build verified by the user with the current real working map.
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -255,6 +255,37 @@ Updated: 2026-07-18 (Asia/Bangkok)
   error while instrumenting the reloaded iframe. No `MutationObserver` exists
   in the MindMap or harness source, and all application assertions passed; this
   is recorded as browser-instrumentation noise rather than an application error.
+
+## V3.92: Structural History Reconciliation (Automated Verification Passed)
+
+- Undo/Redo continues to save complete `formatVersion: 1` snapshots, but a
+  valid Node/Junction/connector topology change is now reconciled by stable IDs
+  instead of rebuilding the whole Canvas. Unrelated Node and connector DOM
+  objects remain intact.
+- The reconciler removes obsolete graph elements, patches retained elements,
+  creates only missing elements, restores exact connector IDs, and preserves
+  arrow modes and both endpoint route labels. Image or annotation topology
+  changes, imports, startup backup restoration, and unexpected reconciliation
+  errors deliberately retain the safe full-rebuild path.
+- History targets are validated before application. Duplicate or missing IDs,
+  connector/Node ID collisions, and missing connector endpoints are rejected
+  without advancing the history cursor.
+- Node and connector construction now share helpers used by live creation,
+  full rebuild, and structural reconciliation, reducing behavior drift between
+  normal editing and history restoration.
+- The background harness now also checks exact created IDs, arrow/route-label
+  preservation, structural Undo/Redo identity retention, regular Node deletion,
+  junction deletion, and their Undo/Redo cycles.
+- Automated foreground-iframe run on 2026-07-18 passed every correctness check
+  with 1,000 regular Nodes and 975 persisted connectors. Structural Undo/Redo
+  measured 16.1/19.0 ms; deleted-Node Undo/Redo 17.5/11.9 ms; deleted-junction
+  Undo/Redo 14.3/14.9 ms. Import was 1258.4 ms and remains a deliberate full
+  rebuild. The known browser-instrumentation `MutationObserver.observe` noise
+  appeared again; there is still no such observer in MindMap or harness code.
+- Displayed version and Project ZIP manifest app version are now `3.92`;
+  Project ZIP `formatVersion` remains 1. Final subjective interaction testing
+  on the user's local `file://` page is still required before marking V3.92 as
+  user verified.
 
 ## V3.89: Direct-Drag Connector Point Tools (Superseded by V3.90)
 

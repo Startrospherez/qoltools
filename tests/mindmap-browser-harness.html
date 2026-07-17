@@ -314,7 +314,18 @@
       progress('4/4 ทดสอบ connector branch และ structural Undo/Redo');
       const line = win.document.getElementById('stress_l_0000');
       const hit = win.document.getElementById('hit_stress_l_0000');
-      assertion(report, 'structural connector target exists', Boolean(line && hit));
+      const stableNode = win.document.getElementById('n999');
+      const stableLine = win.document.getElementById('stress_l_0974');
+      assertion(report, 'structural connector and stable DOM targets exist', Boolean(line && hit && stableNode && stableLine));
+      const routeLabels = {
+        n1: { text: 'ต้นทางทดสอบ', position: .2, autoPlacement: false, placementRevision: 4 },
+        n2: { text: 'ปลายทางทดสอบ', position: .8, autoPlacement: false, placementRevision: 4 },
+      };
+      line.dataset.arrow = 'both';
+      line.dataset.routeLabels = JSON.stringify(routeLabels);
+      win.doSaveState();
+      const beforeNodeIds = new Set(Array.from(win.document.querySelectorAll('.n'), node => node.id));
+      const beforeConnectorIds = Array.from(win.document.querySelectorAll('#s line[data-n1][data-n2]'), connector => connector.id).sort();
       const before = counts(win);
       const rect = line.getBoundingClientRect();
       const x = rect.left + rect.width / 2;
@@ -324,14 +335,53 @@
         mouse(win, win.document, 'mouseup', x, y);
       });
       const branched = counts(win);
+      const addedNodes = Array.from(win.document.querySelectorAll('.n')).filter(node => !beforeNodeIds.has(node.id));
+      const addedRegular = addedNodes.find(node => !node.classList.contains('j'));
+      const addedJunction = addedNodes.find(node => node.classList.contains('j'));
+      const branchedConnectorIds = Array.from(win.document.querySelectorAll('#s line[data-n1][data-n2]'), connector => connector.id).sort();
+      const addedConnectors = Array.from(win.document.querySelectorAll('#s line[data-n1][data-n2]')).filter(connector => !beforeConnectorIds.includes(connector.id));
       assertion(report, 'connector branch adds one regular and one junction Node', branched.regularNodes === before.regularNodes + 1 && branched.junctionNodes === before.junctionNodes + 1, JSON.stringify({ before, branched }));
       assertion(report, 'connector branch replaces one line with three', branched.connectors === before.connectors + 2, JSON.stringify({ before, branched }));
+      assertion(report, 'connector branch exposes exact new Node and connector IDs', Boolean(addedRegular && addedJunction) && addedConnectors.length === 3, JSON.stringify({ addedNodes: addedNodes.map(node => node.id), addedConnectors: addedConnectors.map(connector => connector.id) }));
+      assertion(report, 'split connectors preserve arrow modes', addedConnectors.filter(connector => connector.dataset.arrow === 'both').length === 2);
+      const branchLabelText = addedConnectors.flatMap(connector => Object.values(JSON.parse(connector.dataset.routeLabels || '{}')).map(label => label && label.text || ''));
+      assertion(report, 'split connectors preserve both route labels', branchLabelText.includes('ต้นทางทดสอบ') && branchLabelText.includes('ปลายทางทดสอบ'), JSON.stringify(branchLabelText));
       progress('4/4 ทดสอบ structural Undo');
       report.timings.structuralUndo = await measured(win, () => win.doUndo());
       assertion(report, 'structural Undo restores initial topology', JSON.stringify(counts(win)) === JSON.stringify(before), JSON.stringify(counts(win)));
+      assertion(report, 'structural Undo retains unrelated DOM identity', win.document.getElementById('n999') === stableNode && win.document.getElementById('stress_l_0974') === stableLine);
+      const restoredLine = win.document.getElementById('stress_l_0000');
+      const restoredLabels = restoredLine && JSON.parse(restoredLine.dataset.routeLabels || '{}');
+      assertion(report, 'structural Undo restores original connector ID and metadata', Boolean(restoredLine) && restoredLine.dataset.arrow === 'both' && restoredLabels.n1 && restoredLabels.n1.text === 'ต้นทางทดสอบ' && restoredLabels.n2 && restoredLabels.n2.text === 'ปลายทางทดสอบ');
       progress('4/4 ทดสอบ structural Redo');
       report.timings.structuralRedo = await measured(win, () => win.doRedo());
       assertion(report, 'structural Redo restores branch topology', JSON.stringify(counts(win)) === JSON.stringify(branched), JSON.stringify(counts(win)));
+      assertion(report, 'structural Redo restores exact connector IDs', JSON.stringify(Array.from(win.document.querySelectorAll('#s line[data-n1][data-n2]'), connector => connector.id).sort()) === JSON.stringify(branchedConnectorIds));
+      assertion(report, 'structural Redo retains unrelated DOM identity', win.document.getElementById('n999') === stableNode && win.document.getElementById('stress_l_0974') === stableLine);
+
+      progress('4/4 ทดสอบลบ regular Node และ Undo/Redo');
+      const branchCounts = counts(win);
+      win.del(addedRegular.id);
+      await nextPaint(win);
+      const regularDeleted = counts(win);
+      assertion(report, 'regular Node deletion removes one Node and one connector', regularDeleted.regularNodes === branchCounts.regularNodes - 1 && regularDeleted.connectors === branchCounts.connectors - 1, JSON.stringify({ branchCounts, regularDeleted }));
+      report.timings.deletedNodeUndo = await measured(win, () => win.doUndo());
+      assertion(report, 'deleted regular Node Undo restores branch', JSON.stringify(counts(win)) === JSON.stringify(branchCounts));
+      report.timings.deletedNodeRedo = await measured(win, () => win.doRedo());
+      assertion(report, 'deleted regular Node Redo restores deletion', JSON.stringify(counts(win)) === JSON.stringify(regularDeleted));
+      await measured(win, () => win.doUndo());
+
+      progress('4/4 ทดสอบลบ junction และ Undo/Redo');
+      win.del(addedJunction.id);
+      await nextPaint(win);
+      const junctionDeleted = counts(win);
+      assertion(report, 'junction deletion removes one junction and three connectors', junctionDeleted.junctionNodes === branchCounts.junctionNodes - 1 && junctionDeleted.connectors === branchCounts.connectors - 3, JSON.stringify({ branchCounts, junctionDeleted }));
+      report.timings.deletedJunctionUndo = await measured(win, () => win.doUndo());
+      assertion(report, 'deleted junction Undo restores branch', JSON.stringify(counts(win)) === JSON.stringify(branchCounts));
+      report.timings.deletedJunctionRedo = await measured(win, () => win.doRedo());
+      assertion(report, 'deleted junction Redo restores deletion', JSON.stringify(counts(win)) === JSON.stringify(junctionDeleted));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'deletion history retains unrelated DOM identity', win.document.getElementById('n999') === stableNode && win.document.getElementById('stress_l_0974') === stableLine);
     }
 
     async function runBenchmark() {
