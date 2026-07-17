@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.88</title>
+    <title>MindMap V3.89</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -142,7 +142,9 @@
         .mb:hover .ma, .ma:hover { opacity:1; }
         .ma:hover { background:var(--c6); color:#000; }
         .mb { display:none !important; }
-        .connector-selected-point { position:absolute; z-index:5; width:16px; height:16px; border:2px solid var(--bg); border-radius:50%; background:var(--fg); transform:translate(-50%,-50%); cursor:pointer; }
+        .connector-hit-line { cursor:pointer; }
+        .connector-selected-point { position:absolute; z-index:5; width:16px; height:16px; border:2px solid var(--bg); border-radius:50%; background:var(--fg); transform:translate(-50%,-50%); cursor:grab; }
+        .connector-selected-point:active { cursor:grabbing; }
         .connector-mini-tools .connector-arrow-action { min-width:24px; font-size:14px; }
         .connector-route-label { position:absolute; z-index:4; display:flex; align-items:baseline; gap:5px; max-width:260px; color:var(--fg); cursor:pointer; user-select:none; white-space:pre-wrap; line-height:1.35; border:1px solid transparent; border-radius:4px; padding:2px 4px; transform:translate(-50%,-50%); }
         .connector-route-label:hover, .connector-route-label.editing, .connector-route-label.dragging { border-color:color-mix(in srgb, var(--c9) 55%, transparent); background:color-mix(in srgb, var(--tb) 78%, transparent); box-shadow:0 1px 4px rgba(0,0,0,.16); }
@@ -224,7 +226,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.88</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.89</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
@@ -462,7 +464,7 @@
         function cancelConnectorNavigationHide() { if(connectorNavHideTimer) { clearTimeout(connectorNavHideTimer); connectorNavHideTimer = null; } }
         function scheduleConnectorNavigationHide() { cancelConnectorNavigationHide(); connectorNavHideTimer = setTimeout(() => { connectorNavHoverId = null; renderConnectorRouteLabels(); }, 120); }
         function clearConnectorRouteLabels() { document.querySelectorAll('.connector-route-label').forEach(label => label.remove()); }
-        function clearJunctionMiniTools() { document.querySelectorAll('.junction-mini-tools').forEach(toolbar => toolbar.remove()); }
+        function clearJunctionMiniTools() { document.querySelectorAll('.junction-node-mini-tools').forEach(toolbar => toolbar.remove()); }
         function selectedJunctionNode() { let selected = nodes.filter(node => node.classList.contains('sel') && node.classList.contains('j')); return selected.length === 1 ? selected[0] : null; }
         function junctionMiniToolbarDirection(junction) {
             let centerX = junction.offsetLeft + junction.offsetWidth / 2, centerY = junction.offsetTop + junction.offsetHeight / 2;
@@ -478,7 +480,7 @@
         function renderJunctionMiniTools() {
             clearJunctionMiniTools(); let junction = selectedJunctionNode(); if(!junction) return;
             let direction = junctionMiniToolbarDirection(junction), centerX = junction.offsetLeft + junction.offsetWidth / 2, centerY = junction.offsetTop + junction.offsetHeight / 2;
-            let toolbar = document.createElement('div'); toolbar.className = 'junction-mini-tools dir-' + direction.name; toolbar.style.left = (centerX + direction.x * 12) + 'px'; toolbar.style.top = (centerY + direction.y * 12) + 'px';
+            let toolbar = document.createElement('div'); toolbar.className = 'junction-mini-tools junction-node-mini-tools dir-' + direction.name; toolbar.style.left = (centerX + direction.x * 12) + 'px'; toolbar.style.top = (centerY + direction.y * 12) + 'px';
             let branch = document.createElement('button'); branch.type = 'button'; branch.className = 'junction-mini-action junction-branch'; branch.textContent = '+'; branch.title = 'ลากเพื่อเพิ่มแขนงจากจุดตัดนี้ หรือคลิกเพื่อสร้าง Node ใหม่'; branch.onmousedown = event => window.startLineDrag(event, junction.id, 'r');
             let remove = document.createElement('button'); remove.type = 'button'; remove.className = 'junction-mini-action junction-delete'; remove.textContent = '×'; remove.title = 'ลบจุดตัดนี้'; remove.onmousedown = event => { event.preventDefault(); event.stopPropagation(); window.del(junction.id); };
             toolbar.append(branch, remove); b.appendChild(toolbar);
@@ -492,10 +494,18 @@
             return choices.reduce((best, choice) => Math.abs(dx / length * choice.x + dy / length * choice.y) < Math.abs(dx / length * best.x + dy / length * best.y) ? choice : best, choices[0]);
         }
         function selectConnectorPoint(lineId, position) { clearSel(); selectedConnectorPoint = { lineId:lineId, position:clampConnectorRoutePosition(position, .5) }; connectorPointToolsOpen = false; renderConnectorPointTools(); }
+        function beginConnectorPointInteraction(event) {
+            event.preventDefault(); event.stopPropagation(); if(!selectedConnectorPoint) return;
+            let point = { lineId:selectedConnectorPoint.lineId, position:selectedConnectorPoint.position }, startX = event.clientX, startY = event.clientY, startedDrag = false;
+            function cleanup() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); }
+            function move(moveEvent) { if(startedDrag || Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) <= 5) return; startedDrag = true; cleanup(); let dragStart = { clientX:startX, clientY:startY, stopPropagation() {}, preventDefault() {} }; window.startLineDragFromPoint(dragStart, point.lineId, point.position); document.dispatchEvent(new MouseEvent('mousemove', { bubbles:true, clientX:moveEvent.clientX, clientY:moveEvent.clientY })); }
+            function up() { cleanup(); if(!startedDrag) { connectorPointToolsOpen = true; renderConnectorPointTools(); } }
+            document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+        }
         function renderConnectorPointTools() {
             clearConnectorPointTools(); if(!selectedConnectorPoint) return; let line = document.getElementById(selectedConnectorPoint.lineId); if(!line) { selectedConnectorPoint = null; connectorPointToolsOpen = false; return; }
             let point = connectorPointAt(line, selectedConnectorPoint.position), direction = connectorMiniToolbarDirection(line);
-            let dot = document.createElement('div'); dot.className = 'connector-selected-point'; dot.style.left = point.x + 'px'; dot.style.top = point.y + 'px'; dot.title = 'คลิกเพื่อเลือกคำสั่งบนเส้นเชื่อม'; dot.onmousedown = event => { event.preventDefault(); event.stopPropagation(); connectorPointToolsOpen = true; renderConnectorPointTools(); }; b.appendChild(dot);
+            let dot = document.createElement('div'); dot.className = 'connector-selected-point'; dot.style.left = point.x + 'px'; dot.style.top = point.y + 'px'; dot.title = 'คลิกเพื่อเลือกคำสั่ง หรือกดค้างแล้วลากเพื่อแตกแขนง'; dot.onmousedown = beginConnectorPointInteraction; b.appendChild(dot);
             if(!connectorPointToolsOpen) return;
             let toolbar = document.createElement('div'); toolbar.className = 'junction-mini-tools connector-mini-tools dir-' + direction.name; toolbar.style.left = (point.x + direction.x * 12) + 'px'; toolbar.style.top = (point.y + direction.y * 12) + 'px';
             let branch = document.createElement('button'); branch.type = 'button'; branch.className = 'junction-mini-action junction-branch'; branch.textContent = '+'; branch.title = 'ลากเพื่อแตกแขนงจากจุดนี้ หรือคลิกเพื่อสร้าง Node ใหม่'; branch.onmousedown = event => window.startLineDragFromPoint(event, line.id, selectedConnectorPoint.position);

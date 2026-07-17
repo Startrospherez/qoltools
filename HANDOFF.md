@@ -5,7 +5,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.88** (two-stage anywhere-on-connector tools;
+- Current MindMap build: **V3.89** (click-or-drag anywhere-on-connector tools;
   awaiting user verification).
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
@@ -183,7 +183,16 @@ Updated: 2026-07-17 (Asia/Bangkok)
   connector as needed.
 - The separate crowded hit-area protection for the middle `+` remains intact.
 
-## V3.88: Two-Stage Anywhere Connector Tools (Pending User Verification)
+## V3.89: Direct-Drag Connector Point Tools (Pending User Verification)
+
+- A selected connector point now separates a click from a drag: click/release
+  opens the `+`, `—`, `×` toolbar; drag begins the pre-existing exact-point
+  branch workflow and receives the first moved position immediately.
+- Junction toolbar cleanup is scoped to junctions, so its normal refresh on
+  mouse release no longer removes connector controls. Connector hit targets
+  and their point now use a hand/drag cursor.
+
+## V3.88: Two-Stage Anywhere Connector Tools (Superseded by V3.89)
 
 - V3.87 confirmed that connector clicks create a temporary dark point, but
   exposed that the point was not acting as the familiar junction control.
