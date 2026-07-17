@@ -5,11 +5,11 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.81** (adaptive route-label placement; awaiting
-  user verification).
-- Latest verified baseline: V3.80 route-label interaction fix, after V3.77
-  directed connectors, V3.76 Floating Text, V3.74 image workflow, view/canvas
-  refinements, and V3.75 Line annotations.
+- Current MindMap build: **V3.82** (connector-control clearance; awaiting user
+  verification).
+- Latest verified baseline: V3.81 adaptive route-label placement, after V3.80
+  route-label interaction fix, V3.77 directed connectors, V3.76 Floating Text,
+  V3.74 image workflow, view/canvas refinements, and V3.75 Line annotations.
 - User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
@@ -119,7 +119,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - The label glyph now follows the physical connector direction from its owning
   Node, using all eight cardinal/diagonal arrow glyphs.
 
-## V3.81: Adaptive Route Label Placement (Pending User Verification)
+## V3.81: Adaptive Route Label Placement (Verified)
 
 - New route labels are initially placed about 30 screen pixels from the edge
   of their owning Node instead of at a fixed percentage along the connector.
@@ -129,6 +129,17 @@ Updated: 2026-07-17 (Asia/Bangkok)
   normalized position.
 - Existing saved labels retain their prior positions. The `autoPlacement`
   marker is included wherever connector route-label data is already preserved.
+
+## V3.82: Connector-Control Clearance (Pending User Verification)
+
+- Untouched automatic labels now begin 24px from a regular Node and 10px from
+  a small junction Node. Automatic labels that used the previous revision are
+  migrated once; manually positioned labels do not move.
+- A regular-Node label receives a small perpendicular offset only when needed
+  to clear that Node's `+` branch control.
+- A middle `+` whose invisible hit halo would overlap a nearby Node `+` keeps
+  its position and behavior, but uses a smaller halo so the Node `+` remains
+  the easier click target.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
