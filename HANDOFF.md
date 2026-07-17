@@ -5,9 +5,10 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.84** (directional route-label expansion and
-  selected-junction mini tools; awaiting user verification).
-- Latest verified baseline: V3.83 route-label docking, after V3.82
+- Current MindMap build: **V3.85** (closer regular-Node route labels; awaiting
+  user verification).
+- Latest verified baseline: V3.84 directional route-label expansion and
+  selected-junction mini tools, after V3.83 route-label docking, V3.82
   connector-control clearance, V3.81 adaptive route-label placement, V3.80
   route-label interaction fix, V3.77 directed connectors, V3.76 Floating
   Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
@@ -151,7 +152,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - The regular-Node clearance and near-junction treatment remain in force while
   automatic; dragging a label still makes it manual and preserves its position.
 
-## V3.84: Directional Labels and Junction Mini Tools (Pending User Verification)
+## V3.84: Directional Labels and Junction Mini Tools (Verified)
 
 - An automatic route label docked to a regular Node uses a directional anchor:
   a right-side label expands to the right, while a left-side label expands to
@@ -163,6 +164,12 @@ Updated: 2026-07-17 (Asia/Bangkok)
   `+` is dragged to create a new branch (or clicked to create a Node); red `×`
   removes the junction using the existing reconnect-when-two-branches
   behavior. The toolbar is transient and excluded from exports.
+
+## V3.85: Route-Label Proximity (Pending User Verification)
+
+- Automatic labels at a regular Node now dock 14 screen pixels from its edge,
+  instead of 24px. Junction-dot labels remain at 10px and manually moved
+  labels retain their positions.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
