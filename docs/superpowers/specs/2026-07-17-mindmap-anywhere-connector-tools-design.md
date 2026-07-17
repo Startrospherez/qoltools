@@ -20,6 +20,18 @@ user can place anywhere by clicking a line.
   - `×` removes only that connector and keeps both endpoint Nodes.
 - Clicking empty Canvas or another item closes the selected connector point.
 
+## Direct drag and control isolation
+
+- The dark point also works as a direct drag handle. Pressing and dragging it
+  past a small threshold starts the existing exact-point branch workflow;
+  releasing over empty Canvas, a Node, or another connector retains the
+  existing branch outcomes. A press and release without movement opens the
+  toolbar instead.
+- Junction and connector toolbars have separate cleanup scopes. Refreshing a
+  selected junction must never remove the connector toolbar.
+- The connector hit target and dark point use a pointer/hand cursor so their
+  interactivity is visible before they are clicked.
+
 ## Ambiguous locations
 
 - An actual junction dot keeps priority over a line hit.
