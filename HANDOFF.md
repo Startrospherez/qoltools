@@ -5,10 +5,11 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.86** (automatic labels centred on connectors;
+- Current MindMap build: **V3.87** (anywhere-on-connector mini tools;
   awaiting user verification).
-- Latest verified baseline: V3.84 directional route-label expansion and
-  selected-junction mini tools, after V3.83 route-label docking, V3.82
+- Latest verified baseline: V3.86 centred automatic route labels, after V3.84
+  directional route-label expansion and selected-junction mini tools, V3.83
+  route-label docking, V3.82
   connector-control clearance, V3.81 adaptive route-label placement, V3.80
   route-label interaction fix, V3.77 directed connectors, V3.76 Floating
   Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
@@ -171,7 +172,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
   instead of 24px. Junction-dot labels remain at 10px and manually moved
   labels retain their positions.
 
-## V3.86: Centred Automatic Route Labels (Pending User Verification)
+## V3.86: Centred Automatic Route Labels (Verified)
 
 - Automatic route labels are now centred directly on their connector, matching
   the placement used after the user drags a label. The old perpendicular
@@ -181,6 +182,18 @@ Updated: 2026-07-17 (Asia/Bangkok)
   Text that grows while editing is remeasured and moves farther along the
   connector as needed.
 - The separate crowded hit-area protection for the middle `+` remains intact.
+
+## V3.87: Anywhere Connector Tools (Pending User Verification)
+
+- The old persistent middle `+` is replaced with an invisible wide connector
+  hit target. Clicking anywhere on a connector shows a temporary dark point at
+  that position and a mini toolbar.
+- The toolbar's `+` splits/branches from that exact point, its arrow button
+  cycles `— / → / ← / ↔`, and `×` removes only the selected connector. These
+  temporary controls never enter saved/exported graph data.
+- The former middle-control crowded hit halo is superseded by the new selected
+  point and its mini toolbar; Node and junction controls keep their own
+  existing interaction behaviour.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
