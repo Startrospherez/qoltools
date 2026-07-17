@@ -1,12 +1,13 @@
 # MindMap Handoff
 
-Updated: 2026-07-17 (Asia/Bangkok)
+Updated: 2026-07-18 (Asia/Bangkok)
 
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
 - Current MindMap build: **V3.91** (incremental drag rendering and compatible
-  Undo/Redo state patching; pending user performance verification).
+  Undo/Redo state patching; verified by the user with the current real working
+  map on 2026-07-18).
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -201,7 +202,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - Cleanup removed all unreachable V3.87–V3.89 selected-point/mini-toolbar
   code. V3.90 retains only the direct gesture and no temporary connector UI.
 
-## V3.91: Performance Foundation (Automated Verification Passed; User Feel Pending)
+## V3.91: Performance Foundation (Automated and User Verification Passed)
 
 - The 1,000-Node synthetic fixture established the pre-change baseline on the
   user's machine: about eight seconds before a short Node drag became visible,
