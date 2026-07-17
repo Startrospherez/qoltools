@@ -6,7 +6,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 
 - Repository: `Startrospherez/qoltools`
 - Current MindMap build: **V3.90** (direct connector click/drag and arrow
-  gesture; awaiting user verification).
+  gesture; user verified).
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -14,9 +14,10 @@ Updated: 2026-07-17 (Asia/Bangkok)
   route-label interaction fix, V3.77 directed connectors, V3.76 Floating
   Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
   annotations.
-- User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
+- `D:\202607162107.zip` is the user's current largest regular test map. It
+  contains no images and is a suitable future baseline for graph stress tests.
 
 ## Completed Recently
 
@@ -102,7 +103,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - The controls are temporary, grouped with perpendicular offsets for
   same-direction connectors, and are not persisted or exported.
 
-## V3.79: Connector Route Labels (Pending User Verification)
+## V3.79: Connector Route Labels (Implemented; refined and verified later)
 
 - Replaces V3.78's circular jump controls with two persistent, horizontal
   route labels per connector: one label for each Node endpoint.
@@ -183,7 +184,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
   connector as needed.
 - The separate crowded hit-area protection for the middle `+` remains intact.
 
-## V3.90: Direct Connector Gesture (Pending User Verification)
+## V3.90: Direct Connector Gesture (Verified)
 
 - The selected-point dot and its mini toolbar are superseded by one direct
   connector gesture: click/release creates the same default right-hand Node
@@ -193,6 +194,8 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - `Alt + click` now cycles the selected connector's arrow mode. Arrow state
   survives a split across its two replacement segments; a new branch begins
   without an arrow. The Help and Hotkeys sections document this gesture.
+- Cleanup removed all unreachable V3.87–V3.89 selected-point/mini-toolbar
+  code. V3.90 retains only the direct gesture and no temporary connector UI.
 
 ## V3.89: Direct-Drag Connector Point Tools (Superseded by V3.90)
 
@@ -308,12 +311,7 @@ generated page and saved standalone HTML therefore stay self-contained.
 
 ## Later Roadmap (Not Implemented)
 
-1. Long-connection navigation: show jump affordances only near a visible line
-   end when the opposite node is offscreen; avoid permanent clutter.
-2. Connector labels: future standalone feature. Store `label` in line state,
-   decide horizontal orientation and midpoint placement, preserve in history,
-   JSON, HTML, exports, and avoid conflict with the mid-line branch control.
-3. GitHub release practice: repository currently has only tag `v0.9`. When a
+1. GitHub release practice: repository currently has only tag `v0.9`. When a
    MindMap release is ready to publish, propose a tag such as
    `mindmap-v3.73` and a GitHub Release; do not create/push one without user
    authorization.
@@ -322,6 +320,5 @@ generated page and saved standalone HTML therefore stay self-contained.
 
 - Run inline JavaScript syntax check and `node build-tools.js`.
 - Run `git diff --check`.
-- Preserve `.gitignore` as an unrelated user change.
 - Local `file://` page navigation was previously blocked by automated browser
   policy, so ask the user to refresh and perform final interaction checks.
