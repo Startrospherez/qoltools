@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.87</title>
+    <title>MindMap V3.88</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -224,7 +224,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.87</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.88</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
@@ -365,7 +365,7 @@
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
         let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], images = [];
         let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
-        let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null, lastAnnotationTextClick = { id:null, at:0 }, connectorNavHoverId = null, connectorNavHideTimer = null, editingConnectorRouteLabel = null, connectorRouteClickTimer = null, selectedConnectorPoint = null;
+        let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null, lastAnnotationTextClick = { id:null, at:0 }, connectorNavHoverId = null, connectorNavHideTimer = null, editingConnectorRouteLabel = null, connectorRouteClickTimer = null, selectedConnectorPoint = null, connectorPointToolsOpen = false;
         const imageDomById = new Map(), imageThumbUrlByAsset = new Map();
         let activeProjectId = 'local-' + Date.now().toString(36);
         const MM_PROJECT_FORMAT = 'mindmap-project';
@@ -491,11 +491,12 @@
             let choices = [{name:'top',x:0,y:-1}, {name:'right',x:1,y:0}, {name:'bottom',x:0,y:1}, {name:'left',x:-1,y:0}];
             return choices.reduce((best, choice) => Math.abs(dx / length * choice.x + dy / length * choice.y) < Math.abs(dx / length * best.x + dy / length * best.y) ? choice : best, choices[0]);
         }
-        function selectConnectorPoint(lineId, position) { clearSel(); selectedConnectorPoint = { lineId:lineId, position:clampConnectorRoutePosition(position, .5) }; renderConnectorPointTools(); }
+        function selectConnectorPoint(lineId, position) { clearSel(); selectedConnectorPoint = { lineId:lineId, position:clampConnectorRoutePosition(position, .5) }; connectorPointToolsOpen = false; renderConnectorPointTools(); }
         function renderConnectorPointTools() {
-            clearConnectorPointTools(); if(!selectedConnectorPoint) return; let line = document.getElementById(selectedConnectorPoint.lineId); if(!line) { selectedConnectorPoint = null; return; }
+            clearConnectorPointTools(); if(!selectedConnectorPoint) return; let line = document.getElementById(selectedConnectorPoint.lineId); if(!line) { selectedConnectorPoint = null; connectorPointToolsOpen = false; return; }
             let point = connectorPointAt(line, selectedConnectorPoint.position), direction = connectorMiniToolbarDirection(line);
-            let dot = document.createElement('div'); dot.className = 'connector-selected-point'; dot.style.left = point.x + 'px'; dot.style.top = point.y + 'px'; dot.title = 'จุดที่เลือกบนเส้นเชื่อม'; dot.onmousedown = event => { event.preventDefault(); event.stopPropagation(); }; b.appendChild(dot);
+            let dot = document.createElement('div'); dot.className = 'connector-selected-point'; dot.style.left = point.x + 'px'; dot.style.top = point.y + 'px'; dot.title = 'คลิกเพื่อเลือกคำสั่งบนเส้นเชื่อม'; dot.onmousedown = event => { event.preventDefault(); event.stopPropagation(); connectorPointToolsOpen = true; renderConnectorPointTools(); }; b.appendChild(dot);
+            if(!connectorPointToolsOpen) return;
             let toolbar = document.createElement('div'); toolbar.className = 'junction-mini-tools connector-mini-tools dir-' + direction.name; toolbar.style.left = (point.x + direction.x * 12) + 'px'; toolbar.style.top = (point.y + direction.y * 12) + 'px';
             let branch = document.createElement('button'); branch.type = 'button'; branch.className = 'junction-mini-action junction-branch'; branch.textContent = '+'; branch.title = 'ลากเพื่อแตกแขนงจากจุดนี้ หรือคลิกเพื่อสร้าง Node ใหม่'; branch.onmousedown = event => window.startLineDragFromPoint(event, line.id, selectedConnectorPoint.position);
             let arrow = document.createElement('button'); arrow.type = 'button'; arrow.className = 'connector-arrow-action'; let meta = connectorArrowMeta(line.dataset.arrow); arrow.textContent = meta.icon; arrow.title = meta.title; arrow.onmousedown = event => window.cycleConnectorArrow(event, line.id);
@@ -1255,7 +1256,7 @@
         
         window.loadState = function(step) { 
             let state = mmHistory[step]; if(!state || !state.nodes) return; 
-            nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; ensureAnnotationTextLayer().innerHTML = ''; document.querySelectorAll('.mb, .connector-route-label, .junction-mini-tools, .connector-selected-point, .connector-mini-tools').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null; selectedConnectorPoint = null; nid = state.nid || 0;
+            nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; ensureAnnotationTextLayer().innerHTML = ''; document.querySelectorAll('.mb, .connector-route-label, .junction-mini-tools, .connector-selected-point, .connector-mini-tools').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null; selectedConnectorPoint = null; connectorPointToolsOpen = false; nid = state.nid || 0;
             state.nodes.forEach(ns => { 
                 let n = document.createElement('div'); n.className = ns.type === 'j' ? 'n j' : 'n'; n.id = ns.id; n.style.left = ns.x; n.style.top = ns.y; n.dataset.note = ns.note || '';
                 if(ns.bg) { n.style.background = ns.bg; n.style.setProperty('--n-bg', ns.bg); } 
@@ -1373,9 +1374,9 @@
         let startLineDragWithConnectorHits = window.startLineDrag;
         window.startLineDrag = function(event, nodeId, direction) { setConnectorHitLinesEnabled(false); document.addEventListener('mouseup', () => setConnectorHitLinesEnabled(true), { once:true }); startLineDragWithConnectorHits(event, nodeId, direction); };
         window.startLineDragFromPoint = function(event, lineId, position) { let line = document.getElementById(lineId), middle = document.getElementById('mb_' + lineId); if(line && middle) { let point = connectorPointAt(line, position); middle.style.left = point.x + 'px'; middle.style.top = point.y + 'px'; } setConnectorHitLinesEnabled(false); document.addEventListener('mouseup', () => setConnectorHitLinesEnabled(true), { once:true }); window.startLineDragFromMid(event, lineId); };
-        window.deleteConnectorLine = function(event, lineId) { event.preventDefault(); event.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let middle = document.getElementById('mb_' + lineId), hit = document.getElementById('hit_' + lineId); if(middle) middle.remove(); if(hit) hit.remove(); line.remove(); selectedConnectorPoint = null; renderConnectorPointTools(); window.doSaveState(); };
+        window.deleteConnectorLine = function(event, lineId) { event.preventDefault(); event.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let middle = document.getElementById('mb_' + lineId), hit = document.getElementById('hit_' + lineId); if(middle) middle.remove(); if(hit) hit.remove(); line.remove(); selectedConnectorPoint = null; connectorPointToolsOpen = false; renderConnectorPointTools(); window.doSaveState(); };
         function updateAll() { pruneConnectorHitLines(); s.querySelectorAll('line[data-n1][data-n2]').forEach(updateLine); renderConnectorRouteLabels(); renderJunctionMiniTools(); renderConnectorPointTools(); }
-        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; selectedConnectorPoint = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools(); renderConnectorPointTools(); }
+        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; selectedConnectorPoint = null; connectorPointToolsOpen = false; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools(); renderConnectorPointTools(); }
 
         window.addEventListener('wheel', function(e) {
             if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('#zoom-status')) return;

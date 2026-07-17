@@ -5,7 +5,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.87** (anywhere-on-connector mini tools;
+- Current MindMap build: **V3.88** (two-stage anywhere-on-connector tools;
   awaiting user verification).
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
@@ -183,7 +183,18 @@ Updated: 2026-07-17 (Asia/Bangkok)
   connector as needed.
 - The separate crowded hit-area protection for the middle `+` remains intact.
 
-## V3.87: Anywhere Connector Tools (Pending User Verification)
+## V3.88: Two-Stage Anywhere Connector Tools (Pending User Verification)
+
+- V3.87 confirmed that connector clicks create a temporary dark point, but
+  exposed that the point was not acting as the familiar junction control.
+- V3.88 makes the interaction explicitly two-stage: click a connector to
+  place its dark point, then click that point to open `+`, `—`, and `×`.
+  The dash cycles the connector arrow mode; the other commands retain the
+  existing exact-point branch and connector-only delete behaviours.
+- The selected point and its open/closed menu state remain temporary UI:
+  clicking elsewhere, loading history, or deleting the connector clears both.
+
+## V3.87: Anywhere Connector Tools (Superseded by V3.88)
 
 - The old persistent middle `+` is replaced with an invisible wide connector
   hit target. Clicking anywhere on a connector shows a temporary dark point at
