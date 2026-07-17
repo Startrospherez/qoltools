@@ -5,9 +5,10 @@ Updated: 2026-07-18 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.92** (structural Undo/Redo reconciliation;
-  automated browser verification passed on 2026-07-18). V3.91 remains the
-  latest build verified by the user with the current real working map.
+- Current MindMap build: **V3.93** (activity-based batch Delete history;
+  automated browser correctness passed on 2026-07-18). The user verified the
+  V3.92 structural speedup with the current real working map and identified the
+  multi-selection history-unit issue corrected by V3.93.
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -283,9 +284,36 @@ Updated: 2026-07-18 (Asia/Bangkok)
   rebuild. The known browser-instrumentation `MutationObserver.observe` noise
   appeared again; there is still no such observer in MindMap or harness code.
 - Displayed version and Project ZIP manifest app version are now `3.92`;
-  Project ZIP `formatVersion` remains 1. Final subjective interaction testing
-  on the user's local `file://` page is still required before marking V3.92 as
-  user verified.
+  Project ZIP `formatVersion` remains 1. The user's local interaction test
+  confirmed that structural Undo/Redo was fast, while revealing that one
+  multi-selection Delete still produced one history step per Object; V3.93
+  corrects that separate history-unit defect.
+
+## V3.93: Activity-Based Batch Delete History (Automated Verification Passed)
+
+- One `Delete` keypress now creates one history entry for the complete selected
+  Node/image activity. One Undo restores all affected Objects and connectors;
+  one Redo removes the same result again.
+- Separate Node, junction, or image `×` actions remain separate history
+  activities. Connector cleanup and existing junction-healing order are
+  unchanged.
+- Node and image deletion now use internal mutation primitives. Public
+  single-object deletion commits immediately, while the keyboard batch captures
+  selected IDs first, performs every mutation, and commits once at the end.
+- The new regression first reproduced the V3.92 failure: three selected regular
+  Nodes were removed by one keypress, but the first Undo left the graph in the
+  deleted state because intermediate and duplicate snapshots existed.
+- After the fix, the complete browser suite passed all correctness checks for
+  1,000 regular Nodes and 975 persisted connectors. It verified multi-regular
+  deletion, regular-plus-junction deletion, exact one-step Undo/Redo, unrelated
+  DOM identity, and two separate deletions remaining two separate activities.
+- The final unattended run reported `PARTIAL` only because Chromium throttled
+  background rendering; correctness remained fully passed. Raw batch
+  Undo/Redo measured 18.7/7.7 ms in that run and is not treated as a universal
+  performance limit.
+- Visible and Project ZIP manifest app version are `3.93`; project
+  `formatVersion` remains 1. Final local `file://` testing should include a
+  multi-Node batch and, when image data is available, a mixed Node/image batch.
 
 ## V3.89: Direct-Drag Connector Point Tools (Superseded by V3.90)
 

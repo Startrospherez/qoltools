@@ -135,6 +135,22 @@
       };
     }
 
+    function graphIds(win) {
+      const doc = win.document;
+      return {
+        nodes: Array.from(doc.querySelectorAll('.n'), node => node.id).sort(),
+        connectors: Array.from(doc.querySelectorAll('#s line[data-n1][data-n2]'), connector => connector.id).sort(),
+      };
+    }
+
+    function sameGraphIds(first, second) {
+      return JSON.stringify(first) === JSON.stringify(second);
+    }
+
+    function pressDelete(win) {
+      win.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', bubbles: true, cancelable: true }));
+    }
+
     function exactPosition(node) {
       return { left: node.style.left, top: node.style.top };
     }
@@ -382,6 +398,56 @@
       assertion(report, 'deleted junction Redo restores deletion', JSON.stringify(counts(win)) === JSON.stringify(junctionDeleted));
       await measured(win, () => win.doUndo());
       assertion(report, 'deletion history retains unrelated DOM identity', win.document.getElementById('n999') === stableNode && win.document.getElementById('stress_l_0974') === stableLine);
+
+      progress('4/4 ทดสอบ multi-selection Delete เป็นหนึ่ง activity');
+      const regularBatchTargets = ['n10', 'n11', 'n12'].map(id => win.document.getElementById(id));
+      assertion(report, 'regular batch-delete targets exist', regularBatchTargets.every(Boolean));
+      win.document.querySelectorAll('.n.sel, .img-float.sel').forEach(element => element.classList.remove('sel'));
+      regularBatchTargets.forEach(node => node.classList.add('sel'));
+      const regularBatchBefore = graphIds(win);
+      pressDelete(win);
+      await nextPaint(win);
+      const regularBatchAfter = graphIds(win);
+      assertion(report, 'one Delete keypress removes every selected regular Node', regularBatchTargets.every(node => !win.document.getElementById(node.id)), JSON.stringify(counts(win)));
+      report.timings.batchDeleteUndo = await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo restores the complete regular-Node batch', sameGraphIds(graphIds(win), regularBatchBefore), JSON.stringify(counts(win)));
+      assertion(report, 'batch Undo retains unrelated DOM identity', win.document.getElementById('n999') === stableNode && win.document.getElementById('stress_l_0974') === stableLine);
+      report.timings.batchDeleteRedo = await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo removes the complete regular-Node batch', sameGraphIds(graphIds(win), regularBatchAfter), JSON.stringify(counts(win)));
+      await measured(win, () => win.doUndo());
+
+      progress('4/4 ทดสอบ regular Node + junction batch เป็นหนึ่ง activity');
+      const branchGraph = graphIds(win);
+      win.document.querySelectorAll('.n.sel, .img-float.sel').forEach(element => element.classList.remove('sel'));
+      win.document.getElementById(addedRegular.id).classList.add('sel');
+      win.document.getElementById(addedJunction.id).classList.add('sel');
+      pressDelete(win);
+      await nextPaint(win);
+      const branchBatchAfter = graphIds(win);
+      assertion(report, 'one Delete keypress removes selected regular Node and junction', !win.document.getElementById(addedRegular.id) && !win.document.getElementById(addedJunction.id), JSON.stringify(counts(win)));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo restores the complete Node and junction batch', sameGraphIds(graphIds(win), branchGraph), JSON.stringify(counts(win)));
+      await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo removes the complete Node and junction batch', sameGraphIds(graphIds(win), branchBatchAfter), JSON.stringify(counts(win)));
+      await measured(win, () => win.doUndo());
+
+      progress('4/4 ทดสอบ separate delete ยังคงเป็นคนละ activity');
+      win.del(addedRegular.id);
+      await nextPaint(win);
+      const separateFirst = graphIds(win);
+      win.del(addedJunction.id);
+      await nextPaint(win);
+      const separateSecond = graphIds(win);
+      await measured(win, () => win.doUndo());
+      assertion(report, 'first Undo restores only the second separate delete', sameGraphIds(graphIds(win), separateFirst));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'second Undo restores the first separate delete', sameGraphIds(graphIds(win), branchGraph));
+      await measured(win, () => win.doRedo());
+      assertion(report, 'first Redo reapplies only the first separate delete', sameGraphIds(graphIds(win), separateFirst));
+      await measured(win, () => win.doRedo());
+      assertion(report, 'second Redo reapplies the second separate delete', sameGraphIds(graphIds(win), separateSecond));
+      await measured(win, () => win.doUndo());
+      await measured(win, () => win.doUndo());
     }
 
     async function runBenchmark() {
