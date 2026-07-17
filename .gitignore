@@ -1,5 +1,6 @@
 # Tooling / editor
 node_modules/
+__pycache__/
 .DS_Store
 Thumbs.db
 .agents/
@@ -17,3 +18,6 @@ CLAUDE.md
 
 # Skill lockfile (local)
 skills-lock.json
+
+# Generated MindMap stress-test packages are kept locally and can be recreated.
+test-fixtures/*.zip

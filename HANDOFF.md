@@ -18,6 +18,10 @@ Updated: 2026-07-17 (Asia/Bangkok)
   regenerate `tools/mindmap.html` after source edits.
 - `D:\202607162107.zip` is the user's current largest regular test map. It
   contains no images and is a suitable future baseline for graph stress tests.
+- `test-fixtures/mindmap-ai-stress-1000.zip` is the deterministic, image-free
+  1,000-node synthetic stress fixture. It is generated locally by
+  `generate-mindmap-stress-fixture.py`, intentionally ignored by Git, and must
+  not be mistaken for study data.
 
 ## Completed Recently
 
