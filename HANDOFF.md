@@ -5,11 +5,12 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.82** (connector-control clearance; awaiting user
+- Current MindMap build: **V3.83** (route-label docking; awaiting user
   verification).
-- Latest verified baseline: V3.81 adaptive route-label placement, after V3.80
-  route-label interaction fix, V3.77 directed connectors, V3.76 Floating Text,
-  V3.74 image workflow, view/canvas refinements, and V3.75 Line annotations.
+- Latest verified baseline: V3.82 connector-control clearance, after V3.81
+  adaptive route-label placement, V3.80 route-label interaction fix, V3.77
+  directed connectors, V3.76 Floating Text, V3.74 image workflow, view/canvas
+  refinements, and V3.75 Line annotations.
 - User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
@@ -130,7 +131,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - Existing saved labels retain their prior positions. The `autoPlacement`
   marker is included wherever connector route-label data is already preserved.
 
-## V3.82: Connector-Control Clearance (Pending User Verification)
+## V3.82: Connector-Control Clearance (Verified)
 
 - Untouched automatic labels now begin 24px from a regular Node and 10px from
   a small junction Node. Automatic labels that used the previous revision are
@@ -140,6 +141,14 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - A middle `+` whose invisible hit halo would overlap a nearby Node `+` keeps
   its position and behavior, but uses a smaller halo so the Node `+` remains
   the easier click target.
+
+## V3.83: Route Label Docking (Pending User Verification)
+
+- Automatic route labels now resolve their near-Node position every time their
+  connector is redrawn. Creating a short link and later dragging a Node far
+  away therefore never leaves its labels in the middle of the connector.
+- The regular-Node clearance and near-junction treatment remain in force while
+  automatic; dragging a label still makes it manual and preserves its position.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 

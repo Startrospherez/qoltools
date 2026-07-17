@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.82</title>
+    <title>MindMap V3.83</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -212,7 +212,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.82</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.83</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <details>
     <summary>📖 วิธีใช้งาน</summary>
     <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เนื้อหา และข้อมูลประกอบในหน้าเดียว</p>
@@ -475,7 +475,7 @@
         function scheduleConnectorNavigationHide() { cancelConnectorNavigationHide(); connectorNavHideTimer = setTimeout(() => { connectorNavHoverId = null; renderConnectorRouteLabels(); }, 120); }
         function clearConnectorRouteLabels() { document.querySelectorAll('.connector-route-label').forEach(label => label.remove()); }
         function endpointNodeForRouteLabel(line, side) { return document.getElementById(side === 'n1' ? line.dataset.n1 : line.dataset.n2); }
-        const ROUTE_LABEL_PLACEMENT_REVISION = 2;
+        const ROUTE_LABEL_PLACEMENT_REVISION = 3;
         function nodeBranchControlCenters(node) {
             let bounds = nodeCanvasBounds(node), x = (bounds.left + bounds.right) / 2, y = (bounds.top + bounds.bottom) / 2;
             return [{x:bounds.right + 3,y:y}, {x:bounds.left - 3,y:y}, {x:x,y:bounds.top - 3}, {x:x,y:bounds.bottom + 3}];
@@ -492,14 +492,15 @@
         function connectorRouteLabelPlacement(line, labels, side) {
             let label = labels[side], node = endpointNodeForRouteLabel(line, side), point = connectorRoutePoint(line, .5), dx = point.x2 - point.x1, dy = point.y2 - point.y1, length = Math.hypot(dx, dy), junction = !!(node && node.classList.contains('j'));
             if(!Number.isFinite(length) || length < .001) return null;
-            if(!Number.isFinite(label.position) || label.autoPlacement && label.placementRevision < ROUTE_LABEL_PLACEMENT_REVISION) {
+            let position = label.position;
+            if(label.autoPlacement) {
                 let screenLength = length * zoom, distanceRatio = (junction ? 10 : 24) / Math.max(screenLength, 1), nearEndPosition = Math.min(.36, Math.max(.005, distanceRatio));
-                label.position = side === 'n1' ? nearEndPosition : 1 - nearEndPosition;
-                label.autoPlacement = true;
-                label.placementRevision = ROUTE_LABEL_PLACEMENT_REVISION;
-                setConnectorRouteLabels(line, labels);
+                position = side === 'n1' ? nearEndPosition : 1 - nearEndPosition;
+                if(!Number.isFinite(label.position) || label.placementRevision < ROUTE_LABEL_PLACEMENT_REVISION) { label.position = position; label.placementRevision = ROUTE_LABEL_PLACEMENT_REVISION; setConnectorRouteLabels(line, labels); }
+            } else if(!Number.isFinite(position)) {
+                position = .5; label.position = position; setConnectorRouteLabels(line, labels);
             }
-            point = connectorRoutePoint(line, label.position);
+            point = connectorRoutePoint(line, position);
             let x = point.x1 + (point.x2 - point.x1) * point.position, y = point.y1 + (point.y2 - point.y1) * point.position;
             if(label.autoPlacement) {
                 let offset = length * zoom < 120 ? (side === 'n1' ? -12 : 12) : 0;
@@ -1098,7 +1099,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.82', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.83', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
