@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.90</title>
+    <title>MindMap V3.91</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -223,7 +223,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.90</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.91</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
@@ -362,7 +362,7 @@
         
         // Mindmap State
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
-        let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], images = [];
+        let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], dragConnectorLines = [], dragRenderFrame = null, pendingDragPointer = null, images = [];
         let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
         let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null, lastAnnotationTextClick = { id:null, at:0 }, connectorNavHoverId = null, connectorNavHideTimer = null, editingConnectorRouteLabel = null, connectorRouteClickTimer = null;
         const imageDomById = new Map(), imageThumbUrlByAsset = new Map();
@@ -534,10 +534,11 @@
             function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); if(moved) { window.doSaveState(); return; } let now = Date.now(); if(window.__routeLabelLastClick && window.__routeLabelLastClick.key === key && now - window.__routeLabelLastClick.at < 420) { if(connectorRouteClickTimer) clearTimeout(connectorRouteClickTimer); connectorRouteClickTimer = null; window.__routeLabelLastClick = null; window.editConnectorRouteLabel(lineId, side); return; } window.__routeLabelLastClick = { key:key, at:now }; connectorRouteClickTimer = setTimeout(() => { connectorRouteClickTimer = null; if(window.__routeLabelLastClick && window.__routeLabelLastClick.key === key) { window.__routeLabelLastClick = null; jumpToConnectorRouteTarget(lineId, side); } }, 420); }
             document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
         }
-        function renderConnectorRouteLabels() {
+        function renderConnectorRouteLabels(candidateLines, sourceOverride) {
             if(editingConnectorRouteLabel && b.querySelector('.connector-route-label.editing')) return;
-            clearConnectorRouteLabels(); let source = activeConnectorRouteNode(); if(!source) return;
-            Array.from(s.querySelectorAll('line[data-n1][data-n2]')).forEach(line => {
+            clearConnectorRouteLabels(); let source = arguments.length > 1 ? sourceOverride : activeConnectorRouteNode(); if(!source) return;
+            let connectorLines = Array.isArray(candidateLines) ? candidateLines : Array.from(s.querySelectorAll('line[data-n1][data-n2]'));
+            connectorLines.forEach(line => {
                 let side = line.dataset.n1 === source.id ? 'n1' : (line.dataset.n2 === source.id ? 'n2' : null); if(!side) return;
                 let labels = connectorRouteLabels(line), label = labels[side], placement = connectorRouteLabelPlacement(line, labels, side); if(!placement || ![placement.point.x1,placement.point.y1,placement.point.x2,placement.point.y2].every(Number.isFinite)) return;
                 let x = placement.x, y = placement.y, editing = editingConnectorRouteLabel && editingConnectorRouteLabel.lineId === line.id && editingConnectorRouteLabel.side === side;
@@ -1109,7 +1110,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.87', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.91', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1234,22 +1235,74 @@
         };
         
         window.doUndo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep > 0) window.loadState(curStep - 1); }; window.doRedo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep < mmHistory.length - 1) window.loadState(curStep + 1); };
-        
-        window.loadState = function(step) { 
-            let state = mmHistory[step]; if(!state || !state.nodes) return; 
-            nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; ensureAnnotationTextLayer().innerHTML = ''; document.querySelectorAll('.mb, .connector-route-label, .junction-mini-tools').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null; nid = state.nid || 0;
-            state.nodes.forEach(ns => { 
+
+        function topologyForIncrementalStateLoad(state) {
+            if(!state || !Array.isArray(state.nodes) || !Array.isArray(state.lines) || state.nodes.length !== nodes.length) return null;
+            let nodeStates = new Map();
+            for(let ns of state.nodes) { if(!ns || typeof ns.id !== 'string' || nodeStates.has(ns.id)) return null; nodeStates.set(ns.id, ns); }
+            for(let node of nodes) { let ns = nodeStates.get(node.id); if(!ns || (node.classList.contains('j') ? 'j' : 'n') !== (ns.type === 'j' ? 'j' : 'n')) return null; }
+            let domLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]'));
+            if(state.lines.length !== domLines.length) return null;
+            let lineStates = new Map();
+            for(let ls of state.lines) { if(!ls || typeof ls.id !== 'string' || lineStates.has(ls.id)) return null; lineStates.set(ls.id, ls); }
+            for(let line of domLines) { let ls = lineStates.get(line.id); if(!ls || line.dataset.n1 !== ls.n1 || line.dataset.n2 !== ls.n2) return null; }
+            return { nodeStates:nodeStates, lineStates:lineStates, domLines:domLines };
+        }
+        function setNodeStateStyle(node, property, value, customProperty) {
+            let next = typeof value === 'string' ? value : ''; node.style[property] = next;
+            if(customProperty) { if(next) node.style.setProperty(customProperty, next); else node.style.removeProperty(customProperty); }
+        }
+        const NODE_HISTORY_FIELDS = ['x','y','bg','fg','bd','shape','fs','dfs','txt','desc','note','type'];
+        function nodeHistoryStateMatches(first, second) { return !!first && !!second && NODE_HISTORY_FIELDS.every(field => (first[field] || '') === (second[field] || '')); }
+        function nodeHistoryChangeAffectsGeometry(first, second) { return !first || ['x','y','shape','fs','dfs','txt','desc','type'].some(field => (first[field] || '') !== (second[field] || '')); }
+        function lineHistoryStateMatches(first, second) { return !!first && !!second && first.n1 === second.n1 && first.n2 === second.n2 && normalizeConnectorArrow(first.arrow) === normalizeConnectorArrow(second.arrow) && JSON.stringify(normalizeConnectorRouteLabels(first.routeLabels)) === JSON.stringify(normalizeConnectorRouteLabels(second.routeLabels)); }
+        function patchNodeFromState(node, state) {
+            let title = node.querySelector('.nt'), description = node.querySelector('.nd'), nextTitle = typeof state.txt === 'string' ? state.txt : '', nextDescription = typeof state.desc === 'string' ? state.desc : '';
+            node.style.left = state.x; node.style.top = state.y; node.dataset.note = state.note || ''; node.dataset.shape = state.shape || 'box';
+            setNodeStateStyle(node, 'background', state.bg, '--n-bg'); setNodeStateStyle(node, 'color', state.fg); setNodeStateStyle(node, 'borderColor', state.bd, '--n-bd');
+            if(title) { if(title.innerHTML !== nextTitle) title.innerHTML = nextTitle; title.style.fontSize = state.fs || ''; delete title.dataset.m; }
+            if(description) { if(description.innerHTML !== nextDescription) description.innerHTML = nextDescription; description.style.fontSize = state.dfs || ''; delete description.dataset.m; }
+        }
+        function patchImagesFromState(nextImages) {
+            let nextById = new Map((nextImages || []).map(placement => [placement.id, placement]));
+            imagePlacements.forEach(previous => { let next = nextById.get(previous.id); if(!next || previous.assetId !== next.assetId || previous.src !== next.src) removeImageDom(previous.id); });
+            imagePlacements = cloneMindmapState(nextImages || []); renderImageLayer();
+        }
+        function resetTransientStateForLoad() {
+            cancelActiveNodeDragForStateLoad(); clearFindHighlight(); connectorNavHoverId = null; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null;
+            nodes.forEach(node => node.classList.remove('sel')); images.forEach(image => image.classList.remove('sel')); document.querySelectorAll('.connector-route-label, .junction-mini-tools').forEach(el => el.remove());
+        }
+        function patchCompatibleState(state, step, topology) {
+            let previous = mmHistory[curStep] || {}, previousNodes = new Map((previous.nodes || []).map(item => [item.id, item])), previousLines = new Map((previous.lines || []).map(item => [item.id, item]));
+            resetTransientStateForLoad(); let changedGeometryNodeIds = new Set(), affectedLines = new Set();
+            nodes.forEach(node => { let next = topology.nodeStates.get(node.id), before = previousNodes.get(node.id); if(nodeHistoryStateMatches(before, next)) return; if(nodeHistoryChangeAffectsGeometry(before, next)) changedGeometryNodeIds.add(node.id); patchNodeFromState(node, next); });
+            topology.domLines.forEach(line => {
+                let ls = topology.lineStates.get(line.id), nextArrow = normalizeConnectorArrow(ls.arrow), nextLabels = JSON.stringify(normalizeConnectorRouteLabels(ls.routeLabels));
+                if(!lineHistoryStateMatches(previousLines.get(line.id), ls) || line.dataset.arrow !== nextArrow || line.dataset.routeLabels !== nextLabels) { line.dataset.arrow = nextArrow; line.dataset.routeLabels = nextLabels; affectedLines.add(line); }
+                if(changedGeometryNodeIds.has(line.dataset.n1) || changedGeometryNodeIds.has(line.dataset.n2)) affectedLines.add(line);
+            });
+            affectedLines.forEach(line => updateLine(line));
+            nid = typeof state.nid === 'number' ? state.nid : 0; annotations = normalizedAnnotations(state.annotations); if(JSON.stringify(previous.images || []) !== JSON.stringify(state.images || [])) patchImagesFromState(state.images || []); curStep = step;
+            renderAnnotations(); renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools();
+        }
+        function rebuildStateFully(state, step) {
+            resetTransientStateForLoad(); nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; ensureAnnotationTextLayer().innerHTML = ''; document.querySelectorAll('.mb').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); nid = typeof state.nid === 'number' ? state.nid : 0;
+            state.nodes.forEach(ns => {
                 let n = document.createElement('div'); n.className = ns.type === 'j' ? 'n j' : 'n'; n.id = ns.id; n.style.left = ns.x; n.style.top = ns.y; n.dataset.note = ns.note || '';
-                if(ns.bg) { n.style.background = ns.bg; n.style.setProperty('--n-bg', ns.bg); } 
-                if(ns.fg) { n.style.color = ns.fg; } 
-                if(ns.bd) { n.style.borderColor = ns.bd; n.style.setProperty('--n-bd', ns.bd); } 
-                if(ns.shape) n.dataset.shape = ns.shape; 
+                if(ns.bg) { n.style.background = ns.bg; n.style.setProperty('--n-bg', ns.bg); }
+                if(ns.fg) { n.style.color = ns.fg; }
+                if(ns.bd) { n.style.borderColor = ns.bd; n.style.setProperty('--n-bd', ns.bd); }
+                if(ns.shape) n.dataset.shape = ns.shape;
                 n.innerHTML = '<div class="dx" onclick="del(\'' + ns.id + '\')">x</div><button class="note-btn" type="button" onclick="window.openNodeNote(\'' + ns.id + '\')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">' + ns.txt + '</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=\'\'}" onmousedown="event.stopPropagation()">' + (ns.desc||'') + '</div><div class="p p-r" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'r\')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'l\')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'t\')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, \'' + ns.id + '\',\'b\')">+</div>';
                 if(ns.fs) n.querySelector('.nt').style.fontSize = ns.fs; if(ns.dfs) n.querySelector('.nd').style.fontSize = ns.dfs;
-                b.appendChild(n); nodes.push(n); attachNodeEvents(n); 
-            }); 
+                b.appendChild(n); nodes.push(n); attachNodeEvents(n);
+            });
             state.lines.forEach(ls => { let l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.setAttribute('stroke', 'var(--bc)'); l.setAttribute('stroke-width', '3'); l.id = ls.id; l.dataset.n1 = ls.n1; l.dataset.n2 = ls.n2; l.dataset.arrow = normalizeConnectorArrow(ls.arrow); setConnectorRouteLabels(l, ls.routeLabels); s.appendChild(l); });
             updateAll(); curStep = step; renderAnnotations(); renderAnnotationTexts(); renderImageLayer();
+        }
+        window.loadState = function(step) {
+            let state = mmHistory[step]; if(!state || !Array.isArray(state.nodes)) return;
+            let topology = topologyForIncrementalStateLoad(state); if(topology) patchCompatibleState(state, step, topology); else rebuildStateFully(state, step);
         };
         
         function updateTransform() { b.style.transform = `translate(${cx}px, ${cy}px) scale(${zoom})`; b.dataset.cx = cx; b.dataset.cy = cy; b.dataset.zoom = zoom; updateZoomStatus(); renderImageLayer(); renderConnectorRouteLabels(); }
@@ -1258,11 +1311,13 @@
                 e.stopPropagation(); 
                 if(e.shiftKey) { if(n.classList.contains('sel')) { n.classList.remove('sel'); drag = null; renderJunctionMiniTools(); return; } else { n.classList.add('sel'); } }
                 else { if(!n.classList.contains('sel')) clearSel(); n.classList.add('sel'); } 
+                resetNodeDragRenderState();
                 drag = n; px = e.clientX; py = e.clientY; n.style.cursor = 'grabbing'; isMoved = false;
                 dragStartX = e.clientX; dragStartY = e.clientY;
                 dragStartPos = nodes.filter(x => x.classList.contains('sel')).map(x => ({ node: x, left: parseFloat(x.style.left) || 0, top: parseFloat(x.style.top) || 0 }));
+                let draggedIds = new Set(dragStartPos.map(item => item.node.id)); dragConnectorLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(line => draggedIds.has(line.dataset.n1) || draggedIds.has(line.dataset.n2));
                 if(snapGrid) dragStartPos.forEach(p => p.node.classList.add('snap-dragging'));
-                document.body.style.userSelect = 'none'; renderConnectorRouteLabels(); renderJunctionMiniTools();
+                document.body.style.userSelect = 'none'; renderConnectorRouteLabels(); if(n.classList.contains('j')) clearJunctionMiniTools(); else renderJunctionMiniTools();
             }; 
             n.onmouseenter = function() { cancelConnectorNavigationHide(); connectorNavHoverId = n.id; renderConnectorRouteLabels(); };
             n.onmouseleave = function() { scheduleConnectorNavigationHide(); };
@@ -1376,6 +1431,17 @@
         let startLineDragWithConnectorHits = window.startLineDrag;
         window.startLineDrag = function(event, nodeId, direction) { setConnectorHitLinesEnabled(false); document.addEventListener('mouseup', () => setConnectorHitLinesEnabled(true), { once:true }); startLineDragWithConnectorHits(event, nodeId, direction); };
         function updateAll() { pruneConnectorHitLines(); s.querySelectorAll('line[data-n1][data-n2]').forEach(updateLine); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
+        function resetNodeDragRenderState() { if(dragRenderFrame !== null) cancelAnimationFrame(dragRenderFrame); dragRenderFrame = null; pendingDragPointer = null; dragConnectorLines = []; }
+        function cancelActiveNodeDragForStateLoad() { resetNodeDragRenderState(); dragStartPos.forEach(item => item.node.classList.remove('snap-dragging')); if(drag) drag.style.cursor = 'grab'; drag = null; dragStartPos = []; isMoved = false; }
+        function applyPendingNodeDrag() {
+            dragRenderFrame = null; let pointer = pendingDragPointer; pendingDragPointer = null; if(!drag || !pointer) return;
+            let tdx = (pointer.clientX - dragStartX) / zoom, tdy = (pointer.clientY - dragStartY) / zoom;
+            if(pointer.shiftKey) { if(Math.abs(tdx) > Math.abs(tdy)) tdy = 0; else tdx = 0; }
+            dragStartPos.forEach(item => { let left = item.left + tdx, top = item.top + tdy; if(snapGrid) { let snapped = snapNodeToGrid(item.node, left, top); left = snapped.left; top = snapped.top; } item.node.style.left = left + 'px'; item.node.style.top = top + 'px'; });
+            dragConnectorLines.forEach(line => { if(line.isConnected) updateLine(line); }); renderConnectorRouteLabels(dragConnectorLines, dragStartPos.length === 1 ? drag : null);
+        }
+        function scheduleNodeDrag(pointerEvent) { pendingDragPointer = { clientX:pointerEvent.clientX, clientY:pointerEvent.clientY, shiftKey:pointerEvent.shiftKey }; if(dragRenderFrame === null) dragRenderFrame = requestAnimationFrame(applyPendingNodeDrag); }
+        function flushPendingNodeDrag() { if(dragRenderFrame !== null) { cancelAnimationFrame(dragRenderFrame); dragRenderFrame = null; } if(pendingDragPointer) applyPendingNodeDrag(); }
         function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
 
         window.addEventListener('wheel', function(e) {
@@ -1403,7 +1469,7 @@
             if(crDrag) { let cb = document.getElementById('cropBox'); cb.style.left = (crL + e.clientX - crPx) + 'px'; cb.style.top = (crT + e.clientY - crPy) + 'px'; return; }
             if(crResize) { let cb = document.getElementById('cropBox'); let nw = Math.max(50, crW + e.clientX - crPx); let nh = Math.max(50, crH + e.clientY - crPy); if(currentCropRatio) nh = nw / currentCropRatio; cb.style.width = nw + 'px'; cb.style.height = nh + 'px'; return; }
             
-            if(drag) { isMoved = true; let tdx = (e.clientX - dragStartX) / zoom, tdy = (e.clientY - dragStartY) / zoom; if(e.shiftKey) { if(Math.abs(tdx) > Math.abs(tdy)) tdy = 0; else tdx = 0; } dragStartPos.forEach(p => { let nl = p.left + tdx, nt = p.top + tdy; if(snapGrid) { let snapped = snapNodeToGrid(p.node, nl, nt); nl = snapped.left; nt = snapped.top; } p.node.style.left = nl + 'px'; p.node.style.top = nt + 'px'; }); px = e.clientX; py = e.clientY; updateAll(); }
+            if(drag) { isMoved = true; px = e.clientX; py = e.clientY; scheduleNodeDrag(e); }
             else if(isPan) { cx += e.clientX - px; cy += e.clientY - py; px = e.clientX; py = e.clientY; if(fitRestoreView) fitRestoreView.wasPanned = true; updateTransform(); }
             else if(isSel) { let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; let rx = Math.min(sx, nx), ry = Math.min(sy, ny), rw = Math.abs(nx - sx), rh = Math.abs(ny - sy); sb.style.left = rx + 'px'; sb.style.top = ry + 'px'; sb.style.width = rw + 'px'; sb.style.height = rh + 'px'; nodes.forEach(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top), nw = n.offsetWidth, nh = n.offsetHeight; let inBox = (nl < rx + rw && nl + nw > rx && nt < ry + rh && nt + nh > ry); if(inBox || (isAddSel && preSel.has(n))) n.classList.add('sel'); else n.classList.remove('sel'); }); }
         });
@@ -1411,7 +1477,7 @@
         window.addEventListener('mouseup', function(e) {
             document.body.style.userSelect = '';
             if(crDrag) crDrag = false; if(crResize) crResize = false;
-            if(drag) { drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); drag = null; if(isMoved) { window.doSaveState(); isMoved = false; } }
+            if(drag) { flushPendingNodeDrag(); drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); drag = null; dragConnectorLines = []; if(isMoved) { window.doSaveState(); isMoved = false; } }
             isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none'; if(!editingConnectorRouteLabel) renderConnectorRouteLabels(); renderJunctionMiniTools();
         });
 

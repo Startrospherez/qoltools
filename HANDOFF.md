@@ -5,8 +5,8 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.90** (direct connector click/drag and arrow
-  gesture; user verified).
+- Current MindMap build: **V3.91** (incremental drag rendering and compatible
+  Undo/Redo state patching; pending user performance verification).
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -200,6 +200,25 @@ Updated: 2026-07-17 (Asia/Bangkok)
   without an arrow. The Help and Hotkeys sections document this gesture.
 - Cleanup removed all unreachable V3.87–V3.89 selected-point/mini-toolbar
   code. V3.90 retains only the direct gesture and no temporary connector UI.
+
+## V3.91: Performance Foundation (Pending User Verification)
+
+- The 1,000-Node synthetic fixture established the pre-change baseline on the
+  user's machine: about eight seconds before a short Node drag became visible,
+  and about three seconds for movement/text Undo or Redo. Direct connector
+  branching and Find were immediate.
+- Node drag now collects the connectors attached to the dragged selection once
+  at pointer-down, batches pointer movement through `requestAnimationFrame`,
+  and redraws only those connectors and route labels. A pending frame is
+  flushed before history is saved on pointer-up.
+- Undo/Redo retains the existing full snapshots, but topology-compatible states
+  patch only changed Nodes and connector metadata in place. Structural changes
+  automatically use the prior full rebuild path.
+- Project ZIP/JSON fields and image storage remain compatible. New Project ZIP
+  manifests now correctly report app version `3.91`; `formatVersion` remains 1.
+- Automated in-app browser verification remains unavailable for local
+  `file://` pages under the browser URL policy. Build, syntax, fixture integrity,
+  and static path checks must be followed by the user's timing/interaction test.
 
 ## V3.89: Direct-Drag Connector Point Tools (Superseded by V3.90)
 
