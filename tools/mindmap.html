@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.85</title>
+    <title>MindMap V3.86</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -144,8 +144,6 @@
         .connector-route-label { position:absolute; z-index:4; display:flex; align-items:baseline; gap:5px; max-width:260px; color:var(--fg); cursor:pointer; user-select:none; white-space:pre-wrap; line-height:1.35; border:1px solid transparent; border-radius:4px; padding:2px 4px; transform:translate(-50%,-50%); }
         .connector-route-label:hover, .connector-route-label.editing, .connector-route-label.dragging { border-color:color-mix(in srgb, var(--c9) 55%, transparent); background:color-mix(in srgb, var(--tb) 78%, transparent); box-shadow:0 1px 4px rgba(0,0,0,.16); }
         .connector-route-label.empty { opacity:.72; font-style:italic; }
-        .connector-route-label.dock-right { transform:translate(0,-50%); }
-        .connector-route-label.dock-left { transform:translate(-100%,-50%); flex-direction:row-reverse; }
         .connector-route-arrow { color:var(--c9); font-weight:700; flex:0 0 auto; }
         .connector-route-content { outline:none; min-width:10px; }
         .junction-mini-tools { position:absolute; z-index:6; display:flex; gap:4px; padding:3px; border:1px solid var(--bc); border-radius:8px; background:var(--tb); box-shadow:0 2px 7px rgba(0,0,0,.2); }
@@ -223,7 +221,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.85</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.86</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <details>
     <summary>📖 วิธีใช้งาน</summary>
     <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เนื้อหา และข้อมูลประกอบในหน้าเดียว</p>
@@ -507,7 +505,7 @@
             toolbar.append(branch, remove); b.appendChild(toolbar);
         }
         function endpointNodeForRouteLabel(line, side) { return document.getElementById(side === 'n1' ? line.dataset.n1 : line.dataset.n2); }
-        const ROUTE_LABEL_PLACEMENT_REVISION = 3;
+        const ROUTE_LABEL_PLACEMENT_REVISION = 4;
         function nodeBranchControlCenters(node) {
             let bounds = nodeCanvasBounds(node), x = (bounds.left + bounds.right) / 2, y = (bounds.top + bounds.bottom) / 2;
             return [{x:bounds.right + 3,y:y}, {x:bounds.left - 3,y:y}, {x:x,y:bounds.top - 3}, {x:x,y:bounds.bottom + 3}];
@@ -534,14 +532,12 @@
             }
             point = connectorRoutePoint(line, position);
             let x = point.x1 + (point.x2 - point.x1) * point.position, y = point.y1 + (point.y2 - point.y1) * point.position;
-            if(label.autoPlacement) {
-                let offset = length * zoom < 120 ? (side === 'n1' ? -12 : 12) : 0;
-                if(!junction && node && nodeBranchControlCenters(node).some(control => Math.hypot(x - control.x, y - control.y) * zoom < 30)) offset += side === 'n1' ? -9 : 9;
-                x += -dy / length * offset / zoom; y += dx / length * offset / zoom;
-            }
-            let outwardX = side === 'n1' ? dx : -dx, outwardY = side === 'n1' ? dy : -dy, dockSide = '';
-            if(label.autoPlacement) dockSide = Math.abs(outwardX) >= Math.abs(outwardY) ? (outwardX >= 0 ? 'right' : 'left') : (side === 'n1' ? 'right' : 'left');
-            return { point:point, x:x, y:y, dockSide:dockSide };
+            return { point:point, x:x, y:y };
+        }
+        function centreAutomaticRouteLabelOnConnector(el, line, side) {
+            let node = endpointNodeForRouteLabel(line, side), point = connectorRoutePoint(line, .5), dx = point.x2 - point.x1, dy = point.y2 - point.y1, length = Math.hypot(dx, dy); if(!node || !Number.isFinite(length) || length < .001) return;
+            let outwardX = (side === 'n1' ? dx : -dx) / length, outwardY = (side === 'n1' ? dy : -dy) / length, halfExtent = Math.abs(outwardX) * el.offsetWidth / 2 + Math.abs(outwardY) * el.offsetHeight / 2, gap = (node.classList.contains('j') ? 10 : 14) / zoom, distance = Math.min(length * .36, gap + halfExtent), position = side === 'n1' ? distance / length : 1 - distance / length;
+            let x = point.x1 + dx * position, y = point.y1 + dy * position; el.style.left = x + 'px'; el.style.top = y + 'px';
         }
         function connectorRouteDirectionIcon(line, side) { let point = connectorRoutePoint(line, .5), dx = side === 'n1' ? point.x2 - point.x1 : point.x1 - point.x2, dy = side === 'n1' ? point.y2 - point.y1 : point.y1 - point.y2; if(!Number.isFinite(dx) || !Number.isFinite(dy) || (Math.abs(dx) < .001 && Math.abs(dy) < .001)) return '→'; let icons = ['→','↘','↓','↙','←','↖','↑','↗'], index = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)); return icons[(index + 8) % 8]; }
         function connectorRouteTarget(line, side) { return document.getElementById(side === 'n1' ? line.dataset.n2 : line.dataset.n1); }
@@ -565,15 +561,15 @@
                 let side = line.dataset.n1 === source.id ? 'n1' : (line.dataset.n2 === source.id ? 'n2' : null); if(!side) return;
                 let labels = connectorRouteLabels(line), label = labels[side], placement = connectorRouteLabelPlacement(line, labels, side); if(!placement || ![placement.point.x1,placement.point.y1,placement.point.x2,placement.point.y2].every(Number.isFinite)) return;
                 let x = placement.x, y = placement.y, editing = editingConnectorRouteLabel && editingConnectorRouteLabel.lineId === line.id && editingConnectorRouteLabel.side === side;
-                let el = document.createElement('div'); el.className = 'connector-route-label' + (!label.text.trim() ? ' empty' : '') + (editing ? ' editing' : '') + (placement.dockSide ? ' dock-' + placement.dockSide : ''); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.fontSize = (16 / zoom) + 'px'; el.title = label.text.trim() ? 'คลิกเพื่อไปยัง node อีกฝั่ง • ดับเบิลคลิกเพื่อแก้คำ • ลากเพื่อย้ายตำแหน่ง' : 'คลิกเพื่อเพิ่มคำเรียกเส้นนี้';
+                let el = document.createElement('div'); el.className = 'connector-route-label' + (!label.text.trim() ? ' empty' : '') + (editing ? ' editing' : ''); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.visibility = label.autoPlacement ? 'hidden' : ''; el.style.fontSize = (16 / zoom) + 'px'; el.title = label.text.trim() ? 'คลิกเพื่อไปยัง node อีกฝั่ง • ดับเบิลคลิกเพื่อแก้คำ • ลากเพื่อย้ายตำแหน่ง' : 'คลิกเพื่อเพิ่มคำเรียกเส้นนี้';
                 let arrow = document.createElement('span'); arrow.className = 'connector-route-arrow'; arrow.textContent = connectorRouteDirectionIcon(line, side); let content = document.createElement('span'); content.className = 'connector-route-content'; content.textContent = label.text || '+'; el.append(arrow, content);
                 el.onmouseenter = cancelConnectorNavigationHide; el.onmouseleave = scheduleConnectorNavigationHide; el.ondblclick = event => { event.preventDefault(); event.stopPropagation(); };
                 if(editing) {
-                    content.contentEditable = 'true'; content.textContent = label.text; content.spellcheck = false; content.onmousedown = event => event.stopPropagation(); content.oninput = () => { let latest = connectorRouteLabels(line); latest[side].text = content.innerText.replace(/\r/g, ''); setConnectorRouteLabels(line, latest); };
+                    content.contentEditable = 'true'; content.textContent = label.text; content.spellcheck = false; content.onmousedown = event => event.stopPropagation(); content.oninput = () => { let latest = connectorRouteLabels(line); latest[side].text = content.innerText.replace(/\r/g, ''); setConnectorRouteLabels(line, latest); if(latest[side].autoPlacement) requestAnimationFrame(() => centreAutomaticRouteLabelOnConnector(el, line, side)); };
                     content.onkeydown = event => { event.stopPropagation(); if(event.key === 'Escape') { event.preventDefault(); finishConnectorRouteLabelEdit(false); } else if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); finishConnectorRouteLabelEdit(true); } };
                     content.onblur = () => setTimeout(() => { if(editingConnectorRouteLabel && editingConnectorRouteLabel.lineId === line.id && editingConnectorRouteLabel.side === side) finishConnectorRouteLabelEdit(true); }, 0);
                 } else el.onmousedown = event => beginConnectorRouteLabelPointer(event, line.id, side);
-                b.appendChild(el);
+                b.appendChild(el); if(label.autoPlacement) { centreAutomaticRouteLabelOnConnector(el, line, side); el.style.visibility = ''; }
             });
             if(editingConnectorRouteLabel) requestAnimationFrame(() => { let content = b.querySelector('.connector-route-label.editing .connector-route-content'); if(!content) return; content.focus(); let range = document.createRange(); range.selectNodeContents(content); let selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range); });
         }
@@ -1133,7 +1129,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.85', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.86', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });

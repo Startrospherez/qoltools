@@ -5,8 +5,8 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.85** (closer regular-Node route labels; awaiting
-  user verification).
+- Current MindMap build: **V3.86** (automatic labels centred on connectors;
+  awaiting user verification).
 - Latest verified baseline: V3.84 directional route-label expansion and
   selected-junction mini tools, after V3.83 route-label docking, V3.82
   connector-control clearance, V3.81 adaptive route-label placement, V3.80
@@ -165,11 +165,22 @@ Updated: 2026-07-17 (Asia/Bangkok)
   removes the junction using the existing reconnect-when-two-branches
   behavior. The toolbar is transient and excluded from exports.
 
-## V3.85: Route-Label Proximity (Pending User Verification)
+## V3.85: Route-Label Proximity (Superseded by V3.86)
 
 - Automatic labels at a regular Node now dock 14 screen pixels from its edge,
   instead of 24px. Junction-dot labels remain at 10px and manually moved
   labels retain their positions.
+
+## V3.86: Centred Automatic Route Labels (Pending User Verification)
+
+- Automatic route labels are now centred directly on their connector, matching
+  the placement used after the user drags a label. The old perpendicular
+  offsets for short links and nearby Node `+` controls are removed.
+- Their centre moves along the connector by the label's measured size, keeping
+  a visible 14px gap from a regular Node and 10px gap from a junction dot.
+  Text that grows while editing is remeasured and moves farther along the
+  connector as needed.
+- The separate crowded hit-area protection for the middle `+` remains intact.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
