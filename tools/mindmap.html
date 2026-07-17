@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.83</title>
+    <title>MindMap V3.84</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -97,6 +97,7 @@
         .note-btn.find-note-hit { display: block !important; background: rgb(255,193,7); color: rgb(60,50,0); border-color: rgb(255,193,7); box-shadow: 0 0 0 3px rgba(255,193,7,0.35), 0 2px 4px rgba(0,0,0,0.2); }
         .n.j { min-width: 16px !important; min-height: 16px !important; width: 16px; height: 16px; padding: 0 !important; border-radius: 50% !important; background: var(--fg) !important; border: 2px solid var(--bg) !important; box-shadow: none; resize: none; overflow: visible; }
         .n.j .nt, .n.j .nd, .n.j .p { display: none !important; }
+        .n.j .dx { display: none !important; }
         
         /* SHAPES */ 
         .n[data-shape="circle"] { border-radius: 50% !important; min-width: 120px; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px !important; }
@@ -143,8 +144,18 @@
         .connector-route-label { position:absolute; z-index:4; display:flex; align-items:baseline; gap:5px; max-width:260px; color:var(--fg); cursor:pointer; user-select:none; white-space:pre-wrap; line-height:1.35; border:1px solid transparent; border-radius:4px; padding:2px 4px; transform:translate(-50%,-50%); }
         .connector-route-label:hover, .connector-route-label.editing, .connector-route-label.dragging { border-color:color-mix(in srgb, var(--c9) 55%, transparent); background:color-mix(in srgb, var(--tb) 78%, transparent); box-shadow:0 1px 4px rgba(0,0,0,.16); }
         .connector-route-label.empty { opacity:.72; font-style:italic; }
+        .connector-route-label.dock-right { transform:translate(0,-50%); }
+        .connector-route-label.dock-left { transform:translate(-100%,-50%); flex-direction:row-reverse; }
         .connector-route-arrow { color:var(--c9); font-weight:700; flex:0 0 auto; }
         .connector-route-content { outline:none; min-width:10px; }
+        .junction-mini-tools { position:absolute; z-index:6; display:flex; gap:4px; padding:3px; border:1px solid var(--bc); border-radius:8px; background:var(--tb); box-shadow:0 2px 7px rgba(0,0,0,.2); }
+        .junction-mini-tools.dir-top { transform:translate(-50%,-100%); }
+        .junction-mini-tools.dir-right { transform:translate(0,-50%); }
+        .junction-mini-tools.dir-bottom { transform:translate(-50%,0); }
+        .junction-mini-tools.dir-left { transform:translate(-100%,-50%); }
+        .junction-mini-tools button { width:24px; height:24px; padding:0; border:1px solid var(--bc); border-radius:50%; background:var(--bg); color:var(--fg); font:700 16px/20px sans-serif; cursor:pointer; }
+        .junction-mini-tools .junction-branch { color:#111; background:var(--c6); }
+        .junction-mini-tools .junction-delete { color:#fff; background:rgb(255,77,77); }
         
         .img-float { position: absolute; cursor: grab; z-index: 2; }
         .img-float img { width: 100%; height: 100%; display: block; pointer-events: none; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
@@ -212,7 +223,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.83</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.84</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <details>
     <summary>📖 วิธีใช้งาน</summary>
     <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เนื้อหา และข้อมูลประกอบในหน้าเดียว</p>
@@ -474,6 +485,27 @@
         function cancelConnectorNavigationHide() { if(connectorNavHideTimer) { clearTimeout(connectorNavHideTimer); connectorNavHideTimer = null; } }
         function scheduleConnectorNavigationHide() { cancelConnectorNavigationHide(); connectorNavHideTimer = setTimeout(() => { connectorNavHoverId = null; renderConnectorRouteLabels(); }, 120); }
         function clearConnectorRouteLabels() { document.querySelectorAll('.connector-route-label').forEach(label => label.remove()); }
+        function clearJunctionMiniTools() { document.querySelectorAll('.junction-mini-tools').forEach(toolbar => toolbar.remove()); }
+        function selectedJunctionNode() { let selected = nodes.filter(node => node.classList.contains('sel') && node.classList.contains('j')); return selected.length === 1 ? selected[0] : null; }
+        function junctionMiniToolbarDirection(junction) {
+            let centerX = junction.offsetLeft + junction.offsetWidth / 2, centerY = junction.offsetTop + junction.offsetHeight / 2;
+            let choices = [{name:'top',x:0,y:-1,score:0}, {name:'right',x:1,y:0,score:0}, {name:'bottom',x:0,y:1,score:0}, {name:'left',x:-1,y:0,score:0}];
+            Array.from(s.querySelectorAll('line[data-n1][data-n2]')).forEach(line => {
+                if(line.dataset.n1 !== junction.id && line.dataset.n2 !== junction.id) return;
+                let other = document.getElementById(line.dataset.n1 === junction.id ? line.dataset.n2 : line.dataset.n1); if(!other) return;
+                let dx = other.offsetLeft + other.offsetWidth / 2 - centerX, dy = other.offsetTop + other.offsetHeight / 2 - centerY, length = Math.hypot(dx, dy); if(length < .001) return;
+                choices.forEach(choice => { choice.score += Math.max(0, (dx / length) * choice.x + (dy / length) * choice.y); });
+            });
+            return choices.reduce((best, choice) => choice.score < best.score ? choice : best, choices[0]);
+        }
+        function renderJunctionMiniTools() {
+            clearJunctionMiniTools(); let junction = selectedJunctionNode(); if(!junction) return;
+            let direction = junctionMiniToolbarDirection(junction), centerX = junction.offsetLeft + junction.offsetWidth / 2, centerY = junction.offsetTop + junction.offsetHeight / 2;
+            let toolbar = document.createElement('div'); toolbar.className = 'junction-mini-tools dir-' + direction.name; toolbar.style.left = (centerX + direction.x * 12) + 'px'; toolbar.style.top = (centerY + direction.y * 12) + 'px';
+            let branch = document.createElement('button'); branch.type = 'button'; branch.className = 'junction-mini-action junction-branch'; branch.textContent = '+'; branch.title = 'ลากเพื่อเพิ่มแขนงจากจุดตัดนี้ หรือคลิกเพื่อสร้าง Node ใหม่'; branch.onmousedown = event => window.startLineDrag(event, junction.id, 'r');
+            let remove = document.createElement('button'); remove.type = 'button'; remove.className = 'junction-mini-action junction-delete'; remove.textContent = '×'; remove.title = 'ลบจุดตัดนี้'; remove.onmousedown = event => { event.preventDefault(); event.stopPropagation(); window.del(junction.id); };
+            toolbar.append(branch, remove); b.appendChild(toolbar);
+        }
         function endpointNodeForRouteLabel(line, side) { return document.getElementById(side === 'n1' ? line.dataset.n1 : line.dataset.n2); }
         const ROUTE_LABEL_PLACEMENT_REVISION = 3;
         function nodeBranchControlCenters(node) {
@@ -507,7 +539,9 @@
                 if(!junction && node && nodeBranchControlCenters(node).some(control => Math.hypot(x - control.x, y - control.y) * zoom < 30)) offset += side === 'n1' ? -9 : 9;
                 x += -dy / length * offset / zoom; y += dx / length * offset / zoom;
             }
-            return { point:point, x:x, y:y };
+            let outwardX = side === 'n1' ? dx : -dx, outwardY = side === 'n1' ? dy : -dy, dockSide = '';
+            if(label.autoPlacement) dockSide = Math.abs(outwardX) >= Math.abs(outwardY) ? (outwardX >= 0 ? 'right' : 'left') : (side === 'n1' ? 'right' : 'left');
+            return { point:point, x:x, y:y, dockSide:dockSide };
         }
         function connectorRouteDirectionIcon(line, side) { let point = connectorRoutePoint(line, .5), dx = side === 'n1' ? point.x2 - point.x1 : point.x1 - point.x2, dy = side === 'n1' ? point.y2 - point.y1 : point.y1 - point.y2; if(!Number.isFinite(dx) || !Number.isFinite(dy) || (Math.abs(dx) < .001 && Math.abs(dy) < .001)) return '→'; let icons = ['→','↘','↓','↙','←','↖','↑','↗'], index = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)); return icons[(index + 8) % 8]; }
         function connectorRouteTarget(line, side) { return document.getElementById(side === 'n1' ? line.dataset.n2 : line.dataset.n1); }
@@ -531,7 +565,7 @@
                 let side = line.dataset.n1 === source.id ? 'n1' : (line.dataset.n2 === source.id ? 'n2' : null); if(!side) return;
                 let labels = connectorRouteLabels(line), label = labels[side], placement = connectorRouteLabelPlacement(line, labels, side); if(!placement || ![placement.point.x1,placement.point.y1,placement.point.x2,placement.point.y2].every(Number.isFinite)) return;
                 let x = placement.x, y = placement.y, editing = editingConnectorRouteLabel && editingConnectorRouteLabel.lineId === line.id && editingConnectorRouteLabel.side === side;
-                let el = document.createElement('div'); el.className = 'connector-route-label' + (!label.text.trim() ? ' empty' : '') + (editing ? ' editing' : ''); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.fontSize = (16 / zoom) + 'px'; el.title = label.text.trim() ? 'คลิกเพื่อไปยัง node อีกฝั่ง • ดับเบิลคลิกเพื่อแก้คำ • ลากเพื่อย้ายตำแหน่ง' : 'คลิกเพื่อเพิ่มคำเรียกเส้นนี้';
+                let el = document.createElement('div'); el.className = 'connector-route-label' + (!label.text.trim() ? ' empty' : '') + (editing ? ' editing' : '') + (placement.dockSide ? ' dock-' + placement.dockSide : ''); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.fontSize = (16 / zoom) + 'px'; el.title = label.text.trim() ? 'คลิกเพื่อไปยัง node อีกฝั่ง • ดับเบิลคลิกเพื่อแก้คำ • ลากเพื่อย้ายตำแหน่ง' : 'คลิกเพื่อเพิ่มคำเรียกเส้นนี้';
                 let arrow = document.createElement('span'); arrow.className = 'connector-route-arrow'; arrow.textContent = connectorRouteDirectionIcon(line, side); let content = document.createElement('span'); content.className = 'connector-route-content'; content.textContent = label.text || '+'; el.append(arrow, content);
                 el.onmouseenter = cancelConnectorNavigationHide; el.onmouseleave = scheduleConnectorNavigationHide; el.ondblclick = event => { event.preventDefault(); event.stopPropagation(); };
                 if(editing) {
@@ -947,7 +981,7 @@
             clone.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
             clone.querySelectorAll('.note-btn.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
             clone.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(clone.ownerDocument.createTextNode(mark.textContent || '')));
-            clone.querySelectorAll('[data-annotation-ui], .mb, .connector-route-label').forEach(control => control.remove());
+            clone.querySelectorAll('[data-annotation-ui], .mb, .connector-route-label, .junction-mini-tools').forEach(control => control.remove());
             clone.querySelectorAll('.annotation-text.selected').forEach(text => text.classList.remove('selected'));
             clone.querySelectorAll('.annotation-text.editing').forEach(text => text.classList.remove('editing'));
             clone.querySelectorAll('.annotation-text-content[contenteditable="true"]').forEach(content => content.contentEditable = 'false');
@@ -1099,7 +1133,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.83', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.84', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1219,14 +1253,14 @@
             if(curStep < mmHistory.length - 1) mmHistory = mmHistory.slice(0, curStep + 1);
             let annotationState = normalizedAnnotations(annotations);
             mmHistory.push({nodes: state, lines: lines, images: imgState, annotations: annotationState, nid: nid});
-            curStep++; window.saveBackup(); projectStore.saveGraph({nodes: state, lines: lines, images: imgState, annotations: annotationState, nid: nid}).catch(err => console.warn('Image project autosave:', err)); renderConnectorRouteLabels();
+            curStep++; window.saveBackup(); projectStore.saveGraph({nodes: state, lines: lines, images: imgState, annotations: annotationState, nid: nid}).catch(err => console.warn('Image project autosave:', err)); renderConnectorRouteLabels(); renderJunctionMiniTools();
         };
         
         window.doUndo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep > 0) window.loadState(curStep - 1); }; window.doRedo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep < mmHistory.length - 1) window.loadState(curStep + 1); };
         
         window.loadState = function(step) { 
             let state = mmHistory[step]; if(!state || !state.nodes) return; 
-            nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; ensureAnnotationTextLayer().innerHTML = ''; document.querySelectorAll('.mb, .connector-route-label').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null; nid = state.nid || 0;
+            nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; ensureAnnotationTextLayer().innerHTML = ''; document.querySelectorAll('.mb, .connector-route-label, .junction-mini-tools').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null; nid = state.nid || 0;
             state.nodes.forEach(ns => { 
                 let n = document.createElement('div'); n.className = ns.type === 'j' ? 'n j' : 'n'; n.id = ns.id; n.style.left = ns.x; n.style.top = ns.y; n.dataset.note = ns.note || '';
                 if(ns.bg) { n.style.background = ns.bg; n.style.setProperty('--n-bg', ns.bg); } 
@@ -1245,13 +1279,13 @@
         function attachNodeEvents(n) { 
             n.onmousedown = function(e) { 
                 e.stopPropagation(); 
-                if(e.shiftKey) { if(n.classList.contains('sel')) { n.classList.remove('sel'); drag = null; return; } else { n.classList.add('sel'); } } 
+                if(e.shiftKey) { if(n.classList.contains('sel')) { n.classList.remove('sel'); drag = null; renderJunctionMiniTools(); return; } else { n.classList.add('sel'); } }
                 else { if(!n.classList.contains('sel')) clearSel(); n.classList.add('sel'); } 
                 drag = n; px = e.clientX; py = e.clientY; n.style.cursor = 'grabbing'; isMoved = false;
                 dragStartX = e.clientX; dragStartY = e.clientY;
                 dragStartPos = nodes.filter(x => x.classList.contains('sel')).map(x => ({ node: x, left: parseFloat(x.style.left) || 0, top: parseFloat(x.style.top) || 0 }));
                 if(snapGrid) dragStartPos.forEach(p => p.node.classList.add('snap-dragging'));
-                document.body.style.userSelect = 'none'; renderConnectorRouteLabels();
+                document.body.style.userSelect = 'none'; renderConnectorRouteLabels(); renderJunctionMiniTools();
             }; 
             n.onmouseenter = function() { cancelConnectorNavigationHide(); connectorNavHoverId = n.id; renderConnectorRouteLabels(); };
             n.onmouseleave = function() { scheduleConnectorNavigationHide(); };
@@ -1333,8 +1367,8 @@
         window.addLink = function(pid, dir) { let p = document.getElementById(pid); if(!p) return; let x = parseFloat(p.style.left); let y = parseFloat(p.style.top); if(dir === 'r') { x += 220; y += (Math.random() * 20 - 10); } else if(dir === 'l') { x -= 220; y += (Math.random() * 20 - 10); } else if(dir === 't') { y -= 160; x += (Math.random() * 20 - 10); } else if(dir === 'b') { y += 160; x += (Math.random() * 20 - 10); } else { x += 220; y += (Math.random() * 20 - 10); } let w = 150, h = 80; let isOverlap = function(nx, ny) { return nodes.some(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top); let nw = n.offsetWidth || 150, nh = n.offsetHeight || 80; return !(nx + w + 20 < nl || nx > nl + nw + 20 || ny + h + 20 < nt || ny > nt + nh + 20); }); }; if(dir === 'l' || dir === 'r') { while(isOverlap(x, y)) y += 100; } else if(dir === 't' || dir === 'b') { while(isOverlap(x, y)) x += 180; } else { while(isOverlap(x, y)) y += 100; } addNode(x, y, pid); window.doSaveState(); };
         function updateLine(l) { let n1 = document.getElementById(l.dataset.n1), n2 = document.getElementById(l.dataset.n2); if(n1 && n2) { let points = connectorPointsAtNodeEdges(n1, n2); l.setAttribute('x1', points.x1); l.setAttribute('y1', points.y1); l.setAttribute('x2', points.x2); l.setAttribute('y2', points.y2); applyConnectorArrow(l); let mx = (points.x1 + points.x2) / 2, my = (points.y1 + points.y2) / 2; let mb = document.getElementById('mb_' + l.id); if(!mb) { mb = document.createElement('div'); mb.id = 'mb_' + l.id; mb.className = 'mb'; mb.innerHTML = '+'; mb.title = "ลากเพื่อแตกแขนง (ไปยังที่ว่าง/Node/เส้นอื่น) หรือคลิกเฉยๆ"; mb.onmousedown = function(e) { window.startLineDragFromMid(e, l.id); }; let ma = document.createElement('button'); ma.type = 'button'; ma.className = 'ma'; ma.onmousedown = function(e) { window.cycleConnectorArrow(e, l.id); }; mb.appendChild(ma); document.getElementById('b').appendChild(mb); } let ma = mb.querySelector('.ma'), meta = connectorArrowMeta(l.dataset.arrow); if(ma) { ma.textContent = meta.icon; ma.title = meta.title; } mb.classList.toggle('crowded', connectorMiddleControlIsCrowded(mx, my, n1, n2)); mb.style.left = mx + 'px'; mb.style.top = my + 'px'; } else { l.remove(); let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); } }
         window.startLineDragFromMid = function(e, lineId) { e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let mb = document.getElementById('mb_' + lineId); let startX = e.clientX, startY = e.clientY; let mx = mb ? parseFloat(mb.style.left) : (parseFloat(line.getAttribute('x1')) + parseFloat(line.getAttribute('x2'))) / 2; let my = mb ? parseFloat(mb.style.top) : (parseFloat(line.getAttribute('y1')) + parseFloat(line.getAttribute('y2'))) / 2; let n1_id = line.dataset.n1, n2_id = line.dataset.n2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', mx); tl.setAttribute('y1', my); tl.setAttribute('x2', mx); tl.setAttribute('y2', my); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l !== tl && l !== line); allLines.forEach(l => { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetNode = me.target.closest('.n'); let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLineId = targetMb.id.replace(/^mb_/, ''); if(mbLineId !== lineId) { let mbLine = document.getElementById(mbLineId); if(mbLine) { targetLine = mbLine; targetNode = null; } } } let dropX = (me.clientX - cx) / zoom, dropY = (me.clientY - cy) / zoom; if(!moved) { let jNode = addNode(mx - 8, my - 8, null, 'j'); addNode(mx + 100, my + 80, jNode.id, 'n'); line.remove(); if(mb) mb.remove(); window.createLine(n1_id, jNode.id); window.createLine(jNode.id, n2_id); window.doSaveState(); return; } if(targetLine && targetLine.id.startsWith('l_') && targetLine.id !== lineId) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); line.remove(); if(mb) mb.remove(); let j1 = addNode(mx - 8, my - 8, null, 'j'); let j2 = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(n1_id, j1.id); window.createLine(j1.id, n2_id); window.createLine(tn1, j2.id); window.createLine(j2.id, tn2); window.createLine(j1.id, j2.id); window.doSaveState(); } else if(targetNode) { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); let existing = document.querySelector('line[data-n1="' + j.id + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + j.id + '"][data-n1="' + targetNode.id + '"]'); if(!existing) window.createLine(j.id, targetNode.id); window.doSaveState(); } else { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); addNode(dropX - 75, dropY - 40, j.id, 'n'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); window.doSaveState(); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
-        function updateAll() { s.querySelectorAll('line[data-n1][data-n2]').forEach(updateLine); renderConnectorRouteLabels(); }
-        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorRouteLabels(); }
+        function updateAll() { s.querySelectorAll('line[data-n1][data-n2]').forEach(updateLine); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
+        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
 
         window.addEventListener('wheel', function(e) {
             if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('#zoom-status')) return;
@@ -1344,7 +1378,7 @@
         }, {passive: false});
 
         window.addEventListener('mousedown', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('.connector-route-label')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('.connector-route-label') || e.target.closest('.junction-mini-tools')) return;
             if(e.target.closest('#float-ui-btn')) return;
 
             if(e.button === 1 || e.button === 2) { isPan = true; px = e.clientX; py = e.clientY; }
@@ -1354,7 +1388,7 @@
             }
         });
 
-        window.addEventListener('contextmenu', function(e) { if(!e.target.closest('.n') && !e.target.closest('.mb') && !e.target.closest('.connector-route-label')) e.preventDefault(); });
+        window.addEventListener('contextmenu', function(e) { if(!e.target.closest('.n') && !e.target.closest('.mb') && !e.target.closest('.connector-route-label') && !e.target.closest('.junction-mini-tools')) e.preventDefault(); });
 
         window.addEventListener('mousemove', function(e) {
             lastCanvasPointer = { x: e.clientX, y: e.clientY };
@@ -1370,11 +1404,11 @@
             document.body.style.userSelect = '';
             if(crDrag) crDrag = false; if(crResize) crResize = false;
             if(drag) { drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); drag = null; if(isMoved) { window.doSaveState(); isMoved = false; } }
-            isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none'; if(!editingConnectorRouteLabel) renderConnectorRouteLabels();
+            isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none'; if(!editingConnectorRouteLabel) renderConnectorRouteLabels(); renderJunctionMiniTools();
         });
 
         window.addEventListener('dblclick', function(e) {
-            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('.connector-route-label') || e.target.closest('#about-btn')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('.connector-route-label') || e.target.closest('.junction-mini-tools') || e.target.closest('#about-btn')) return;
             if(e.target.closest('.n') || e.target.closest('.img-float') || e.target.closest('.annotation-text')) return;
             let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; addNode(nx, ny, null); window.doSaveState();
         });

@@ -5,12 +5,13 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.83** (route-label docking; awaiting user
-  verification).
-- Latest verified baseline: V3.82 connector-control clearance, after V3.81
-  adaptive route-label placement, V3.80 route-label interaction fix, V3.77
-  directed connectors, V3.76 Floating Text, V3.74 image workflow, view/canvas
-  refinements, and V3.75 Line annotations.
+- Current MindMap build: **V3.84** (directional route-label expansion and
+  selected-junction mini tools; awaiting user verification).
+- Latest verified baseline: V3.83 route-label docking, after V3.82
+  connector-control clearance, V3.81 adaptive route-label placement, V3.80
+  route-label interaction fix, V3.77 directed connectors, V3.76 Floating
+  Text, V3.74 image workflow, view/canvas refinements, and V3.75 Line
+  annotations.
 - User-owned unrelated working-tree change: `.gitignore` (do not stage or edit).
 - MindMap source of truth: `decoded/mindmap.html`; run `node build-tools.js` to
   regenerate `tools/mindmap.html` after source edits.
@@ -142,13 +143,26 @@ Updated: 2026-07-17 (Asia/Bangkok)
   its position and behavior, but uses a smaller halo so the Node `+` remains
   the easier click target.
 
-## V3.83: Route Label Docking (Pending User Verification)
+## V3.83: Route Label Docking (Verified)
 
 - Automatic route labels now resolve their near-Node position every time their
   connector is redrawn. Creating a short link and later dragging a Node far
   away therefore never leaves its labels in the middle of the connector.
 - The regular-Node clearance and near-junction treatment remain in force while
   automatic; dragging a label still makes it manual and preserves its position.
+
+## V3.84: Directional Labels and Junction Mini Tools (Pending User Verification)
+
+- An automatic route label docked to a regular Node uses a directional anchor:
+  a right-side label expands to the right, while a left-side label expands to
+  the left. Its arrow stays nearest the Node, preventing newly typed text from
+  covering the Node. Vertically connected labels choose stable opposite sides.
+  A manually dragged label retains its existing centered, free placement.
+- A junction now has no permanent delete control. Select its dark dot to show
+  one compact mini toolbar in the least-occupied cardinal direction: green
+  `+` is dragged to create a new branch (or clicked to create a Node); red `×`
+  removes the junction using the existing reconnect-when-two-branches
+  behavior. The toolbar is transient and excluded from exports.
 
 ## User-Test Feedback: V3.73 Revision (Implemented and Verified)
 
