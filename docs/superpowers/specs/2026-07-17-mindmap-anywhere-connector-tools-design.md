@@ -11,10 +11,12 @@ user can place anywhere by clicking a line.
   on that target selects the connector at the nearest point on its path.
 - A small dark point appears only at the selected location, matching an
   intersection dot. It is not saved, exported, or otherwise persistent.
-- A compact mini toolbar opens perpendicular to the selected connector:
+- Clicking that dark point opens a compact mini toolbar perpendicular to the
+  selected connector. This deliberate second click keeps the initial line
+  selection visually quiet and matches the existing intersection-dot pattern:
   - `+` keeps the existing split-and-branch behaviour, using the selected
     point instead of the former midpoint;
-  - `— / → / ← / ↔` cycles the connector's arrow mode;
+  - `—` (then `→ / ← / ↔` as it cycles) changes the connector's arrow mode;
   - `×` removes only that connector and keeps both endpoint Nodes.
 - Clicking empty Canvas or another item closes the selected connector point.
 
