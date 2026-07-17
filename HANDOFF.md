@@ -5,8 +5,8 @@ Updated: 2026-07-17 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.89** (click-or-drag anywhere-on-connector tools;
-  awaiting user verification).
+- Current MindMap build: **V3.90** (direct connector click/drag and arrow
+  gesture; awaiting user verification).
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -183,7 +183,18 @@ Updated: 2026-07-17 (Asia/Bangkok)
   connector as needed.
 - The separate crowded hit-area protection for the middle `+` remains intact.
 
-## V3.89: Direct-Drag Connector Point Tools (Pending User Verification)
+## V3.90: Direct Connector Gesture (Pending User Verification)
+
+- The selected-point dot and its mini toolbar are superseded by one direct
+  connector gesture: click/release creates the same default right-hand Node
+  as a Node `+`; press/drag creates the Node at the release location.
+- Both actions split the original connector with a real `n.j` junction, so
+  new and existing junction dots share precisely the same 16px visual.
+- `Alt + click` now cycles the selected connector's arrow mode. Arrow state
+  survives a split across its two replacement segments; a new branch begins
+  without an arrow. The Help and Hotkeys sections document this gesture.
+
+## V3.89: Direct-Drag Connector Point Tools (Superseded by V3.90)
 
 - A selected connector point now separates a click from a drag: click/release
   opens the `+`, `—`, `×` toolbar; drag begins the pre-existing exact-point
