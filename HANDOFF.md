@@ -201,7 +201,7 @@ Updated: 2026-07-17 (Asia/Bangkok)
 - Cleanup removed all unreachable V3.87–V3.89 selected-point/mini-toolbar
   code. V3.90 retains only the direct gesture and no temporary connector UI.
 
-## V3.91: Performance Foundation (Pending User Verification)
+## V3.91: Performance Foundation (Automated Verification Passed; User Feel Pending)
 
 - The 1,000-Node synthetic fixture established the pre-change baseline on the
   user's machine: about eight seconds before a short Node drag became visible,
@@ -216,9 +216,44 @@ Updated: 2026-07-17 (Asia/Bangkok)
   automatically use the prior full rebuild path.
 - Project ZIP/JSON fields and image storage remain compatible. New Project ZIP
   manifests now correctly report app version `3.91`; `formatVersion` remains 1.
-- Automated in-app browser verification remains unavailable for local
-  `file://` pages under the browser URL policy. Build, syntax, fixture integrity,
-  and static path checks must be followed by the user's timing/interaction test.
+- The background browser harness below now exercises the generated page over a
+  loopback-only server, avoiding the automated browser restriction on local
+  `file://` pages. Subjective feel during real work still belongs to the user.
+
+## Background Browser Harness (Implemented and Verified)
+
+- `tests/mindmap-test-server.js` is a read-only Node standard-library server.
+  It binds only to `127.0.0.1`, defaults to port `8765`, rejects write methods,
+  traversal, directories, and missing files, and sends `Cache-Control: no-store`.
+- `tests/mindmap-browser-harness.html` loads the generated MindMap in a
+  same-origin iframe and imports only
+  `test-fixtures/mindmap-ai-stress-1000.zip`. It never imports the user's real
+  `D:\202607162107.zip` automatically.
+- Manual start command:
+  `node tests/mindmap-test-server.js --port 8765`, then open
+  `http://127.0.0.1:8765/tests/mindmap-browser-harness.html`. Add `?autorun=1`
+  for an unattended run. Stop the terminal process with `Ctrl+C` afterward.
+- The harness checks the exact 1,000 regular Nodes and 975 connectors, five
+  drags plus attached connector redraws, movement/text Undo and Redo, a
+  connector branch, and structural Undo and Redo. It keeps reports in the page
+  only; it does not write benchmark results into the repository.
+- First background run on 2026-07-17 passed all correctness assertions. Main
+  timings: import 1376.8 ms, drag-visible median 15.9 ms, drag-commit median
+  35.9 ms, movement Undo/Redo 29.2/33.2 ms, text Undo/Redo 34.9/31.7 ms,
+  structural branch 32.2 ms, and structural Undo/Redo 1484.4/1416.5 ms.
+  Structural history remains the known full-rebuild path and is the clearest
+  remaining performance target.
+- A later deeply hidden iframe run also passed every correctness assertion and
+  correctly reported overall `PARTIAL`: rendered drag timing was unavailable
+  because Chromium throttled the iframe. In that mode the harness skips waiting
+  on hidden animation frames, reports handler timings separately, and never
+  presents throttled values as normal foreground performance. It also dispatches
+  the existing contenteditable blur event when a hidden iframe cannot receive
+  programmatic focus, keeping the text history test on the real save path.
+- The browser-control layer emitted one `MutationObserver.observe` console
+  error while instrumenting the reloaded iframe. No `MutationObserver` exists
+  in the MindMap or harness source, and all application assertions passed; this
+  is recorded as browser-instrumentation noise rather than an application error.
 
 ## V3.89: Direct-Drag Connector Point Tools (Superseded by V3.90)
 

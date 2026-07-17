@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MindMap Background Browser Harness</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; background:#f4efe3; color:#2e2a24; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; grid-template-rows:auto minmax(360px, 1fr); }
+    header { display:grid; grid-template-columns:minmax(300px, 1fr) minmax(360px, 620px); gap:14px; padding:12px; border-bottom:1px solid #c9c1b2; background:#e8e0d1; }
+    h1 { margin:0 0 5px; font-size:18px; }
+    p { margin:0; font-size:13px; color:#635d53; }
+    .controls { display:flex; gap:7px; margin-top:10px; flex-wrap:wrap; }
+    button { border:1px solid #aaa193; border-radius:6px; padding:7px 10px; background:#fffdf8; cursor:pointer; }
+    button:hover { border-color:#3687d9; }
+    button:disabled { opacity:.55; cursor:wait; }
+    pre { margin:0; height:150px; overflow:auto; padding:10px; border:1px solid #c9c1b2; border-radius:7px; background:#fffdf8; white-space:pre-wrap; font:12px/1.45 ui-monospace, Consolas, monospace; }
+    iframe { width:100%; height:100%; border:0; background:#f4efe3; }
+    body[data-status="running"] pre, body[data-status="loading"] pre { border-color:#d79724; }
+    body[data-status="complete"] pre { border-color:#2b9b59; }
+    body[data-status="failed"] pre { border-color:#cf4545; }
+  </style>
+</head>
+<body data-status="booting">
+  <header>
+    <section>
+      <h1>🧪 MindMap Background Browser Harness</h1>
+      <p>ใช้เฉพาะ Project สังเคราะห์ 1,000 nodes และทำงานบน localhost ซึ่งแยก storage จากไฟล์ MindMap ปกติ</p>
+      <div class="controls">
+        <button type="button" data-testid="load-fixture">Load / Reset fixture</button>
+        <button type="button" data-testid="run-benchmark">Run benchmark</button>
+        <button type="button" data-testid="copy-report">Copy report</button>
+      </div>
+    </section>
+    <pre id="report-output" data-testid="report">กำลังเตรียมหน้าทดสอบ…</pre>
+  </header>
+  <iframe id="mindmap-frame" title="MindMap under test" src="/tools/mindmap.html"></iframe>
+
+  <script>
+    'use strict';
+
+    const EXPECTED = { regularNodes: 1000, connectors: 975 };
+    const FIXTURE_URL = '/test-fixtures/mindmap-ai-stress-1000.zip';
+    const frame = document.getElementById('mindmap-frame');
+    const output = document.getElementById('report-output');
+    const buttons = Array.from(document.querySelectorAll('button'));
+    let fixtureReady = false;
+    let lastReport = null;
+    let paintFallbackCount = 0;
+    let throttledPaintCount = 0;
+
+    function setStatus(status, message) {
+      document.body.dataset.status = status;
+      if (message) output.textContent = message;
+    }
+
+    function setBusy(busy) {
+      buttons.forEach(button => { button.disabled = busy; });
+    }
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function waitForMindMap(timeoutMs = 20000) {
+      const started = performance.now();
+      while (performance.now() - started < timeoutMs) {
+        const win = frame.contentWindow;
+        if (win && win.document && win.document.readyState === 'complete' && typeof win.importMindmapFile === 'function') return win;
+        await delay(50);
+      }
+      throw new Error('MindMap iframe did not expose importMindmapFile within the timeout');
+    }
+
+    function nextPaint(win) {
+      if (document.visibilityState !== 'visible' || win.document.visibilityState !== 'visible') {
+        throttledPaintCount += 1;
+        return Promise.resolve();
+      }
+      return new Promise(resolve => {
+        let settled = false;
+        const started = performance.now();
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(fallback);
+          if (performance.now() - started > 250) throttledPaintCount += 1;
+          resolve();
+        };
+        const fallback = setTimeout(() => {
+          paintFallbackCount += 1;
+          finish();
+        }, 1500);
+        win.requestAnimationFrame(finish);
+      });
+    }
+
+    function progress(message) {
+      window.__mindmapHarnessProgress = message;
+      if (document.body.dataset.status === 'running') output.textContent = `กำลังรัน benchmark…\n${message}`;
+    }
+
+    async function measured(win, action) {
+      const started = performance.now();
+      await action();
+      await nextPaint(win);
+      return performance.now() - started;
+    }
+
+    function median(values) {
+      const sorted = [...values].sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+
+    function rounded(value) {
+      return Math.round(value * 10) / 10;
+    }
+
+    function speedLabel(value) {
+      if (!Number.isFinite(value)) return 'not measured';
+      if (value <= 100) return 'responsive';
+      if (value <= 500) return 'caution';
+      return 'slow';
+    }
+
+    function counts(win) {
+      const doc = win.document;
+      return {
+        totalNodes: doc.querySelectorAll('.n').length,
+        regularNodes: doc.querySelectorAll('.n:not(.j)').length,
+        junctionNodes: doc.querySelectorAll('.n.j').length,
+        connectors: doc.querySelectorAll('#s line[data-n1][data-n2]').length,
+      };
+    }
+
+    function exactPosition(node) {
+      return { left: node.style.left, top: node.style.top };
+    }
+
+    function samePosition(first, second) {
+      return first.left === second.left && first.top === second.top;
+    }
+
+    function connectorGeometry(line) {
+      return ['x1', 'y1', 'x2', 'y2'].map(name => line.getAttribute(name)).join(',');
+    }
+
+    function assertion(report, name, passed, details) {
+      report.checks.push({ name, status: passed ? 'PASS' : 'FAIL', details: details || '' });
+      if (!passed) throw new Error(`${name}: ${details || 'assertion failed'}`);
+    }
+
+    function reportVersion(win) {
+      const text = `${win.document.title} ${win.document.body.innerText.slice(0, 500)}`;
+      const match = text.match(/(?:V|Version\s*)?(\d+\.\d+)/i);
+      return match ? match[1] : 'unknown';
+    }
+
+    function reportText(report) {
+      const timingLines = Object.entries(report.timings).map(([name, value]) => {
+        if (!Number.isFinite(value)) return `- ${name}: unavailable (background rendering throttled)`;
+        return `- ${name}: ${rounded(value)} ms (${speedLabel(value)})`;
+      });
+      const lines = [
+        `MindMap browser benchmark: ${report.overall}`,
+        `Version: ${report.version}`,
+        `Timestamp: ${report.timestamp}`,
+        `User agent: ${report.userAgent}`,
+        `Nodes: ${report.counts.regularNodes} regular + ${report.counts.junctionNodes} junction`,
+        `Connectors: ${report.counts.connectors}`,
+        '',
+        'Correctness:',
+        ...report.checks.map(check => `- ${check.status} ${check.name}${check.details ? ` — ${check.details}` : ''}`),
+        '',
+        'Timings:',
+        ...timingLines,
+      ];
+      if (report.comparison) {
+        lines.push('', 'Previous run comparison:');
+        Object.entries(report.comparison).forEach(([name, item]) => {
+          const direction = item.deltaMs > 0 ? 'slower' : item.deltaMs < 0 ? 'faster' : 'unchanged';
+          lines.push(`- ${name}: ${rounded(Math.abs(item.deltaMs))} ms ${direction} (previous ${rounded(item.previousMs)} ms)`);
+        });
+      }
+      if (report.error) lines.push('', `First error: ${report.error}`);
+      if (report.timingNote) lines.push('', `Timing note: ${report.timingNote}`);
+      lines.push('', 'JSON:', JSON.stringify(report, null, 2));
+      return lines.join('\n');
+    }
+
+    function renderReport(report) {
+      lastReport = report;
+      window.__mindmapHarnessReport = report;
+      output.textContent = reportText(report);
+      document.body.dataset.status = report.overall === 'FAIL' ? 'failed' : 'complete';
+    }
+
+    async function reloadFrame() {
+      fixtureReady = false;
+      const loaded = new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('MindMap iframe reload timed out')), 20000);
+        frame.addEventListener('load', () => { clearTimeout(timer); resolve(); }, { once: true });
+      });
+      frame.src = `/tools/mindmap.html?harness=${Date.now()}`;
+      await loaded;
+      return waitForMindMap();
+    }
+
+    async function loadFixture() {
+      setBusy(true);
+      setStatus('loading', 'กำลัง Reset iframe และ Import Project สังเคราะห์…');
+      try {
+        const win = await reloadFrame();
+        const response = await fetch(FIXTURE_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Fixture request failed: HTTP ${response.status}`);
+        const blob = await response.blob();
+        const file = new File([blob], 'mindmap-ai-stress-1000.zip', { type: 'application/zip' });
+        const started = performance.now();
+        await win.importMindmapFile({ target: { files: [file], value: '' } });
+        await nextPaint(win);
+        const importMs = performance.now() - started;
+        const importedCounts = counts(win);
+        if (importedCounts.regularNodes !== EXPECTED.regularNodes || importedCounts.connectors !== EXPECTED.connectors) {
+          throw new Error(`Fixture count mismatch: ${JSON.stringify(importedCounts)}`);
+        }
+        fixtureReady = true;
+        setStatus('ready', `พร้อมทดสอบ — Import ${rounded(importMs)} ms\n${JSON.stringify(importedCounts, null, 2)}`);
+        return { win, importMs, importedCounts };
+      } catch (error) {
+        setStatus('failed', `Load fixture failed: ${error.message}`);
+        throw error;
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function mouse(win, target, type, x, y, options = {}) {
+      target.dispatchEvent(new win.MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        buttons: type === 'mouseup' ? 0 : 1,
+        clientX: x,
+        clientY: y,
+        ...options,
+      }));
+    }
+
+    async function runDragChecks(win, report) {
+      progress('1/4 ทดสอบการลาก Node และ connector');
+      const throttlesBeforeDrag = throttledPaintCount;
+      const node = win.document.getElementById('n4');
+      const attachedLine = win.document.querySelector('#s line[data-n1="n4"], #s line[data-n2="n4"]');
+      assertion(report, 'drag target and attached connector exist', Boolean(node && attachedLine));
+      const visible = [];
+      const commit = [];
+      let lastBefore = null;
+      let lastAfter = null;
+
+      for (let index = 0; index < 5; index += 1) {
+        progress(`1/4 ทดสอบการลาก Node ครั้งที่ ${index + 1}/5`);
+        const rect = node.getBoundingClientRect();
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+        const geometryBefore = connectorGeometry(attachedLine);
+        lastBefore = exactPosition(node);
+        mouse(win, node, 'mousedown', startX, startY);
+        const visibleStarted = performance.now();
+        mouse(win, win, 'mousemove', startX + 14, startY + 4);
+        await nextPaint(win);
+        visible.push(performance.now() - visibleStarted);
+        const commitStarted = performance.now();
+        mouse(win, win, 'mouseup', startX + 14, startY + 4);
+        await nextPaint(win);
+        commit.push(performance.now() - commitStarted);
+        lastAfter = exactPosition(node);
+        assertion(report, `drag ${index + 1} moves Node`, !samePosition(lastBefore, lastAfter));
+        assertion(report, `drag ${index + 1} updates attached connector`, connectorGeometry(attachedLine) !== geometryBefore);
+      }
+
+      report.timings.dragVisibleMedian = throttledPaintCount === throttlesBeforeDrag ? median(visible) : null;
+      report.timings.dragCommitMedian = median(commit);
+      progress('2/4 ทดสอบ movement Undo/Redo');
+      report.timings.moveUndo = await measured(win, () => win.doUndo());
+      assertion(report, 'movement Undo restores exact position', samePosition(exactPosition(win.document.getElementById('n4')), lastBefore));
+      report.timings.moveRedo = await measured(win, () => win.doRedo());
+      assertion(report, 'movement Redo restores exact position', samePosition(exactPosition(win.document.getElementById('n4')), lastAfter));
+    }
+
+    async function runTextChecks(win, report) {
+      progress('3/4 ทดสอบ text edit และ Undo/Redo');
+      const title = win.document.querySelector('#n4 .nt');
+      assertion(report, 'text edit target exists', Boolean(title));
+      const before = title.innerHTML;
+      const after = `${before} · benchmark`;
+      title.focus();
+      title.innerHTML = after;
+      title.dispatchEvent(new win.Event('input', { bubbles: true }));
+      title.blur();
+      if (title.dataset.m) title.dispatchEvent(new win.FocusEvent('blur'));
+      await nextPaint(win);
+      assertion(report, 'text edit is saved', win.document.querySelector('#n4 .nt').innerHTML === after);
+      report.timings.textUndo = await measured(win, () => win.doUndo());
+      const undoTitle = win.document.querySelector('#n4 .nt').innerHTML;
+      assertion(report, 'text Undo restores exact title', undoTitle === before, JSON.stringify({ expected: before, actual: undoTitle }));
+      report.timings.textRedo = await measured(win, () => win.doRedo());
+      const redoTitle = win.document.querySelector('#n4 .nt').innerHTML;
+      assertion(report, 'text Redo restores exact title', redoTitle === after, JSON.stringify({ expected: after, actual: redoTitle }));
+    }
+
+    async function runStructuralChecks(win, report) {
+      progress('4/4 ทดสอบ connector branch และ structural Undo/Redo');
+      const line = win.document.getElementById('stress_l_0000');
+      const hit = win.document.getElementById('hit_stress_l_0000');
+      assertion(report, 'structural connector target exists', Boolean(line && hit));
+      const before = counts(win);
+      const rect = line.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      report.timings.structuralBranch = await measured(win, async () => {
+        mouse(win, hit, 'mousedown', x, y);
+        mouse(win, win.document, 'mouseup', x, y);
+      });
+      const branched = counts(win);
+      assertion(report, 'connector branch adds one regular and one junction Node', branched.regularNodes === before.regularNodes + 1 && branched.junctionNodes === before.junctionNodes + 1, JSON.stringify({ before, branched }));
+      assertion(report, 'connector branch replaces one line with three', branched.connectors === before.connectors + 2, JSON.stringify({ before, branched }));
+      progress('4/4 ทดสอบ structural Undo');
+      report.timings.structuralUndo = await measured(win, () => win.doUndo());
+      assertion(report, 'structural Undo restores initial topology', JSON.stringify(counts(win)) === JSON.stringify(before), JSON.stringify(counts(win)));
+      progress('4/4 ทดสอบ structural Redo');
+      report.timings.structuralRedo = await measured(win, () => win.doRedo());
+      assertion(report, 'structural Redo restores branch topology', JSON.stringify(counts(win)) === JSON.stringify(branched), JSON.stringify(counts(win)));
+    }
+
+    async function runBenchmark() {
+      let report;
+      try {
+        let setup;
+        if (!fixtureReady) setup = await loadFixture();
+        setBusy(true);
+        setStatus('running', 'กำลังรัน benchmark ผ่าน event path ของ MindMap…');
+        paintFallbackCount = 0;
+        throttledPaintCount = 0;
+        const win = setup ? setup.win : await waitForMindMap();
+        const importedCounts = counts(win);
+        report = {
+          overall: 'PARTIAL',
+          version: reportVersion(win),
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          visibility: { harness: document.visibilityState, mindmap: win.document.visibilityState },
+          counts: importedCounts,
+          checks: [],
+          timings: {},
+          error: '',
+        };
+        if (setup) report.timings.import = setup.importMs;
+        assertion(report, 'fixture has exactly 1,000 regular Nodes', importedCounts.regularNodes === EXPECTED.regularNodes, JSON.stringify(importedCounts));
+        assertion(report, 'fixture has exactly 975 persisted connectors', importedCounts.connectors === EXPECTED.connectors, JSON.stringify(importedCounts));
+        await runDragChecks(win, report);
+        await runTextChecks(win, report);
+        await runStructuralChecks(win, report);
+        report.paintFallbacks = paintFallbackCount;
+        report.throttledPaints = throttledPaintCount;
+        report.overall = paintFallbackCount > 0 || throttledPaintCount > 0 ? 'PARTIAL' : 'PASS';
+        if (report.overall === 'PARTIAL') report.timingNote = 'Background rendering was throttled; correctness passed, but rendered timing is not representative of an active MindMap tab.';
+        if (lastReport && lastReport.timings) {
+          report.comparison = {};
+          Object.entries(report.timings).forEach(([name, value]) => {
+            const previous = lastReport.timings[name];
+            if (Number.isFinite(value) && Number.isFinite(previous)) report.comparison[name] = { previousMs: previous, deltaMs: value - previous };
+          });
+          if (!Object.keys(report.comparison).length) delete report.comparison;
+        }
+      } catch (error) {
+        if (!report) {
+          report = {
+            overall: 'FAIL', version: 'unknown', timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent, counts: {}, checks: [], timings: {}, error: error.message,
+          };
+        } else {
+          report.overall = 'FAIL';
+          report.error = error.message;
+        }
+        report.paintFallbacks = paintFallbackCount;
+        report.throttledPaints = throttledPaintCount;
+        console.error('MindMap benchmark failed:', error);
+      } finally {
+        setBusy(false);
+      }
+      renderReport(report);
+      return report;
+    }
+
+    async function copyReport() {
+      const text = lastReport ? reportText(lastReport) : output.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const area = document.createElement('textarea');
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+    }
+
+    document.querySelector('[data-testid="load-fixture"]').addEventListener('click', () => loadFixture().catch(() => {}));
+    document.querySelector('[data-testid="run-benchmark"]').addEventListener('click', runBenchmark);
+    document.querySelector('[data-testid="copy-report"]').addEventListener('click', copyReport);
+
+    frame.addEventListener('load', async () => {
+      if (new URLSearchParams(location.search).get('autorun') !== '1' || document.body.dataset.status !== 'booting') return;
+      try {
+        await waitForMindMap();
+        await runBenchmark();
+      } catch (error) {
+        setBusy(false);
+        setStatus('failed', `Autorun failed: ${error.message}`);
+      }
+    });
+  </script>
+</body>
+</html>
