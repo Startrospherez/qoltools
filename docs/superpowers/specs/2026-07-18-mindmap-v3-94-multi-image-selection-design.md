@@ -16,7 +16,8 @@ transient `.sel` CSS class.
 - Select multiple images with Shift+click or a marquee on empty Canvas space.
 - Let a marquee select Nodes and images together; Shift+marquee adds to the
   current selection.
-- Drag one selected image to move every selected image by one shared delta.
+- Drag one selected Node or image to move every selected Node and image by one
+  shared delta.
 - Preserve selected-image state while image DOM is culled and recreated.
 - Allow V3.93 one-activity Delete/Undo/Redo to include selected Nodes and
   images together.
@@ -25,8 +26,6 @@ transient `.sel` CSS class.
 
 ## Non-goals
 
-- Do not move selected Nodes when an image is dragged, or selected images when
-  a Node is dragged.
 - Do not add group resize, group rotation, image alignment, or image
   distribution controls.
 - Do not persist selection state in JSON, Project ZIP, HTML, local backup, or
@@ -41,23 +40,20 @@ state. The existing `.sel` class remains a rendering detail and is synchronized
 whenever an image element is created or the selection changes.
 
 Nodes retain their existing DOM-class selection model. Mixed selection is
-permitted for commands such as Delete, but movement remains type-specific:
-
-- dragging a Node moves selected Nodes only;
-- dragging an image moves selected images only.
-
-This keeps layout actions predictable while allowing Node/image batch deletion.
+permitted for every group action. Dragging any selected Node or image moves all
+selected Nodes and images together, making selection consistently mean one
+movable group as well as one deletion group.
 
 ## Selection interactions
 
 ### Image click
 
-- A normal click on an unselected image clears Node and image selection, selects
-  that image, and begins its drag interaction.
-- A normal click on a selected image keeps the existing image selection and
-  begins group drag.
-- Shift+click toggles only the clicked image in `selectedImageIds` and does not
-  start a drag. It may coexist with selected Nodes.
+- A normal click on an unselected Node or image clears Node and image selection,
+  selects that Object, and begins its drag interaction.
+- A normal click on a selected Node or image keeps the existing complete
+  selection and begins group drag.
+- Shift+click toggles only the clicked Object and does not start a drag. Node
+  and image selections may coexist.
 - Image delete, resize, and detail controls keep their current separate event
   handling and do not accidentally trigger a group drag.
 
@@ -75,20 +71,23 @@ placement bounds for overlap:
 Annotation selection behavior remains exclusive and clears image selection as
 it does today.
 
-## Image group drag and Snap
+## Unified group drag and Snap
 
-At image pointer-down, capture every selected image placement's original
-position and remember the clicked image as the drag anchor.
+At Node or image pointer-down, capture every selected Node's original position,
+every selected image placement's original position, and remember the clicked
+Object as the drag anchor.
 
-During drag, calculate a single Canvas-space delta from the anchor pointer.
-When Snap is off, apply that same delta to all captured placements. When Snap
-is on, snap the anchor's target top-left to the 40px grid, derive the resulting
-single delta, and apply it unchanged to every image in the group. This preserves
-the exact relative spacing of the group rather than independently rounding each
-image and distorting its layout.
+During drag, calculate one Canvas-space delta from the anchor pointer. When
+Snap is off, apply that same delta to all captured Nodes and images. When Snap
+is on, snap the anchor's target position to the 40px grid (Node center for a
+Node anchor; top-left for an image anchor), derive the resulting single delta,
+and apply it unchanged to every Object in the group. This preserves exact
+relative spacing rather than independently rounding Objects and distorting the
+group.
 
 The move commits one history snapshot only on pointer-up if position actually
-changed. It does not change Node positions or connector geometry.
+changed. Connectors attached to moved Nodes redraw through the existing
+incremental drag path; images do not have connectors.
 
 ## Resize and deletion
 
@@ -120,10 +119,10 @@ existing 1,000-Node fixture, without adding generated assets to Git:
    selected.
 3. Marquee selection includes overlapping Nodes and images; Shift+marquee adds
    rather than replaces.
-4. Dragging one selected image moves every selected image by the same delta and
-   leaves selected Nodes unchanged.
-5. With Snap enabled, the anchor lands on the grid and image-to-image spacing
-   remains unchanged.
+4. Dragging one selected Node or image moves every selected Node and image by
+   the same delta; connectors attached to moved Nodes redraw correctly.
+5. With Snap enabled, the anchor lands on the grid and all Node-to-Node,
+   image-to-image, and Node-to-image spacing remains unchanged.
 6. One group move creates one Undo/Redo step.
 7. One mixed selected Node/image Delete creates one Undo/Redo step.
 8. Removing an image clears its selected ID; loading/importing state clears all
