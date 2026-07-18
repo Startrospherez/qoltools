@@ -5,10 +5,11 @@ Updated: 2026-07-18 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.94** (mixed Node/image selection and group
-  movement), automated and user-verified on 2026-07-18. The user tested real
-  images, mixed selection, group movement, Snap, individual resize, and mixed
-  Delete Undo/Redo successfully. V3.93 activity-based batch Delete history
+- Current MindMap build: **V3.95** (Canvas-scaled route labels, easier Timeline
+  Line selection, and Alt-drag copy), automated and user-verified on
+  2026-07-18. The user tested real images, mixed selection, group movement,
+  Snap, individual resize, mixed Delete Undo/Redo, and the complete Alt-drag
+  copy refinement successfully. V3.93 activity-based batch Delete history
   remains user-verified: multi-Node Delete and one-step Undo/Redo worked with
   the current real working map.
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
@@ -28,6 +29,30 @@ Updated: 2026-07-18 (Asia/Bangkok)
   not be mistaken for study data.
 
 ## Completed Recently
+
+## V3.95: Scaled Labels, Line Hit Areas, and Alt-drag Copy (Automated and User Verified)
+
+- Connector route labels now use normal Canvas units. At 100% they retain the
+  prior appearance, while at every other zoom they scale together with their
+  Nodes and retain Canvas-relative automatic docking gaps.
+- Timeline Lines keep their 4px visual stroke but render a separate invisible
+  20px non-scaling hit stroke, making selection and dragging easier without
+  changing exports, persistence, or the visible divider.
+- `Alt`+drag copies Node/image groups, Lines, and Floating Text. A copied
+  Node/image group retains relative positions, reuses image assets, and
+  recreates only connectors wholly within the copied group, including arrow
+  modes and route labels. Each completed copy is one Undo/Redo activity.
+- The direct-copy refinement permits `Alt`+drag on an unselected single Node,
+  image, Line, or Text without a preparatory click. When a Node/image group is
+  already selected, `Alt`+dragging an unselected Node or image adds it to the
+  copied group. An `Alt`+click without a drag leaves data, history, and
+  selection unchanged; Escape/blur restores the original selection.
+- The `i` dialog documents both the direct `Alt`+drag shortcut and the
+  Node/image group behavior.
+- The localhost 1,000-Node browser harness passed all existing checks plus
+  direct copy of each object type, expanded Node/image group copy, one-step
+  Undo/Redo, and the no-drag safety case. The user verified all requested
+  direct-copy cases on the local `file://` MindMap page successfully.
 
 ## V3.94: Mixed Node/Image Selection (Automated Verification Passed)
 
