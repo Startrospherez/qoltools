@@ -6,9 +6,9 @@ Updated: 2026-07-18 (Asia/Bangkok)
 
 - Repository: `Startrospherez/qoltools`
 - Current MindMap build: **V3.93** (activity-based batch Delete history;
-  automated browser correctness passed on 2026-07-18). The user verified the
-  V3.92 structural speedup with the current real working map and identified the
-  multi-selection history-unit issue corrected by V3.93.
+  automated and user interaction verification passed on 2026-07-18). The user
+  verified multi-Node Delete, one-step Undo/Redo, and the V3.92 structural
+  speedup with the current real working map.
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -289,7 +289,7 @@ Updated: 2026-07-18 (Asia/Bangkok)
   multi-selection Delete still produced one history step per Object; V3.93
   corrects that separate history-unit defect.
 
-## V3.93: Activity-Based Batch Delete History (Automated Verification Passed)
+## V3.93: Activity-Based Batch Delete History (Automated and User Verified)
 
 - One `Delete` keypress now creates one history entry for the complete selected
   Node/image activity. One Undo restores all affected Objects and connectors;
@@ -312,8 +312,10 @@ Updated: 2026-07-18 (Asia/Bangkok)
   Undo/Redo measured 18.7/7.7 ms in that run and is not treated as a universal
   performance limit.
 - Visible and Project ZIP manifest app version are `3.93`; project
-  `formatVersion` remains 1. Final local `file://` testing should include a
-  multi-Node batch and, when image data is available, a mixed Node/image batch.
+  `formatVersion` remains 1. The user verified the multi-Node batch on the local
+  `file://` page and found it correct. Mixed Node/image selection could not be
+  tested because the current UI does not yet support selecting multiple images;
+  that is a separate future capability, not a V3.93 failure.
 
 ## V3.89: Direct-Drag Connector Point Tools (Superseded by V3.90)
 
