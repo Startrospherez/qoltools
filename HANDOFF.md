@@ -5,10 +5,11 @@ Updated: 2026-07-18 (Asia/Bangkok)
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.93** (activity-based batch Delete history;
-  automated and user interaction verification passed on 2026-07-18). The user
-  verified multi-Node Delete, one-step Undo/Redo, and the V3.92 structural
-  speedup with the current real working map.
+- Current MindMap build: **V3.94** (mixed Node/image selection and group
+  movement). Automated browser verification passed on 2026-07-18; final
+  interaction testing with the user's real images is pending. V3.93
+  activity-based batch Delete history remains user-verified: multi-Node Delete
+  and one-step Undo/Redo worked with the current real working map.
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -26,6 +27,36 @@ Updated: 2026-07-18 (Asia/Bangkok)
   not be mistaken for study data.
 
 ## Completed Recently
+
+## V3.94: Mixed Node/Image Selection (Automated Verification Passed)
+
+- Image selection now lives in the transient `selectedImageIds` set instead of
+  only visible image DOM classes, so it remains correct when viewport culling
+  removes and recreates image elements.
+- `Shift`+click toggles an individual Node or image. A normal click on an
+  unselected Object replaces the selection; normal click on an already
+  selected Object preserves the whole mixed selection for dragging.
+- Empty-canvas marquee now selects images and Nodes together; `Shift`+marquee
+  adds to the existing mixed selection.
+- Dragging a selected Node or selected image moves all selected Nodes and
+  images by one shared Canvas-space delta. With Snap on, only the drag anchor
+  is snapped, preserving all relative spacing. Connectors attached to moved
+  Nodes still redraw incrementally.
+- Image resize remains single-image only. The existing Shift/Ctrl resize
+  modifiers are unchanged. Selection is not saved in JSON, ZIP, HTML,
+  history, backups, or `formatVersion: 1` project data.
+- One mixed move and one mixed Delete each form one Undo/Redo activity. Image
+  deletion removes its transient selected ID.
+- The localhost browser harness passed on the 1,000-Node fixture. It covered
+  Shift+click, normal selection replacement/preservation, marquee and
+  Shift+marquee, image culling/recreation, Node-anchor and image-anchor group
+  drag, Snap geometry, connector redraw, group Undo/Redo, and mixed
+  Node/image Delete Undo/Redo. Its displayed app version and new Project ZIP
+  manifest version are `3.94`.
+- Pending final user test: on the local `file://` page with real images,
+  select Node(s) plus image(s), drag from both Object types with Snap off/on,
+  resize one image, then verify one-step Undo/Redo for mixed move and mixed
+  Delete.
 
 - V3.72: center-based Grid Snap, 50% opacity while snapping drag, per-node
   plain-text Notes stored in history/backup/JSON/standalone HTML.

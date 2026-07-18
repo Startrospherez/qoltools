@@ -159,6 +159,18 @@
       return first.left === second.left && first.top === second.top;
     }
 
+    function numericPosition(element) {
+      return { left: parseFloat(element.style.left), top: parseFloat(element.style.top) };
+    }
+
+    function positionDelta(before, after) {
+      return { left: after.left - before.left, top: after.top - before.top };
+    }
+
+    function sameDelta(first, second) {
+      return Math.abs(first.left - second.left) < 0.01 && Math.abs(first.top - second.top) < 0.01;
+    }
+
     function connectorGeometry(line) {
       return ['x1', 'y1', 'x2', 'y2'].map(name => line.getAttribute(name)).join(',');
     }
@@ -450,6 +462,140 @@
       await measured(win, () => win.doUndo());
     }
 
+    async function insertHarnessImages(win) {
+      const node = win.document.getElementById('n4');
+      assertion({ checks: [] }, 'image fixture anchor exists', Boolean(node));
+      const colors = ['#c94d4d', '#3d7cc9'];
+      const files = colors.map((color, index) => new win.File([
+        `<svg xmlns="http://www.w3.org/2000/svg" width="92" height="58"><rect width="92" height="58" fill="${color}"/></svg>`,
+      ], `harness-image-${index + 1}.svg`, { type: 'image/svg+xml' }));
+      await win.insertImageFiles(files, node.offsetLeft + 260, node.offsetTop + 20);
+      await nextPaint(win);
+      const images = Array.from(win.document.querySelectorAll('.img-float')).filter(image => image.id.startsWith('im'));
+      if (images.length < 2) throw new Error(`Synthetic images did not render: ${images.length}`);
+      return images.slice(-2);
+    }
+
+    function selectMixedGroup(win, nodeIds, imageIds) {
+      win.eval('clearSel()');
+      const firstNode = win.document.getElementById(nodeIds[0]);
+      const firstRect = firstNode.getBoundingClientRect();
+      mouse(win, firstNode, 'mousedown', firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
+      mouse(win, win, 'mouseup', firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
+      nodeIds.slice(1).forEach(id => {
+        const node = win.document.getElementById(id);
+        const rect = node.getBoundingClientRect();
+        mouse(win, node, 'mousedown', rect.left + rect.width / 2, rect.top + rect.height / 2, { shiftKey: true });
+      });
+      imageIds.forEach(id => {
+        const image = win.document.getElementById(id);
+        const rect = image.getBoundingClientRect();
+        mouse(win, image, 'mousedown', rect.left + rect.width / 2, rect.top + rect.height / 2, { shiftKey: true });
+      });
+    }
+
+    function marquee(win, left, top, right, bottom, shiftKey = false) {
+      const canvas = win.document.getElementById('b');
+      mouse(win, canvas, 'mousedown', left, top, { shiftKey });
+      mouse(win, canvas, 'mousemove', right, bottom, { shiftKey });
+      mouse(win, canvas, 'mouseup', right, bottom, { shiftKey });
+    }
+
+    function canvasBoundsToScreen(win, ids) {
+      const state = win.eval(`(() => ({ cx, cy, zoom, bounds: ${JSON.stringify(ids)}.map(id => { const element = document.getElementById(id); return { id, left: element.offsetLeft, top: element.offsetTop, right: element.offsetLeft + element.offsetWidth, bottom: element.offsetTop + element.offsetHeight }; }) }))()`);
+      return state.bounds.map(bounds => ({ ...bounds, left: state.cx + bounds.left * state.zoom, top: state.cy + bounds.top * state.zoom, right: state.cx + bounds.right * state.zoom, bottom: state.cy + bounds.bottom * state.zoom }));
+    }
+
+    async function runMixedImageSelectionChecks(win, report) {
+      progress('5/5 ทดสอบเลือกและลาก Node กับภาพพร้อมกัน');
+      const [firstImage, secondImage] = await insertHarnessImages(win);
+      const node = win.document.getElementById('n4');
+      const otherNode = win.document.getElementById('n5');
+      const line = win.document.querySelector('#s line[data-n1="n4"], #s line[data-n2="n4"]');
+      assertion(report, 'mixed-selection Nodes, images, and connector exist', Boolean(node && otherNode && firstImage && secondImage && line));
+
+      const nodeRect = node.getBoundingClientRect();
+      mouse(win, node, 'mousedown', nodeRect.left + nodeRect.width / 2, nodeRect.top + nodeRect.height / 2);
+      mouse(win, win, 'mouseup', nodeRect.left + nodeRect.width / 2, nodeRect.top + nodeRect.height / 2);
+      [firstImage, secondImage].forEach(image => {
+        const rect = image.getBoundingClientRect();
+        mouse(win, image, 'mousedown', rect.left + rect.width / 2, rect.top + rect.height / 2, { shiftKey: true });
+      });
+      assertion(report, 'Shift+click selects two images while keeping selected Node', node.classList.contains('sel') && firstImage.classList.contains('sel') && secondImage.classList.contains('sel'));
+      const secondRect = secondImage.getBoundingClientRect();
+      mouse(win, secondImage, 'mousedown', secondRect.left + secondRect.width / 2, secondRect.top + secondRect.height / 2, { shiftKey: true });
+      assertion(report, 'Shift+click toggles only the selected image', node.classList.contains('sel') && firstImage.classList.contains('sel') && !secondImage.classList.contains('sel'));
+      const firstRect = firstImage.getBoundingClientRect();
+      mouse(win, firstImage, 'mousedown', firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
+      mouse(win, win, 'mouseup', firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
+      assertion(report, 'normal click on a selected image preserves the complete selection', node.classList.contains('sel') && firstImage.classList.contains('sel') && !secondImage.classList.contains('sel'));
+      mouse(win, secondImage, 'mousedown', secondRect.left + secondRect.width / 2, secondRect.top + secondRect.height / 2);
+      mouse(win, win, 'mouseup', secondRect.left + secondRect.width / 2, secondRect.top + secondRect.height / 2);
+      assertion(report, 'normal click on an unselected image replaces Node/image selection', !node.classList.contains('sel') && !firstImage.classList.contains('sel') && secondImage.classList.contains('sel'));
+
+      win.eval('clearSel()');
+      const selectRects = canvasBoundsToScreen(win, [node.id, firstImage.id, secondImage.id]);
+      marquee(win, Math.min(...selectRects.map(rect => rect.left)) - 4, Math.min(...selectRects.map(rect => rect.top)) - 4, Math.max(...selectRects.map(rect => rect.right)) + 4, Math.max(...selectRects.map(rect => rect.bottom)) + 4);
+      assertion(report, 'marquee selects overlapping Node and images together', node.classList.contains('sel') && firstImage.classList.contains('sel') && secondImage.classList.contains('sel'));
+      const [otherRect] = canvasBoundsToScreen(win, [otherNode.id]);
+      marquee(win, otherRect.left - 4, otherRect.top - 4, otherRect.right + 4, otherRect.bottom + 4, true);
+      assertion(report, 'Shift+marquee adds another Node without losing image selection', node.classList.contains('sel') && otherNode.classList.contains('sel') && firstImage.classList.contains('sel') && secondImage.classList.contains('sel'));
+
+      selectMixedGroup(win, ['n4', 'n5'], [firstImage.id, secondImage.id]);
+      assertion(report, 'mixed group selection contains Nodes and images', node.classList.contains('sel') && otherNode.classList.contains('sel') && firstImage.classList.contains('sel') && secondImage.classList.contains('sel'));
+      const cullX = win.eval('cx');
+      win.eval('cx -= 20000; updateTransform();');
+      await nextPaint(win);
+      assertion(report, 'selected image is culled outside the viewport', !win.document.getElementById(firstImage.id));
+      win.eval(`cx = ${cullX}; updateTransform();`);
+      await nextPaint(win);
+      const restoredFirstImage = win.document.getElementById(firstImage.id);
+      const restoredSecondImage = win.document.getElementById(secondImage.id);
+      assertion(report, 'selected image state survives viewport recreation', Boolean(restoredFirstImage && restoredSecondImage && restoredFirstImage.classList.contains('sel') && restoredSecondImage.classList.contains('sel')));
+
+      const before = [node, otherNode, restoredFirstImage, restoredSecondImage].map(element => ({ id: element.id, position: numericPosition(element) }));
+      const geometryBefore = connectorGeometry(line);
+      const dragRect = node.getBoundingClientRect();
+      mouse(win, node, 'mousedown', dragRect.left + dragRect.width / 2, dragRect.top + dragRect.height / 2);
+      mouse(win, win, 'mousemove', dragRect.left + dragRect.width / 2 + 27, dragRect.top + dragRect.height / 2 + 19);
+      await nextPaint(win);
+      mouse(win, win, 'mouseup', dragRect.left + dragRect.width / 2 + 27, dragRect.top + dragRect.height / 2 + 19);
+      await nextPaint(win);
+      const after = before.map(item => ({ id: item.id, position: numericPosition(win.document.getElementById(item.id)) }));
+      const deltas = after.map((item, index) => positionDelta(before[index].position, item.position));
+      assertion(report, 'Node-anchor mixed drag gives every selected Object one shared delta', deltas.every(delta => sameDelta(delta, deltas[0])) && (Math.abs(deltas[0].left) > .01 || Math.abs(deltas[0].top) > .01), JSON.stringify(deltas));
+      assertion(report, 'mixed drag updates attached connector geometry', connectorGeometry(line) !== geometryBefore);
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo restores mixed group positions', before.every(item => sameDelta(positionDelta(item.position, numericPosition(win.document.getElementById(item.id))), { left: 0, top: 0 })));
+      await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo reapplies mixed group positions', after.every(item => sameDelta(positionDelta(item.position, numericPosition(win.document.getElementById(item.id))), { left: 0, top: 0 })));
+
+      selectMixedGroup(win, ['n4', 'n5'], [firstImage.id, secondImage.id]);
+      win.toggleSnapGrid();
+      const snapBefore = [win.document.getElementById('n4'), win.document.getElementById('n5'), win.document.getElementById(firstImage.id), win.document.getElementById(secondImage.id)].map(element => ({ id: element.id, position: numericPosition(element) }));
+      const imageAnchor = win.document.getElementById(firstImage.id);
+      const imageRect = imageAnchor.getBoundingClientRect();
+      mouse(win, imageAnchor, 'mousedown', imageRect.left + imageRect.width / 2, imageRect.top + imageRect.height / 2);
+      mouse(win, win, 'mousemove', imageRect.left + imageRect.width / 2 + 19, imageRect.top + imageRect.height / 2 + 31);
+      mouse(win, win, 'mouseup', imageRect.left + imageRect.width / 2 + 19, imageRect.top + imageRect.height / 2 + 31);
+      await nextPaint(win);
+      const snapAfter = snapBefore.map(item => ({ id: item.id, position: numericPosition(win.document.getElementById(item.id)) }));
+      const snapDeltas = snapAfter.map((item, index) => positionDelta(snapBefore[index].position, item.position));
+      assertion(report, 'Snap image anchor lands on the grid and preserves mixed spacing', snapDeltas.every(delta => sameDelta(delta, snapDeltas[0])) && Math.abs(snapAfter[2].position.left / 40 - Math.round(snapAfter[2].position.left / 40)) < .01 && Math.abs(snapAfter[2].position.top / 40 - Math.round(snapAfter[2].position.top / 40)) < .01, JSON.stringify({ snapAfter, snapDeltas }));
+      win.toggleSnapGrid();
+
+      selectMixedGroup(win, ['n5'], [secondImage.id]);
+      assertion(report, 'mixed Delete target Node and image are selected', win.document.getElementById('n5').classList.contains('sel') && win.document.getElementById(secondImage.id).classList.contains('sel'));
+      pressDelete(win);
+      await nextPaint(win);
+      assertion(report, 'one Delete removes a selected Node and image together', !win.document.getElementById('n5') && !win.document.getElementById(secondImage.id), JSON.stringify({ node:!!win.document.getElementById('n5'), image:!!win.document.getElementById(secondImage.id) }));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo restores the mixed Node/image Delete', Boolean(win.document.getElementById('n5') && win.document.getElementById(secondImage.id)));
+      await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo reapplies the mixed Node/image Delete', !win.document.getElementById('n5') && !win.document.getElementById(secondImage.id));
+      await measured(win, () => win.doUndo());
+    }
+
     async function runBenchmark() {
       let report;
       try {
@@ -478,6 +624,7 @@
         await runDragChecks(win, report);
         await runTextChecks(win, report);
         await runStructuralChecks(win, report);
+        await runMixedImageSelectionChecks(win, report);
         report.paintFallbacks = paintFallbackCount;
         report.throttledPaints = throttledPaintCount;
         report.overall = paintFallbackCount > 0 || throttledPaintCount > 0 ? 'PARTIAL' : 'PASS';

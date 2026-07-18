@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap V3.93</title>
+    <title>MindMap V3.94</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -223,7 +223,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.93</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.94</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
@@ -362,10 +362,10 @@
         
         // Mindmap State
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
-        let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], dragConnectorLines = [], dragRenderFrame = null, pendingDragPointer = null, images = [];
+        let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], dragImageStartPos = [], dragAnchorKind = null, dragConnectorLines = [], dragRenderFrame = null, pendingDragPointer = null, images = [];
         let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
         let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null, lastAnnotationTextClick = { id:null, at:0 }, connectorNavHoverId = null, connectorNavHideTimer = null, editingConnectorRouteLabel = null, connectorRouteClickTimer = null;
-        const imageDomById = new Map(), imageThumbUrlByAsset = new Map();
+        const imageDomById = new Map(), imageThumbUrlByAsset = new Map(), selectedImageIds = new Set();
         let activeProjectId = 'local-' + Date.now().toString(36);
         const MM_PROJECT_FORMAT = 'mindmap-project';
         const MM_PROJECT_VERSION = 1;
@@ -374,7 +374,7 @@
         
         // Selection variables
         let isAddSel = false;
-        let preSel = new Set();
+        let preSel = new Set(), preImageSel = new Set();
 
         let crDrag = false, crResize = false, crPx, crPy, crW, crH, crL, crT;
         let modalCallback = null;
@@ -417,6 +417,12 @@
         function newId(prefix) { return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8); }
         function placementFromElement(im) { return { id: im.id, x: im.style.left, y: im.style.top, w: im.style.width, h: im.style.height, src: im.querySelector('img') ? im.querySelector('img').src : '', caption: '', source: '', note: '' }; }
         function imagePlacementById(id) { return imagePlacements.find(p => p.id === id); }
+        function selectedImagePlacements() { return imagePlacements.filter(p => selectedImageIds.has(p.id)); }
+        function syncImageSelection(im) { if(im) im.classList.toggle('sel', selectedImageIds.has(im.id)); }
+        function syncRenderedImageSelection() { images.forEach(syncImageSelection); }
+        function setImageSelected(id, selected) { if(selected) selectedImageIds.add(id); else selectedImageIds.delete(id); syncImageSelection(imageDomById.get(id)); }
+        function clearImageSelection() { selectedImageIds.clear(); syncRenderedImageSelection(); }
+        function clearObjectSelection() { nodes.forEach(n => n.classList.remove('sel')); clearImageSelection(); }
         function placementDimensions(p) { return { x: parseFloat(p.x) || 0, y: parseFloat(p.y) || 0, w: Math.max(30, parseFloat(p.w) || 30), h: Math.max(20, parseFloat(p.h) || 20) }; }
         function revokeImageThumbUrls() { imageThumbUrlByAsset.forEach(url => URL.revokeObjectURL(url)); imageThumbUrlByAsset.clear(); }
         async function thumbnailUrlFor(placement) {
@@ -446,7 +452,7 @@
                 if(!wanted.has(p.id)) return;
                 let d = placementDimensions(p), im = imageDomById.get(p.id);
                 if(!im) { im = createImageElement(p); imageDomById.set(p.id, im); b.appendChild(im); thumbnailUrlFor(p).then(url => { if(imageDomById.get(p.id) === im && url) im.querySelector('img').src = url; }).catch(err => console.warn(err)); }
-                im.style.left = d.x + 'px'; im.style.top = d.y + 'px'; im.style.width = d.w + 'px'; im.style.height = d.h + 'px';
+                im.style.left = d.x + 'px'; im.style.top = d.y + 'px'; im.style.width = d.w + 'px'; im.style.height = d.h + 'px'; syncImageSelection(im);
             });
             images = Array.from(imageDomById.values());
         }
@@ -912,8 +918,8 @@
             });
             if(editingAnnotationTextId) requestAnimationFrame(() => { let content = layer.querySelector('.annotation-text[data-annotation-text-id="' + editingAnnotationTextId + '"] .annotation-text-content'); if(!content) return; content.focus(); let range = document.createRange(); range.selectNodeContents(content); let selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range); });
         }
-        function selectAnnotation(id) { selectedAnnotationId = id; selectedAnnotationTextId = null; editingAnnotationTextId = null; nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); renderAnnotations(); renderAnnotationTexts(); }
-        function selectAnnotationText(id, edit) { selectedAnnotationId = null; selectedAnnotationTextId = id; editingAnnotationTextId = edit ? id : null; nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); renderAnnotations(); renderAnnotationTexts(); }
+        function selectAnnotation(id) { selectedAnnotationId = id; selectedAnnotationTextId = null; editingAnnotationTextId = null; clearObjectSelection(); renderAnnotations(); renderAnnotationTexts(); }
+        function selectAnnotationText(id, edit) { selectedAnnotationId = null; selectedAnnotationTextId = id; editingAnnotationTextId = edit ? id : null; clearObjectSelection(); renderAnnotations(); renderAnnotationTexts(); }
         function startAnnotationTextDrag(e, id) {
             if(editingAnnotationTextId) return;
             e.preventDefault(); e.stopPropagation(); let text = annotations.texts.find(item => item.id === id); if(!text) return;
@@ -1110,7 +1116,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.93', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.94', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1297,7 +1303,7 @@
         }
         function resetTransientStateForLoad() {
             cancelActiveNodeDragForStateLoad(); clearFindHighlight(); connectorNavHoverId = null; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null;
-            nodes.forEach(node => node.classList.remove('sel')); images.forEach(image => image.classList.remove('sel')); document.querySelectorAll('.connector-route-label, .junction-mini-tools').forEach(el => el.remove());
+            clearObjectSelection(); document.querySelectorAll('.connector-route-label, .junction-mini-tools').forEach(el => el.remove());
         }
         function patchCompatibleState(state, step, topology) {
             let previous = mmHistory[curStep] || {}, previousNodes = new Map((previous.nodes || []).map(item => [item.id, item])), previousLines = new Map((previous.lines || []).map(item => [item.id, item]));
@@ -1359,15 +1365,9 @@
         function attachNodeEvents(n) { 
             n.onmousedown = function(e) { 
                 e.stopPropagation(); 
-                if(e.shiftKey) { if(n.classList.contains('sel')) { n.classList.remove('sel'); drag = null; renderJunctionMiniTools(); return; } else { n.classList.add('sel'); } }
-                else { if(!n.classList.contains('sel')) clearSel(); n.classList.add('sel'); } 
-                resetNodeDragRenderState();
-                drag = n; px = e.clientX; py = e.clientY; n.style.cursor = 'grabbing'; isMoved = false;
-                dragStartX = e.clientX; dragStartY = e.clientY;
-                dragStartPos = nodes.filter(x => x.classList.contains('sel')).map(x => ({ node: x, left: parseFloat(x.style.left) || 0, top: parseFloat(x.style.top) || 0 }));
-                let draggedIds = new Set(dragStartPos.map(item => item.node.id)); dragConnectorLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(line => draggedIds.has(line.dataset.n1) || draggedIds.has(line.dataset.n2));
-                if(snapGrid) dragStartPos.forEach(p => p.node.classList.add('snap-dragging'));
-                document.body.style.userSelect = 'none'; renderConnectorRouteLabels(); if(n.classList.contains('j')) clearJunctionMiniTools(); else renderJunctionMiniTools();
+                if(e.shiftKey) { n.classList.toggle('sel'); renderJunctionMiniTools(); return; }
+                if(!n.classList.contains('sel')) { clearSel(); n.classList.add('sel'); }
+                beginObjectDrag(e, n, 'node');
             }; 
             n.onmouseenter = function() { cancelConnectorNavigationHide(); connectorNavHoverId = n.id; renderConnectorRouteLabels(); };
             n.onmouseleave = function() { scheduleConnectorNavigationHide(); };
@@ -1379,17 +1379,15 @@
             im.innerHTML = '<img draggable="false" alt=""><div class="ifx" title="ลบรูปนี้" onmousedown="event.stopPropagation()">x</div><div class="ifr" title="ลากเพื่อย่อ/ขยาย — Shift รักษาสัดส่วน, Ctrl รักษาจุดศูนย์กลาง"></div><button class="if-info" type="button" title="ดูภาพใหญ่และรายละเอียด">i</button>';
             attachImgEvents(im); return im;
         }
-        function updatePlacementStyle(im, p) { let d = placementDimensions(p); im.style.left = d.x + 'px'; im.style.top = d.y + 'px'; im.style.width = d.w + 'px'; im.style.height = d.h + 'px'; }
+        function updatePlacementStyle(im, p) { if(!im) return; let d = placementDimensions(p); im.style.left = d.x + 'px'; im.style.top = d.y + 'px'; im.style.width = d.w + 'px'; im.style.height = d.h + 'px'; }
         function attachImgEvents(im) {
             let id = im.dataset.placementId;
             im.onmousedown = function(e) {
                 if(e.target.closest('.ifx') || e.target.closest('.ifr') || e.target.closest('.if-info')) return;
-                e.stopPropagation(); if(!im.classList.contains('sel')) { clearSel(); im.classList.add('sel'); }
-                let p = imagePlacementById(id); if(!p) return; let startX = e.clientX, startY = e.clientY, d = placementDimensions(p), moved = false;
-                document.body.style.userSelect = 'none'; im.style.cursor = 'grabbing';
-                function mm(me) { moved = true; let nl = d.x + (me.clientX - startX) / zoom, nt = d.y + (me.clientY - startY) / zoom; if(snapGrid) { nl = Math.round(nl / 40) * 40; nt = Math.round(nt / 40) * 40; } p.x = nl + 'px'; p.y = nt + 'px'; updatePlacementStyle(im, p); }
-                function mu() { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); document.body.style.userSelect = ''; im.style.cursor = 'grab'; if(moved) window.doSaveState(); }
-                document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
+                e.stopPropagation();
+                if(e.shiftKey) { setImageSelected(id, !selectedImageIds.has(id)); return; }
+                if(!selectedImageIds.has(id)) { clearSel(); setImageSelected(id, true); }
+                beginObjectDrag(e, im, 'image');
             };
             im.querySelector('.ifx').onmousedown = e => e.stopPropagation();
             im.querySelector('.ifx').onclick = () => window.delImage(id);
@@ -1409,7 +1407,7 @@
                 document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
             };
         }
-        function removeImagePlacement(id) { let index = imagePlacements.findIndex(p => p.id === id); if(index < 0) return false; imagePlacements.splice(index, 1); removeImageDom(id); return true; }
+        function removeImagePlacement(id) { let index = imagePlacements.findIndex(p => p.id === id); if(index < 0) return false; selectedImageIds.delete(id); imagePlacements.splice(index, 1); removeImageDom(id); return true; }
         window.delImage = function(id) { if(removeImagePlacement(id)) window.doSaveState(); };
         function normalizeConnectorArrow(value) { return ['none', 'forward', 'reverse', 'both'].includes(value) ? value : 'none'; }
         function clampConnectorRoutePosition(value, fallback) { return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback; }
@@ -1449,7 +1447,7 @@
         function removeNode(id) { if(nodeNoteId === id) window.closeNodeNote(); let n = document.getElementById(id); if(!n) return false; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(removeConnectorElement); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } return true; }
         window.del = function(id) { if(removeNode(id)) window.doSaveState(); };
         function deleteSelectedObjectsActivity() {
-            let nodeIds = nodes.filter(node => node.classList.contains('sel')).map(node => node.id), imageIds = images.filter(image => image.classList.contains('sel')).map(image => image.id); if(!nodeIds.length && !imageIds.length) return false;
+            let nodeIds = nodes.filter(node => node.classList.contains('sel')).map(node => node.id), imageIds = Array.from(selectedImageIds); if(!nodeIds.length && !imageIds.length) return false;
             let changed = false, failure = null;
             try { nodeIds.forEach(id => { if(removeNode(id)) changed = true; }); imageIds.forEach(id => { if(removeImagePlacement(id)) changed = true; }); }
             catch(error) { failure = error; }
@@ -1493,17 +1491,39 @@
         window.startLineDrag = function(event, nodeId, direction) { setConnectorHitLinesEnabled(false); document.addEventListener('mouseup', () => setConnectorHitLinesEnabled(true), { once:true }); startLineDragWithConnectorHits(event, nodeId, direction); };
         function updateAll() { pruneConnectorHitLines(); s.querySelectorAll('line[data-n1][data-n2]').forEach(updateLine); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
         function resetNodeDragRenderState() { if(dragRenderFrame !== null) cancelAnimationFrame(dragRenderFrame); dragRenderFrame = null; pendingDragPointer = null; dragConnectorLines = []; }
-        function cancelActiveNodeDragForStateLoad() { resetNodeDragRenderState(); dragStartPos.forEach(item => item.node.classList.remove('snap-dragging')); if(drag) drag.style.cursor = 'grab'; drag = null; dragStartPos = []; isMoved = false; }
+        function beginObjectDrag(event, anchor, anchorKind) {
+            resetNodeDragRenderState(); drag = anchor; dragAnchorKind = anchorKind; px = event.clientX; py = event.clientY; drag.style.cursor = 'grabbing'; isMoved = false;
+            dragStartX = event.clientX; dragStartY = event.clientY;
+            dragStartPos = nodes.filter(node => node.classList.contains('sel')).map(node => ({ node:node, left:parseFloat(node.style.left) || 0, top:parseFloat(node.style.top) || 0 }));
+            dragImageStartPos = selectedImagePlacements().map(placement => { let d = placementDimensions(placement); return { placement:placement, left:d.x, top:d.y }; });
+            let draggedIds = new Set(dragStartPos.map(item => item.node.id)); dragConnectorLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(line => draggedIds.has(line.dataset.n1) || draggedIds.has(line.dataset.n2));
+            if(snapGrid) dragStartPos.forEach(item => item.node.classList.add('snap-dragging'));
+            document.body.style.userSelect = 'none'; renderConnectorRouteLabels(); if(anchorKind === 'node' && anchor.classList.contains('j')) clearJunctionMiniTools(); else renderJunctionMiniTools();
+        }
+        function dragAnchorStart() {
+            if(dragAnchorKind === 'image') return dragImageStartPos.find(item => item.placement.id === drag.dataset.placementId) || null;
+            return dragStartPos.find(item => item.node === drag) || null;
+        }
+        function dragPositionChanged() {
+            return dragStartPos.some(item => Math.abs((parseFloat(item.node.style.left) || 0) - item.left) > .001 || Math.abs((parseFloat(item.node.style.top) || 0) - item.top) > .001) || dragImageStartPos.some(item => { let d = placementDimensions(item.placement); return Math.abs(d.x - item.left) > .001 || Math.abs(d.y - item.top) > .001; });
+        }
+        function cancelActiveNodeDragForStateLoad() { resetNodeDragRenderState(); dragStartPos.forEach(item => item.node.classList.remove('snap-dragging')); if(drag) drag.style.cursor = 'grab'; drag = null; dragAnchorKind = null; dragStartPos = []; dragImageStartPos = []; isMoved = false; }
         function applyPendingNodeDrag() {
             dragRenderFrame = null; let pointer = pendingDragPointer; pendingDragPointer = null; if(!drag || !pointer) return;
             let tdx = (pointer.clientX - dragStartX) / zoom, tdy = (pointer.clientY - dragStartY) / zoom;
-            if(pointer.shiftKey) { if(Math.abs(tdx) > Math.abs(tdy)) tdy = 0; else tdx = 0; }
-            dragStartPos.forEach(item => { let left = item.left + tdx, top = item.top + tdy; if(snapGrid) { let snapped = snapNodeToGrid(item.node, left, top); left = snapped.left; top = snapped.top; } item.node.style.left = left + 'px'; item.node.style.top = top + 'px'; });
-            dragConnectorLines.forEach(line => { if(line.isConnected) updateLine(line); }); renderConnectorRouteLabels(dragConnectorLines, dragStartPos.length === 1 ? drag : null);
+            if(dragAnchorKind === 'node' && pointer.shiftKey) { if(Math.abs(tdx) > Math.abs(tdy)) tdy = 0; else tdx = 0; }
+            let anchorStart = dragAnchorStart(); if(!anchorStart) return;
+            if(snapGrid) {
+                if(dragAnchorKind === 'node') { let snapped = snapNodeToGrid(anchorStart.node, anchorStart.left + tdx, anchorStart.top + tdy); tdx = snapped.left - anchorStart.left; tdy = snapped.top - anchorStart.top; }
+                else { tdx = Math.round((anchorStart.left + tdx) / 40) * 40 - anchorStart.left; tdy = Math.round((anchorStart.top + tdy) / 40) * 40 - anchorStart.top; }
+            }
+            dragStartPos.forEach(item => { item.node.style.left = (item.left + tdx) + 'px'; item.node.style.top = (item.top + tdy) + 'px'; });
+            dragImageStartPos.forEach(item => { item.placement.x = (item.left + tdx) + 'px'; item.placement.y = (item.top + tdy) + 'px'; updatePlacementStyle(imageDomById.get(item.placement.id), item.placement); });
+            dragConnectorLines.forEach(line => { if(line.isConnected) updateLine(line); }); renderConnectorRouteLabels(dragConnectorLines, dragStartPos.length === 1 ? dragStartPos[0].node : null); isMoved = dragPositionChanged();
         }
         function scheduleNodeDrag(pointerEvent) { pendingDragPointer = { clientX:pointerEvent.clientX, clientY:pointerEvent.clientY, shiftKey:pointerEvent.shiftKey }; if(dragRenderFrame === null) dragRenderFrame = requestAnimationFrame(applyPendingNodeDrag); }
         function flushPendingNodeDrag() { if(dragRenderFrame !== null) { cancelAnimationFrame(dragRenderFrame); dragRenderFrame = null; } if(pendingDragPointer) applyPendingNodeDrag(); }
-        function clearSel() { nodes.forEach(n => n.classList.remove('sel')); images.forEach(im => im.classList.remove('sel')); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
+        function clearSel() { clearObjectSelection(); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
 
         window.addEventListener('wheel', function(e) {
             if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('#zoom-status')) return;
@@ -1518,7 +1538,7 @@
 
             if(e.button === 1 || e.button === 2) { isPan = true; px = e.clientX; py = e.clientY; }
             else if(e.button === 0) { 
-                isSel = true; isAddSel = e.shiftKey; if(!isAddSel) clearSel(); preSel = new Set(nodes.filter(n => n.classList.contains('sel'))); sx = (e.clientX - cx) / zoom; sy = (e.clientY - cy) / zoom; sb.style.left = sx + 'px'; sb.style.top = sy + 'px'; sb.style.width = '0px'; sb.style.height = '0px'; sb.style.display = 'block'; 
+                isSel = true; isAddSel = e.shiftKey; if(!isAddSel) clearSel(); preSel = new Set(nodes.filter(n => n.classList.contains('sel'))); preImageSel = new Set(selectedImageIds); sx = (e.clientX - cx) / zoom; sy = (e.clientY - cy) / zoom; sb.style.left = sx + 'px'; sb.style.top = sy + 'px'; sb.style.width = '0px'; sb.style.height = '0px'; sb.style.display = 'block';
                 document.body.style.userSelect = 'none';
             }
         });
@@ -1530,15 +1550,15 @@
             if(crDrag) { let cb = document.getElementById('cropBox'); cb.style.left = (crL + e.clientX - crPx) + 'px'; cb.style.top = (crT + e.clientY - crPy) + 'px'; return; }
             if(crResize) { let cb = document.getElementById('cropBox'); let nw = Math.max(50, crW + e.clientX - crPx); let nh = Math.max(50, crH + e.clientY - crPy); if(currentCropRatio) nh = nw / currentCropRatio; cb.style.width = nw + 'px'; cb.style.height = nh + 'px'; return; }
             
-            if(drag) { isMoved = true; px = e.clientX; py = e.clientY; scheduleNodeDrag(e); }
+            if(drag) { px = e.clientX; py = e.clientY; scheduleNodeDrag(e); }
             else if(isPan) { cx += e.clientX - px; cy += e.clientY - py; px = e.clientX; py = e.clientY; if(fitRestoreView) fitRestoreView.wasPanned = true; updateTransform(); }
-            else if(isSel) { let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; let rx = Math.min(sx, nx), ry = Math.min(sy, ny), rw = Math.abs(nx - sx), rh = Math.abs(ny - sy); sb.style.left = rx + 'px'; sb.style.top = ry + 'px'; sb.style.width = rw + 'px'; sb.style.height = rh + 'px'; nodes.forEach(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top), nw = n.offsetWidth, nh = n.offsetHeight; let inBox = (nl < rx + rw && nl + nw > rx && nt < ry + rh && nt + nh > ry); if(inBox || (isAddSel && preSel.has(n))) n.classList.add('sel'); else n.classList.remove('sel'); }); }
+            else if(isSel) { let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; let rx = Math.min(sx, nx), ry = Math.min(sy, ny), rw = Math.abs(nx - sx), rh = Math.abs(ny - sy); sb.style.left = rx + 'px'; sb.style.top = ry + 'px'; sb.style.width = rw + 'px'; sb.style.height = rh + 'px'; nodes.forEach(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top), nw = n.offsetWidth, nh = n.offsetHeight; let inBox = (nl < rx + rw && nl + nw > rx && nt < ry + rh && nt + nh > ry); if(inBox || (isAddSel && preSel.has(n))) n.classList.add('sel'); else n.classList.remove('sel'); }); imagePlacements.forEach(p => { let d = placementDimensions(p), inBox = d.x < rx + rw && d.x + d.w > rx && d.y < ry + rh && d.y + d.h > ry; if(inBox || (isAddSel && preImageSel.has(p.id))) selectedImageIds.add(p.id); else selectedImageIds.delete(p.id); }); syncRenderedImageSelection(); }
         });
 
         window.addEventListener('mouseup', function(e) {
             document.body.style.userSelect = '';
             if(crDrag) crDrag = false; if(crResize) crResize = false;
-            if(drag) { flushPendingNodeDrag(); drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); drag = null; dragConnectorLines = []; if(isMoved) { window.doSaveState(); isMoved = false; } }
+            if(drag) { flushPendingNodeDrag(); drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); let changed = dragPositionChanged(); drag = null; dragAnchorKind = null; dragConnectorLines = []; dragStartPos = []; dragImageStartPos = []; renderImageLayer(); if(changed) window.doSaveState(); isMoved = false; }
             isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none'; if(!editingConnectorRouteLabel) renderConnectorRouteLabels(); renderJunctionMiniTools();
         });
 
@@ -1622,7 +1642,7 @@
                 if(ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
                 if(selectedAnnotationTextId) { e.preventDefault(); window.deleteAnnotationText(selectedAnnotationTextId); return; }
                 if(selectedAnnotationId) { e.preventDefault(); window.deleteAnnotationLine(selectedAnnotationId); return; }
-                if(nodes.some(n => n.classList.contains('sel')) || images.some(im => im.classList.contains('sel'))) { e.preventDefault(); deleteSelectedObjectsActivity(); }
+                if(nodes.some(n => n.classList.contains('sel')) || selectedImageIds.size) { e.preventDefault(); deleteSelectedObjectsActivity(); }
                 return;
             }
             if(e.altKey || (e.getModifierState && e.getModifierState('AltGraph'))) {
