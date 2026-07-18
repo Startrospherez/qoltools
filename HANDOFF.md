@@ -6,10 +6,11 @@ Updated: 2026-07-18 (Asia/Bangkok)
 
 - Repository: `Startrospherez/qoltools`
 - Current MindMap build: **V3.94** (mixed Node/image selection and group
-  movement). Automated browser verification passed on 2026-07-18; final
-  interaction testing with the user's real images is pending. V3.93
-  activity-based batch Delete history remains user-verified: multi-Node Delete
-  and one-step Undo/Redo worked with the current real working map.
+  movement), automated and user-verified on 2026-07-18. The user tested real
+  images, mixed selection, group movement, Snap, individual resize, and mixed
+  Delete Undo/Redo successfully. V3.93 activity-based batch Delete history
+  remains user-verified: multi-Node Delete and one-step Undo/Redo worked with
+  the current real working map.
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -53,10 +54,9 @@ Updated: 2026-07-18 (Asia/Bangkok)
   drag, Snap geometry, connector redraw, group Undo/Redo, and mixed
   Node/image Delete Undo/Redo. Its displayed app version and new Project ZIP
   manifest version are `3.94`.
-- Pending final user test: on the local `file://` page with real images,
-  select Node(s) plus image(s), drag from both Object types with Snap off/on,
-  resize one image, then verify one-step Undo/Redo for mixed move and mixed
-  Delete.
+- **User verification passed (2026-07-18):** real-image mixed selection,
+  group movement from both Object types, Snap, individual resize, and
+  one-step Undo/Redo for mixed Delete all worked as intended.
 
 - V3.72: center-based Grid Snap, 50% opacity while snapping drag, per-node
   plain-text Notes stored in history/backup/JSON/standalone HTML.
