@@ -276,6 +276,10 @@
       }));
     }
 
+    function documentMouse(win, type, x, y, options = {}) {
+      mouse(win, win.document, type, x, y, options);
+    }
+
     async function runDragChecks(win, report) {
       progress('1/4 ทดสอบการลาก Node และ connector');
       const throttlesBeforeDrag = throttledPaintCount;
@@ -596,6 +600,122 @@
       await measured(win, () => win.doUndo());
     }
 
+    async function runV395InteractionChecks(win, report) {
+      progress('6/6 ทดสอบ V3.95: scale, Line hit area, และ Alt+ลากคัดลอก');
+      const source = win.document.getElementById('n4');
+      const internalLine = win.document.querySelector('#s line[data-n1="n4"], #s line[data-n2="n4"]');
+      const paired = internalLine && win.document.getElementById(internalLine.dataset.n1 === source.id ? internalLine.dataset.n2 : internalLine.dataset.n1);
+      assertion(report, 'V3.95 route-label and copy targets exist', Boolean(source && paired && internalLine));
+
+      win.eval(`(() => {
+        const line = document.getElementById(${JSON.stringify(internalLine.id)});
+        line.dataset.arrow = 'both';
+        line.dataset.routeLabels = JSON.stringify({
+          n1: { text: 'ต้นทาง V3.95', position: .18, autoPlacement: false, placementRevision: 4 },
+          n2: { text: 'ปลายทาง V3.95', position: .82, autoPlacement: false, placementRevision: 4 },
+        });
+        clearSel(); document.getElementById(${JSON.stringify(source.id)}).classList.add('sel'); updateLine(line); renderConnectorRouteLabels(); window.doSaveState();
+      })()`);
+
+      function routeScaleAt(zoom) {
+        return win.eval(`(() => {
+          zoom = ${zoom}; updateTransform();
+          const node = document.getElementById(${JSON.stringify(source.id)});
+          connectorNavHoverId = null; clearConnectorRouteLabels(); renderConnectorRouteLabels();
+          const label = document.querySelector('.connector-route-label');
+          const nodeRect = node.getBoundingClientRect(), labelRect = label && label.getBoundingClientRect();
+          return labelRect ? { nodeWidth: nodeRect.width, labelWidth: labelRect.width } : null;
+        })()`);
+      }
+
+      const scale10 = routeScaleAt(0.1);
+      const scale100 = routeScaleAt(1);
+      const scale200 = routeScaleAt(2);
+      assertion(report, 'route label renders at every tested zoom', Boolean(scale10 && scale100 && scale200), JSON.stringify({ scale10, scale100, scale200 }));
+      const ratio10 = scale10.labelWidth / scale10.nodeWidth;
+      const ratio100 = scale100.labelWidth / scale100.nodeWidth;
+      const ratio200 = scale200.labelWidth / scale200.nodeWidth;
+      assertion(report, 'route label keeps Node-relative scale across zoom', Math.abs(ratio10 - ratio100) < 0.03 && Math.abs(ratio200 - ratio100) < 0.03 && scale10.labelWidth < scale100.labelWidth * 0.2, JSON.stringify({ ratio10, ratio100, ratio200, scale10, scale100, scale200 }));
+      win.eval('zoom = 1; updateTransform(); clearSel();');
+
+      win.addAnnotationLine();
+      const annotationLine = win.eval(`(() => { const line = annotations.lines[annotations.lines.length - 1]; line.x1 = line.x2 = (window.innerWidth * .72 - cx) / zoom; line.y1 = (window.innerHeight * .25 - cy) / zoom; line.y2 = (window.innerHeight * .75 - cy) / zoom; renderAnnotations(); window.doSaveState(); return { id:line.id, x:line.x1, y:(line.y1 + line.y2) / 2 }; })()`);
+      const annotationHit = win.document.querySelector('.annotation-line-hit[data-annotation-id="' + annotationLine.id + '"]');
+      assertion(report, 'Timeline Line receives a dedicated non-scaling hit area', Boolean(annotationHit) && annotationHit.getAttribute('vector-effect') === 'non-scaling-stroke' && annotationHit.getAttribute('stroke-width') === '20');
+      const annotationScreen = win.eval(`({ x:cx + ${annotationLine.x} * zoom, y:cy + ${annotationLine.y} * zoom })`);
+      mouse(win, annotationHit, 'mousedown', annotationScreen.x + 8, annotationScreen.y);
+      documentMouse(win, 'mouseup', annotationScreen.x + 8, annotationScreen.y);
+      assertion(report, 'Timeline Line hit area selects the Line near its visible stroke', win.eval('selectedAnnotationId') === annotationLine.id);
+
+      const lineCopyBefore = win.eval('({ count:annotations.lines.length, step:curStep })');
+      const selectedAnnotationHit = win.document.querySelector('.annotation-line-hit[data-annotation-id="' + annotationLine.id + '"]');
+      mouse(win, selectedAnnotationHit, 'mousedown', annotationScreen.x, annotationScreen.y, { altKey: true });
+      documentMouse(win, 'mousemove', annotationScreen.x + 32, annotationScreen.y + 18, { altKey: true });
+      documentMouse(win, 'mouseup', annotationScreen.x + 32, annotationScreen.y + 18, { altKey: true });
+      await nextPaint(win);
+      const lineCopyAfter = win.eval('({ count:annotations.lines.length, step:curStep, selected:selectedAnnotationId })');
+      assertion(report, 'Alt-drag copies one selected Timeline Line in one history activity', lineCopyAfter.count === lineCopyBefore.count + 1 && lineCopyAfter.step === lineCopyBefore.step + 1 && lineCopyAfter.selected !== annotationLine.id, JSON.stringify({ lineCopyBefore, lineCopyAfter }));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo removes the copied Timeline Line', win.eval('annotations.lines.length') === lineCopyBefore.count);
+      await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo restores the copied Timeline Line', win.eval('annotations.lines.length') === lineCopyAfter.count);
+
+      win.addAnnotationText();
+      win.eval('editingAnnotationTextId = null; renderAnnotationTexts();');
+      const textId = win.eval('annotations.texts[annotations.texts.length - 1].id');
+      const textEl = win.document.querySelector('.annotation-text[data-annotation-text-id="' + textId + '"]');
+      const textContent = textEl.querySelector('.annotation-text-content');
+      const textRect = textEl.getBoundingClientRect();
+      const textCopyBefore = win.eval('({ count:annotations.texts.length, step:curStep })');
+      mouse(win, textContent, 'mousedown', textRect.left + 4, textRect.top + 4, { altKey: true });
+      documentMouse(win, 'mousemove', textRect.left + 29, textRect.top + 21, { altKey: true });
+      documentMouse(win, 'mouseup', textRect.left + 29, textRect.top + 21, { altKey: true });
+      await nextPaint(win);
+      const textCopyAfter = win.eval('({ count:annotations.texts.length, step:curStep, selected:selectedAnnotationTextId })');
+      assertion(report, 'Alt-drag copies one selected Floating Text in one history activity', textCopyAfter.count === textCopyBefore.count + 1 && textCopyAfter.step === textCopyBefore.step + 1 && textCopyAfter.selected !== textId, JSON.stringify({ textCopyBefore, textCopyAfter }));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo removes the copied Floating Text', win.eval('annotations.texts.length') === textCopyBefore.count);
+      await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo restores the copied Floating Text', win.eval('annotations.texts.length') === textCopyAfter.count);
+
+      const imageId = win.eval(`(() => { const placement = imagePlacements.find(p => p.id.startsWith('im')); if(!placement) return ''; const d = placementDimensions(placement), viewport = getUsableViewport(); cx = viewport.centerX - (d.x + d.w / 2) * zoom; cy = viewport.centerY - (d.y + d.h / 2) * zoom; updateTransform(); return placement.id; })()`);
+      await nextPaint(win);
+      const image = imageId && win.document.getElementById(imageId);
+      assertion(report, 'V3.95 image copy target exists', Boolean(image));
+      selectMixedGroup(win, [source.id, paired.id], [image.id]);
+      const copyBefore = win.eval(`(() => ({ nodes:Array.from(document.querySelectorAll('.n'), n => n.id), lines:Array.from(document.querySelectorAll('#s line[data-n1][data-n2]'), l => l.id), images:imagePlacements.map(p => ({ id:p.id, assetId:p.assetId })), step:curStep }))()`);
+      const copyRect = source.getBoundingClientRect();
+      mouse(win, source, 'mousedown', copyRect.left + copyRect.width / 2, copyRect.top + copyRect.height / 2, { altKey: true });
+      documentMouse(win, 'mousemove', copyRect.left + copyRect.width / 2 + 36, copyRect.top + copyRect.height / 2 + 24, { altKey: true });
+      documentMouse(win, 'mouseup', copyRect.left + copyRect.width / 2 + 36, copyRect.top + copyRect.height / 2 + 24, { altKey: true });
+      await nextPaint(win);
+      const copyAfter = win.eval(`(() => ({ nodes:Array.from(document.querySelectorAll('.n'), n => ({ id:n.id, selected:n.classList.contains('sel'), x:n.style.left, y:n.style.top })), lines:Array.from(document.querySelectorAll('#s line[data-n1][data-n2]'), l => ({ id:l.id, n1:l.dataset.n1, n2:l.dataset.n2, arrow:l.dataset.arrow, labels:l.dataset.routeLabels })), images:imagePlacements.map(p => ({ id:p.id, assetId:p.assetId, selected:selectedImageIds.has(p.id) })), step:curStep }))()`);
+      const copiedNodes = copyAfter.nodes.filter(node => !copyBefore.nodes.includes(node.id));
+      const copiedLines = copyAfter.lines.filter(line => !copyBefore.lines.includes(line.id));
+      const copiedImages = copyAfter.images.filter(imageItem => !copyBefore.images.some(beforeImage => beforeImage.id === imageItem.id));
+      const copiedLine = copiedLines[0];
+      const selectedCopiedNodes = copiedNodes.filter(node => node.selected);
+      assertion(report, 'Alt-drag copies selected Node/image group with one internal connector', copiedNodes.length === 2 && copiedImages.length === 1 && copiedLines.length === 1 && copyAfter.step === copyBefore.step + 1, JSON.stringify({ copiedNodes, copiedLines, copiedImages, copyBefore:copyBefore.step, copyAfter:copyAfter.step }));
+      assertion(report, 'copied image reuses its existing asset and copied group becomes selected', copiedImages[0].assetId === copyBefore.images.find(beforeImage => beforeImage.id === image.id).assetId && copiedImages[0].selected && selectedCopiedNodes.length === 2, JSON.stringify({ copiedImages, selectedCopiedNodes }));
+      assertion(report, 'copied internal connector preserves arrow and route labels', Boolean(copiedLine) && copiedLine.arrow === 'both' && copiedLine.labels.includes('ต้นทาง V3.95') && copiedLine.labels.includes('ปลายทาง V3.95') && copiedNodes.some(node => node.id === copiedLine.n1) && copiedNodes.some(node => node.id === copiedLine.n2), JSON.stringify(copiedLine));
+      await measured(win, () => win.doUndo());
+      const copyUndo = win.eval(`(() => ({ nodes:Array.from(document.querySelectorAll('.n'), n => n.id), lines:Array.from(document.querySelectorAll('#s line[data-n1][data-n2]'), l => l.id), images:imagePlacements.map(p => p.id) }))()`);
+      assertion(report, 'one Undo removes the complete copied Node/image group', JSON.stringify(copyUndo.nodes.sort()) === JSON.stringify(copyBefore.nodes.sort()) && JSON.stringify(copyUndo.lines.sort()) === JSON.stringify(copyBefore.lines.sort()) && JSON.stringify(copyUndo.images.sort()) === JSON.stringify(copyBefore.images.map(imageItem => imageItem.id).sort()));
+      await measured(win, () => win.doRedo());
+      const copyRedo = win.eval(`(() => ({ nodes:Array.from(document.querySelectorAll('.n'), n => n.id), lines:Array.from(document.querySelectorAll('#s line[data-n1][data-n2]'), l => l.id), images:imagePlacements.map(p => p.id) }))()`);
+      assertion(report, 'one Redo restores the complete copied Node/image group', copiedNodes.every(node => copyRedo.nodes.includes(node.id)) && copiedLines.every(line => copyRedo.lines.includes(line.id)) && copiedImages.every(imageItem => copyRedo.images.includes(imageItem.id)));
+
+      const unselectedNode = win.document.getElementById(source.id);
+      const unselectedRect = unselectedNode.getBoundingClientRect();
+      const noCopyBefore = win.eval(`(() => ({ nodeCount:nodes.length, lineCount:document.querySelectorAll('#s line[data-n1][data-n2]').length, imageCount:imagePlacements.length, step:curStep, x:document.getElementById(${JSON.stringify(source.id)}).style.left, y:document.getElementById(${JSON.stringify(source.id)}).style.top }))()`);
+      mouse(win, unselectedNode, 'mousedown', unselectedRect.left + unselectedRect.width / 2, unselectedRect.top + unselectedRect.height / 2, { altKey: true });
+      documentMouse(win, 'mousemove', unselectedRect.left + unselectedRect.width / 2 + 28, unselectedRect.top + unselectedRect.height / 2 + 16, { altKey: true });
+      documentMouse(win, 'mouseup', unselectedRect.left + unselectedRect.width / 2 + 28, unselectedRect.top + unselectedRect.height / 2 + 16, { altKey: true });
+      await nextPaint(win);
+      const noCopyAfter = win.eval(`(() => ({ nodeCount:nodes.length, lineCount:document.querySelectorAll('#s line[data-n1][data-n2]').length, imageCount:imagePlacements.length, step:curStep, x:document.getElementById(${JSON.stringify(source.id)}).style.left, y:document.getElementById(${JSON.stringify(source.id)}).style.top }))()`);
+      assertion(report, 'Alt-drag on an unselected Node makes no copy or movement', JSON.stringify(noCopyAfter) === JSON.stringify(noCopyBefore), JSON.stringify({ noCopyBefore, noCopyAfter }));
+    }
+
     async function runBenchmark() {
       let report;
       try {
@@ -625,6 +745,7 @@
         await runTextChecks(win, report);
         await runStructuralChecks(win, report);
         await runMixedImageSelectionChecks(win, report);
+        await runV395InteractionChecks(win, report);
         report.paintFallbacks = paintFallbackCount;
         report.throttledPaints = throttledPaintCount;
         report.overall = paintFallbackCount > 0 || throttledPaintCount > 0 ? 'PARTIAL' : 'PASS';
