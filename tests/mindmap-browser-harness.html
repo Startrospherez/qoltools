@@ -647,6 +647,7 @@
       documentMouse(win, 'mouseup', annotationScreen.x + 8, annotationScreen.y);
       assertion(report, 'Timeline Line hit area selects the Line near its visible stroke', win.eval('selectedAnnotationId') === annotationLine.id);
 
+      win.eval('clearSel();');
       const lineCopyBefore = win.eval('({ count:annotations.lines.length, step:curStep })');
       const selectedAnnotationHit = win.document.querySelector('.annotation-line-hit[data-annotation-id="' + annotationLine.id + '"]');
       mouse(win, selectedAnnotationHit, 'mousedown', annotationScreen.x, annotationScreen.y, { altKey: true });
@@ -654,7 +655,7 @@
       documentMouse(win, 'mouseup', annotationScreen.x + 32, annotationScreen.y + 18, { altKey: true });
       await nextPaint(win);
       const lineCopyAfter = win.eval('({ count:annotations.lines.length, step:curStep, selected:selectedAnnotationId })');
-      assertion(report, 'Alt-drag copies one selected Timeline Line in one history activity', lineCopyAfter.count === lineCopyBefore.count + 1 && lineCopyAfter.step === lineCopyBefore.step + 1 && lineCopyAfter.selected !== annotationLine.id, JSON.stringify({ lineCopyBefore, lineCopyAfter }));
+      assertion(report, 'Alt-drag directly copies one unselected Timeline Line in one history activity', lineCopyAfter.count === lineCopyBefore.count + 1 && lineCopyAfter.step === lineCopyBefore.step + 1 && lineCopyAfter.selected !== annotationLine.id, JSON.stringify({ lineCopyBefore, lineCopyAfter }));
       await measured(win, () => win.doUndo());
       assertion(report, 'one Undo removes the copied Timeline Line', win.eval('annotations.lines.length') === lineCopyBefore.count);
       await measured(win, () => win.doRedo());
@@ -666,13 +667,14 @@
       const textEl = win.document.querySelector('.annotation-text[data-annotation-text-id="' + textId + '"]');
       const textContent = textEl.querySelector('.annotation-text-content');
       const textRect = textEl.getBoundingClientRect();
+      win.eval('clearSel();');
       const textCopyBefore = win.eval('({ count:annotations.texts.length, step:curStep })');
       mouse(win, textContent, 'mousedown', textRect.left + 4, textRect.top + 4, { altKey: true });
       documentMouse(win, 'mousemove', textRect.left + 29, textRect.top + 21, { altKey: true });
       documentMouse(win, 'mouseup', textRect.left + 29, textRect.top + 21, { altKey: true });
       await nextPaint(win);
       const textCopyAfter = win.eval('({ count:annotations.texts.length, step:curStep, selected:selectedAnnotationTextId })');
-      assertion(report, 'Alt-drag copies one selected Floating Text in one history activity', textCopyAfter.count === textCopyBefore.count + 1 && textCopyAfter.step === textCopyBefore.step + 1 && textCopyAfter.selected !== textId, JSON.stringify({ textCopyBefore, textCopyAfter }));
+      assertion(report, 'Alt-drag directly copies one unselected Floating Text in one history activity', textCopyAfter.count === textCopyBefore.count + 1 && textCopyAfter.step === textCopyBefore.step + 1 && textCopyAfter.selected !== textId, JSON.stringify({ textCopyBefore, textCopyAfter }));
       await measured(win, () => win.doUndo());
       assertion(report, 'one Undo removes the copied Floating Text', win.eval('annotations.texts.length') === textCopyBefore.count);
       await measured(win, () => win.doRedo());
@@ -705,15 +707,60 @@
       const copyRedo = win.eval(`(() => ({ nodes:Array.from(document.querySelectorAll('.n'), n => n.id), lines:Array.from(document.querySelectorAll('#s line[data-n1][data-n2]'), l => l.id), images:imagePlacements.map(p => p.id) }))()`);
       assertion(report, 'one Redo restores the complete copied Node/image group', copiedNodes.every(node => copyRedo.nodes.includes(node.id)) && copiedLines.every(line => copyRedo.lines.includes(line.id)) && copiedImages.every(imageItem => copyRedo.images.includes(imageItem.id)));
 
-      const unselectedNode = win.document.getElementById(source.id);
-      const unselectedRect = unselectedNode.getBoundingClientRect();
-      const noCopyBefore = win.eval(`(() => ({ nodeCount:nodes.length, lineCount:document.querySelectorAll('#s line[data-n1][data-n2]').length, imageCount:imagePlacements.length, step:curStep, x:document.getElementById(${JSON.stringify(source.id)}).style.left, y:document.getElementById(${JSON.stringify(source.id)}).style.top }))()`);
-      mouse(win, unselectedNode, 'mousedown', unselectedRect.left + unselectedRect.width / 2, unselectedRect.top + unselectedRect.height / 2, { altKey: true });
-      documentMouse(win, 'mousemove', unselectedRect.left + unselectedRect.width / 2 + 28, unselectedRect.top + unselectedRect.height / 2 + 16, { altKey: true });
-      documentMouse(win, 'mouseup', unselectedRect.left + unselectedRect.width / 2 + 28, unselectedRect.top + unselectedRect.height / 2 + 16, { altKey: true });
+      win.eval('clearSel();');
+      const directNode = win.document.getElementById(source.id);
+      const directNodeRect = directNode.getBoundingClientRect();
+      const directNodeBefore = win.eval(`(() => ({ nodeCount:nodes.length, lineCount:document.querySelectorAll('#s line[data-n1][data-n2]').length, imageCount:imagePlacements.length, step:curStep }))()`);
+      mouse(win, directNode, 'mousedown', directNodeRect.left + directNodeRect.width / 2, directNodeRect.top + directNodeRect.height / 2, { altKey: true });
+      documentMouse(win, 'mousemove', directNodeRect.left + directNodeRect.width / 2 + 28, directNodeRect.top + directNodeRect.height / 2 + 16, { altKey: true });
+      documentMouse(win, 'mouseup', directNodeRect.left + directNodeRect.width / 2 + 28, directNodeRect.top + directNodeRect.height / 2 + 16, { altKey: true });
       await nextPaint(win);
-      const noCopyAfter = win.eval(`(() => ({ nodeCount:nodes.length, lineCount:document.querySelectorAll('#s line[data-n1][data-n2]').length, imageCount:imagePlacements.length, step:curStep, x:document.getElementById(${JSON.stringify(source.id)}).style.left, y:document.getElementById(${JSON.stringify(source.id)}).style.top }))()`);
-      assertion(report, 'Alt-drag on an unselected Node makes no copy or movement', JSON.stringify(noCopyAfter) === JSON.stringify(noCopyBefore), JSON.stringify({ noCopyBefore, noCopyAfter }));
+      const directNodeAfter = win.eval(`(() => ({ nodeCount:nodes.length, lineCount:document.querySelectorAll('#s line[data-n1][data-n2]').length, imageCount:imagePlacements.length, step:curStep, selectedNodes:nodes.filter(node => node.classList.contains('sel')).map(node => node.id) }))()`);
+      assertion(report, 'Alt-drag directly copies one unselected Node', directNodeAfter.nodeCount === directNodeBefore.nodeCount + 1 && directNodeAfter.lineCount === directNodeBefore.lineCount && directNodeAfter.imageCount === directNodeBefore.imageCount && directNodeAfter.step === directNodeBefore.step + 1 && directNodeAfter.selectedNodes.length === 1 && directNodeAfter.selectedNodes[0] !== source.id, JSON.stringify({ directNodeBefore, directNodeAfter }));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo removes directly copied Node', win.eval('nodes.length') === directNodeBefore.nodeCount);
+      await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo restores directly copied Node', win.eval('nodes.length') === directNodeAfter.nodeCount);
+
+      win.eval('clearSel();');
+      const directImage = win.document.getElementById(image.id);
+      const directImageRect = directImage.getBoundingClientRect();
+      const directImageBefore = win.eval('({ imageCount:imagePlacements.length, step:curStep })');
+      mouse(win, directImage, 'mousedown', directImageRect.left + directImageRect.width / 2, directImageRect.top + directImageRect.height / 2, { altKey: true });
+      documentMouse(win, 'mousemove', directImageRect.left + directImageRect.width / 2 + 24, directImageRect.top + directImageRect.height / 2 + 18, { altKey: true });
+      documentMouse(win, 'mouseup', directImageRect.left + directImageRect.width / 2 + 24, directImageRect.top + directImageRect.height / 2 + 18, { altKey: true });
+      await nextPaint(win);
+      const directImageAfter = win.eval('({ imageCount:imagePlacements.length, step:curStep, selectedImages:Array.from(selectedImageIds) })');
+      assertion(report, 'Alt-drag directly copies one unselected image', directImageAfter.imageCount === directImageBefore.imageCount + 1 && directImageAfter.step === directImageBefore.step + 1 && directImageAfter.selectedImages.length === 1 && directImageAfter.selectedImages[0] !== image.id, JSON.stringify({ directImageBefore, directImageAfter }));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo removes directly copied image', win.eval('imagePlacements.length') === directImageBefore.imageCount);
+      await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo restores directly copied image', win.eval('imagePlacements.length') === directImageAfter.imageCount);
+
+      selectMixedGroup(win, [source.id, paired.id], []);
+      const expandedImage = win.document.getElementById(image.id);
+      const expandedImageRect = expandedImage.getBoundingClientRect();
+      const expandedBefore = win.eval('({ nodeCount:nodes.length, lineCount:document.querySelectorAll(\'#s line[data-n1][data-n2]\').length, imageCount:imagePlacements.length, step:curStep })');
+      mouse(win, expandedImage, 'mousedown', expandedImageRect.left + expandedImageRect.width / 2, expandedImageRect.top + expandedImageRect.height / 2, { altKey: true });
+      documentMouse(win, 'mousemove', expandedImageRect.left + expandedImageRect.width / 2 + 30, expandedImageRect.top + expandedImageRect.height / 2 + 20, { altKey: true });
+      documentMouse(win, 'mouseup', expandedImageRect.left + expandedImageRect.width / 2 + 30, expandedImageRect.top + expandedImageRect.height / 2 + 20, { altKey: true });
+      await nextPaint(win);
+      const expandedAfter = win.eval('({ nodeCount:nodes.length, lineCount:document.querySelectorAll(\'#s line[data-n1][data-n2]\').length, imageCount:imagePlacements.length, step:curStep, selectedNodes:nodes.filter(node => node.classList.contains(\'sel\')).length, selectedImages:Array.from(selectedImageIds).length })');
+      assertion(report, 'Alt-drag adds an unselected image to the copied Node/image group', expandedAfter.nodeCount === expandedBefore.nodeCount + 2 && expandedAfter.lineCount === expandedBefore.lineCount + 1 && expandedAfter.imageCount === expandedBefore.imageCount + 1 && expandedAfter.step === expandedBefore.step + 1 && expandedAfter.selectedNodes === 2 && expandedAfter.selectedImages === 1, JSON.stringify({ expandedBefore, expandedAfter }));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo removes the expanded Node/image copy group', win.eval(`nodes.length === ${expandedBefore.nodeCount} && document.querySelectorAll('#s line[data-n1][data-n2]').length === ${expandedBefore.lineCount} && imagePlacements.length === ${expandedBefore.imageCount}`));
+      await measured(win, () => win.doRedo());
+      assertion(report, 'one Redo restores the expanded Node/image copy group', win.eval(`nodes.length === ${expandedAfter.nodeCount} && document.querySelectorAll('#s line[data-n1][data-n2]').length === ${expandedAfter.lineCount} && imagePlacements.length === ${expandedAfter.imageCount}`));
+
+      win.eval('clearSel();');
+      const noDragNode = win.document.getElementById(source.id);
+      const noDragRect = noDragNode.getBoundingClientRect();
+      const noDragBefore = win.eval(`(() => ({ nodeCount:nodes.length, lineCount:document.querySelectorAll('#s line[data-n1][data-n2]').length, imageCount:imagePlacements.length, step:curStep, selectedNodes:nodes.filter(node => node.classList.contains('sel')).length, selectedImages:selectedImageIds.size, selectedLine:selectedAnnotationId, selectedText:selectedAnnotationTextId }))()`);
+      mouse(win, noDragNode, 'mousedown', noDragRect.left + noDragRect.width / 2, noDragRect.top + noDragRect.height / 2, { altKey: true });
+      documentMouse(win, 'mouseup', noDragRect.left + noDragRect.width / 2, noDragRect.top + noDragRect.height / 2, { altKey: true });
+      await nextPaint(win);
+      const noDragAfter = win.eval(`(() => ({ nodeCount:nodes.length, lineCount:document.querySelectorAll('#s line[data-n1][data-n2]').length, imageCount:imagePlacements.length, step:curStep, selectedNodes:nodes.filter(node => node.classList.contains('sel')).length, selectedImages:selectedImageIds.size, selectedLine:selectedAnnotationId, selectedText:selectedAnnotationTextId }))()`);
+      assertion(report, 'Alt-click without dragging creates no copy and preserves selection', JSON.stringify(noDragAfter) === JSON.stringify(noDragBefore), JSON.stringify({ noDragBefore, noDragAfter }));
     }
 
     async function runBenchmark() {
