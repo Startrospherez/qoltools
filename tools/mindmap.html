@@ -2,35 +2,40 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MindMap V3.98</title>
+<title>MindMap V3.99</title>
     <style>
         :root {
-            /* โทนสีปัจจุบัน (สำหรับกรอบ) */
+            /* สีที่ลงบน Board ต้องคงตระกูลเดิม แม้สลับปุ่ม 🎨 ภายหลัง */
             --bg: rgb(244,238,224); --fg: rgb(60,60,60); --tb: rgb(228,220,204); --bc: rgb(200,190,175);
-            --c1: rgb(220,50,50); --c2: rgb(230,110,20); --c3: rgb(240,160,0); --c4: rgb(220,190,0);
-            --c5: rgb(180,180,0); --c6: rgb(120,190,0); --c7: rgb(40,180,40); --c8: rgb(0,170,150);
-            --c9: rgb(30,120,220); --c10: rgb(120,70,210); --c11: rgb(180,50,200); --c12: rgb(220,60,140);
-            --c13: rgb(160,100,50); --c14: rgb(130,130,130); --c15: rgb(60,60,60); --c16: rgb(255,255,255);
+            --normal-c1: rgb(220,50,50); --normal-c2: rgb(230,110,20); --normal-c3: rgb(240,160,0); --normal-c4: rgb(220,190,0);
+            --normal-c5: rgb(180,180,0); --normal-c6: rgb(120,190,0); --normal-c7: rgb(40,180,40); --normal-c8: rgb(0,170,150);
+            --normal-c9: rgb(30,120,220); --normal-c10: rgb(120,70,210); --normal-c11: rgb(180,50,200); --normal-c12: rgb(220,60,140);
+            --normal-c13: rgb(160,100,50); --normal-c14: rgb(130,130,130); --normal-c15: rgb(60,60,60); --normal-c16: rgb(255,255,255);
+            --highlight-c1: rgb(255,153,153); --highlight-c2: rgb(255,191,128); --highlight-c3: rgb(255,230,128); --highlight-c4: rgb(255,242,128);
+            --highlight-c5: rgb(255,255,128); --highlight-c6: rgb(217,255,128); --highlight-c7: rgb(153,255,153); --highlight-c8: rgb(128,255,204);
+            --highlight-c9: rgb(128,204,255); --highlight-c10: rgb(191,128,255); --highlight-c11: rgb(255,128,255); --highlight-c12: rgb(255,128,191);
+            --highlight-c13: rgb(210,180,140); --highlight-c14: rgb(192,192,192); --highlight-c15: rgb(60,60,60); --highlight-c16: rgb(255,255,255);
+            --c1: var(--normal-c1); --c2: var(--normal-c2); --c3: var(--normal-c3); --c4: var(--normal-c4);
+            --c5: var(--normal-c5); --c6: var(--normal-c6); --c7: var(--normal-c7); --c8: var(--normal-c8);
+            --c9: var(--normal-c9); --c10: var(--normal-c10); --c11: var(--normal-c11); --c12: var(--normal-c12);
+            --c13: var(--normal-c13); --c14: var(--normal-c14); --c15: var(--normal-c15); --c16: var(--normal-c16);
         }
         .dark {
             --bg: rgb(30,30,30); --fg: rgb(220,220,220); --tb: rgb(50,50,50); --bc: rgb(70,70,70); --nb: rgb(51,51,51);
-            --c1: rgb(255,100,100); --c2: rgb(255,150,80); --c3: rgb(255,190,80); --c4: rgb(240,220,80);
-            --c5: rgb(220,220,80); --c6: rgb(180,230,80); --c7: rgb(100,220,100); --c8: rgb(80,220,200);
-            --c9: rgb(100,180,255); --c10: rgb(160,130,255); --c11: rgb(220,130,255); --c12: rgb(255,120,190);
-            --c13: rgb(190,140,100); --c14: rgb(170,170,170); --c15: rgb(60,60,60); --c16: rgb(220,220,220);
+            --normal-c1: rgb(255,100,100); --normal-c2: rgb(255,150,80); --normal-c3: rgb(255,190,80); --normal-c4: rgb(240,220,80);
+            --normal-c5: rgb(220,220,80); --normal-c6: rgb(180,230,80); --normal-c7: rgb(100,220,100); --normal-c8: rgb(80,220,200);
+            --normal-c9: rgb(100,180,255); --normal-c10: rgb(160,130,255); --normal-c11: rgb(220,130,255); --normal-c12: rgb(255,120,190);
+            --normal-c13: rgb(190,140,100); --normal-c14: rgb(170,170,170); --normal-c15: rgb(60,60,60); --normal-c16: rgb(220,220,220);
+            --highlight-c1: rgb(128,0,0); --highlight-c2: rgb(153,51,0); --highlight-c3: rgb(153,102,0); --highlight-c4: rgb(128,128,0);
+            --highlight-c5: rgb(102,102,0); --highlight-c6: rgb(77,128,0); --highlight-c7: rgb(0,102,0); --highlight-c8: rgb(0,102,102);
+            --highlight-c9: rgb(0,51,153); --highlight-c10: rgb(51,0,153); --highlight-c11: rgb(102,0,102); --highlight-c12: rgb(128,0,64);
+            --highlight-c13: rgb(102,64,32); --highlight-c14: rgb(85,85,85); --highlight-c15: rgb(60,60,60); --highlight-c16: rgb(220,220,220);
         }
-        /* โทนสีเดิม (สำหรับไฮไลต์) — สลับด้วยปุ่ม 🎨 */
         .hl-mode {
-            --c1: rgb(255,153,153); --c2: rgb(255,191,128); --c3: rgb(255,230,128); --c4: rgb(255,242,128);
-            --c5: rgb(255,255,128); --c6: rgb(217,255,128); --c7: rgb(153,255,153); --c8: rgb(128,255,204);
-            --c9: rgb(128,204,255); --c10: rgb(191,128,255); --c11: rgb(255,128,255); --c12: rgb(255,128,191);
-            --c13: rgb(210,180,140); --c14: rgb(192,192,192);
-        }
-        .dark.hl-mode {
-            --c1: rgb(128,0,0); --c2: rgb(153,51,0); --c3: rgb(153,102,0); --c4: rgb(128,128,0);
-            --c5: rgb(102,102,0); --c6: rgb(77,128,0); --c7: rgb(0,102,0); --c8: rgb(0,102,102);
-            --c9: rgb(0,51,153); --c10: rgb(51,0,153); --c11: rgb(102,0,102); --c12: rgb(128,0,64);
-            --c13: rgb(102,64,32); --c14: rgb(85,85,85);
+            --c1: var(--highlight-c1); --c2: var(--highlight-c2); --c3: var(--highlight-c3); --c4: var(--highlight-c4);
+            --c5: var(--highlight-c5); --c6: var(--highlight-c6); --c7: var(--highlight-c7); --c8: var(--highlight-c8);
+            --c9: var(--highlight-c9); --c10: var(--highlight-c10); --c11: var(--highlight-c11); --c12: var(--highlight-c12);
+            --c13: var(--highlight-c13); --c14: var(--highlight-c14); --c15: var(--highlight-c15); --c16: var(--highlight-c16);
         }
         /* White base — auto when neither Sepia nor Dark is active */
         .white {
@@ -39,6 +44,7 @@
         .shader::after { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgb(220,204,177); mix-blend-mode: multiply; pointer-events: none; z-index: 99999; }
         
         body { margin: 0; background: var(--bg); color: var(--fg); font-family: sans-serif; transition: background 0.3s, color 0.3s; overflow: hidden; }
+        body.canvas-dark-viewport { background: rgb(24,24,24); }
         button { cursor: pointer; padding: 4px 8px; border: 1px solid rgb(170,170,170); border-radius: 4px; background: rgb(255,255,255); color: rgb(0,0,0); transition: all 0.2s; white-space: nowrap; }
         button:hover { background: rgb(238,238,238); }
         .c { width: 24px !important; height: 24px !important; min-width: 24px; min-height: 24px; flex: 0 0 auto; border-radius: 50%; padding: 0; border: 2px solid rgba(0,0,0,0.2); box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; color: rgba(0,0,0,0.6); }
@@ -255,31 +261,67 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.98</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.99</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <details>
-    <summary>📖 วิธีใช้งาน</summary>
-    <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เนื้อหา และข้อมูลประกอบในหน้าเดียว</p>
-    <p>เลือกใช้ <b>📥 Import</b> เพื่อเปิด JSON เดิมหรือ Project ZIP, <b>📤 Export</b> เพื่อเก็บโปรเจกต์พร้อมภาพต้นฉบับ, <b>💾 HTML</b> เพื่อบันทึกหน้า MindMap ไฟล์เดียวพร้อมภาพย่อ หรือ <b>📸 PNG</b> เพื่อบันทึกภาพ</p>
+    <summary>🌿 แนะนำเบื้องต้น</summary>
+    <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เส้นทาง เนื้อหา ภาพ และข้อมูลประกอบในกระดานเดียว เหมาะทั้งงานเล็กและแผนผังระยะยาว</p>
+    <p><b>📥 Import</b> เปิด JSON เดิมหรือ Project ZIP, <b>📤 Export</b> เก็บโปรเจกต์เป็น ZIP พร้อมภาพต้นฉบับ, <b>💾 HTML</b> สร้างไฟล์เปิดดูได้ทันทีพร้อมภาพย่อ และ <b>📸 PNG</b> บันทึกเป็นภาพ</p>
 </details>
 <details>
-    <summary>🧩 ใช้งานยังไง?</summary>
-    <ul><li>ดับเบิลคลิกพื้นที่ว่างเพื่อสร้าง node</li><li>แก้ไขหัวข้อและรายละเอียดในกล่องได้โดยตรง</li><li>ลากปุ่ม <b>+</b> รอบ node เพื่อเชื่อม, แตกแขนง หรือสร้าง node ใหม่</li><li>ชี้และคลิกเส้นเชื่อมเพื่อแทรกจุดเชื่อมแล้วสร้าง node ใหม่; กดค้างแล้วลากจากเส้นเพื่อวาง node ณ จุดที่ปล่อย</li><li><kbd>Alt</kbd> + คลิกเส้นเชื่อม เพื่อวนหัวลูกศร: ไม่มี → ไปข้างหน้า → ย้อนกลับ → สองหัว ↔</li><li>ใช้ <b>🔎 Find</b> ค้นหาหัวข้อ, รายละเอียด, และ Note; ข้อความที่พบในหัวข้อ/รายละเอียดจะถูกเน้นสี ส่วนที่พบใน Note จะทำให้ปุ่ม <b>📝</b> ของ node แสดงและถูกเน้น โดยไม่แสดงข้อความ Note บน Canvas; ในหน้าต่าง Note มี <b>🔎 ค้นหาในบันทึก</b> ด้านบนเสมอ สำหรับเลือกคำที่พบทีละตำแหน่ง</li><li><kbd>Shift</kbd> + คลิก หรือ ลากพื้นที่ว่างเพื่อเลือกหลาย node และหลายภาพพร้อมกัน; ลากวัตถุชิ้นใดในกลุ่มเพื่อย้ายทั้งกลุ่ม โดย <b>🧲 Snap</b> รักษาระยะห่างเดิมของทุกชิ้น</li><li>กด <kbd>Alt</kbd> ค้างพร้อมลากเพื่อคัดลอก Node, รูป, Line หรือ Text ลอยได้ทันที; หากลาก Node/รูปที่อยู่ในชุดเลือก จะคัดลอกทั้งชุด และหากมีชุดเดิมอยู่จะรวมชิ้นที่ลากเพิ่มเข้าไปด้วย; ชุดสำเนาวางตรงตำแหน่งที่ปล่อยเมาส์</li><li>คลิกขวาหรือกดเมาส์กลางค้างเพื่อเลื่อนมุมมอง</li></ul>
+    <summary>🌱 วิธีใช้งาน Basic</summary>
+    <ul>
+        <li>ดับเบิลคลิกพื้นที่ว่างเพื่อสร้าง Node แล้วแก้หัวข้อและรายละเอียดในกล่องได้โดยตรง</li>
+        <li>ลากปุ่ม <b>+</b> รอบ Node เพื่อเชื่อม แตกแขนง หรือสร้าง Node ใหม่</li>
+        <li>ลาก Node, รูป, <b>│ Line</b>, <b>T Text ลอย</b> หรือ <b>🟨 Area</b> เพื่อจัดตำแหน่ง; กด <kbd>Shift</kbd> ระหว่างลาก Text ลอยเพื่อล็อกแนวนอนหรือแนวตั้ง</li>
+        <li>คลิกวัตถุเพื่อเลือก, <kbd>Shift</kbd> + คลิกเพื่อเพิ่มหรือลดจากชุดเลือก และลากพื้นที่ว่างเพื่อคลุมเลือกหลายชิ้น</li>
+        <li><b>▦ Grid</b> แสดงตาราง, <b>🧲 Snap</b> ล็อกตำแหน่ง และเมาส์กลางหรือคลิกขวาค้างใช้เลื่อนกระดาน</li>
+        <li>ใช้ล้อเมาส์ Zoom เข้า-ออก; คลิกตัวเลขเปอร์เซ็นต์มุมซ้ายล่างเพื่อกลับ 100%</li>
+    </ul>
 </details>
 <details>
-    <summary>🧭 ทำยังไง?</summary>
-    <ul><li>ใช้เมาส์เพื่อ Zoom เข้า-ออก ได้</li><li><b>Theme</b> วน Sepia → Dark → Sepia with Dark Canvas</li><li><b>▦ Grid</b> แสดงตาราง และ <b>🧲 Snap</b> ล็อกกึ่งกลาง node ลงกริด</li><li>กดตัวเลขเปอร์เซ็นต์มุมซ้ายล่างเพื่อกลับสู่ 100%</li><li>กด <kbd>Alt</kbd> + <kbd>R</kbd> เพื่อ Fit graph; กดซ้ำเพื่อกลับมุมเดิม หรือหลังเลื่อนมุมมองให้กลับระดับ Zoom เดิมที่ตำแหน่งเมาส์</li><li>ชี้หรือเลือก node เพื่อเห็นป้ายความสัมพันธ์ของทุกเส้นรอบ node เช่น <b>→ +</b>; คลิกป้ายเพื่อไปยัง node อีกฝั่ง, ดับเบิลคลิกเพื่อพิมพ์หรือแก้คำ และลากเพื่อย้ายตำแหน่งบนเส้น ลูกศรจะชี้ตามทิศที่เส้นออกจาก node</li><li>เลือกหลาย node เพื่อใช้ T/C/B-Align, L/C/R-Align และ Dist</li></ul>
+    <summary>🧰 วิธีใช้งาน Intermediate</summary>
+    <ul>
+        <li><b>🔎 Find</b> ค้นหัวข้อ รายละเอียด Note และข้อมูล Area; ผลใน Note จะเน้นปุ่ม <b>📝</b> โดยไม่เปิดข้อความบน Canvas</li>
+        <li>กด <b>📝</b> ของ Node หรือ Area เพื่อเก็บ Note หลายบรรทัด และใช้ช่องค้นหาภายในบันทึกเลือกคำที่พบทีละตำแหน่ง</li>
+        <li><b>🖼️ IMG</b> หรือวางไฟล์ภาพลง Canvas; ลากมุมเพื่อปรับขนาด, <kbd>Shift</kbd> รักษาสัดส่วน, <kbd>Ctrl</kbd> รักษาศูนย์กลาง และดับเบิลคลิกเพื่อดูภาพเต็มพร้อมคำบรรยาย/แหล่งที่มา</li>
+        <li>เลือกหลายวัตถุแล้วใช้ T/C/B-Align, L/C/R-Align และ Dist; การลาก ลบ จัดแนว และปรับขนาดแบบกลุ่มย้อนกลับได้ด้วย Undo ครั้งเดียวต่อกิจกรรม</li>
+        <li>กด <kbd>Alt</kbd> ค้างแล้วลากเพื่อทำสำเนาวัตถุหรือชุดที่เลือก และวางสำเนาตรงตำแหน่งปล่อยเมาส์</li>
+        <li><b>Theme</b> วน Sepia → Dark → Sepia with Dark Canvas; <b>🎨</b> เลือกตระกูลสีสำหรับการลงสีครั้งถัดไป โดยสีที่ลงไว้แล้วไม่เปลี่ยนตาม</li>
+        <li>กด <kbd>Alt</kbd> + <kbd>R</kbd> เพื่อ Fit graph; กดซ้ำเพื่อกลับมุมมองเดิม หรือกลับระดับ Zoom เดิม ณ ตำแหน่งเมาส์หลังเลื่อนกระดาน</li>
+    </ul>
 </details>
 <details>
-    <summary>✨ นอกจาก node ที่เห็นแล้วมีอะไรอีก?</summary>
-    <ul><li>กด <b>🖼️ IMG</b> หรือวางไฟล์ภาพลงบน Canvas ได้; <b>🌄 ภาพ</b> ใช้ซ่อน/แสดงภาพชั่วคราวเพื่อลดภาระการแสดงผลโดยไม่ลบข้อมูล</li><li>คลิกภาพเพื่อย้าย, ลากจุดมุมเพื่อปรับขนาด; กด <kbd>Shift</kbd> เพื่อรักษาสัดส่วน, <kbd>Ctrl</kbd> เพื่อรักษาจุดศูนย์กลาง, หรือกดทั้งคู่พร้อมกัน</li><li>ดับเบิลคลิกภาพ หรือกด <b>i</b> ข้างภาพ เพื่อดูภาพเต็มและบันทึกคำบรรยาย, แหล่งที่มา, และบันทึกเพิ่มเติม</li><li>กด <b>📝</b> ที่มุมซ้ายล่างของ node เพื่อเปิดพื้นที่บันทึกข้อความหลายบรรทัด</li><li>กด <b>│</b> เพื่อเพิ่มเส้นแบ่งแนวตั้ง; เลือกเส้นแล้วลากปลายเส้นเพื่อกำหนดมุม, กด <kbd>Shift</kbd> เพื่อล็อกแนวนอนหรือแนวตั้ง, ใช้ <b>🧲 Snap</b> เพื่อล็อกปลายเส้นเข้ากริด และกด <kbd>Delete</kbd> เพื่อลบ</li><li>กด <b>T</b> เพื่อสร้างหัวข้อช่วงเวลา พร้อมคำอธิบายบรรทัดเล็กด้านล่าง; พิมพ์แทนข้อความเริ่มต้นได้ทันที, ดับเบิลคลิกเพื่อแก้ไขอีกครั้ง, กด <kbd>Shift</kbd> + <kbd>Enter</kbd> เพื่อขึ้นบรรทัดใหม่, ลากเพื่อย้าย และใช้ A+/A- หรือแถบสีเพื่อปรับรูปแบบ; ระหว่างลากกด <kbd>Shift</kbd> เพื่อล็อกการเคลื่อนที่แนวนอนหรือแนวตั้ง</li><li>กด <b>🟨 Area</b> เพื่อเข้าโหมดวาดพื้นหลัง: ลากพื้นที่ว่างเพื่อสร้าง, ลากพื้นที่เพื่อย้าย, ใช้จุดรอบกรอบเพื่อปรับขนาด และเลือกสีจากแถบสี; กด <kbd>Esc</kbd> หรือ <b>🟨 Area</b> ซ้ำเพื่อออกจากโหมด แล้วพื้นที่สีจะคลิกทะลุได้ตามปกติ</li></ul>
+    <summary>🛠️ วิธีใช้งาน Advanced</summary>
+    <ul>
+        <li>ชี้หรือเลือก Node เพื่อเห็นป้ายความสัมพันธ์รอบ Node; คลิกป้ายเพื่อไปปลายทาง, ดับเบิลคลิกเพื่อแก้คำ และลากเพื่อย้ายป้ายบนเส้น</li>
+        <li>คลิกเส้นเชื่อมเพื่อสร้าง Node จากจุดนั้น หรือกดค้างแล้วลากออกไปเพื่อกำหนดตำแหน่ง Node ใหม่</li>
+        <li><kbd>Alt</kbd> + คลิกซ้ายเส้นเชื่อม วนหัวลูกศร: ไม่มี → ไปข้างหน้า → ย้อนกลับ → สองหัว; <kbd>Alt</kbd> + เมาส์กลางบนเส้น วนเส้นทึบ → เส้นจุด → เส้นประ</li>
+        <li><b>│ Line</b> เป็นเส้นแบ่งอิสระ: ลากปลายเพื่อกำหนดมุม, กด <kbd>Shift</kbd> เพื่อล็อกแนวนอน/แนวตั้ง และใช้ Snap ล็อกปลายลงกริด</li>
+        <li><b>T Text ลอย</b> มีชื่อและ Description, ดับเบิลคลิกเพื่อแก้, <kbd>Shift</kbd> + <kbd>Enter</kbd> เพื่อขึ้นบรรทัดใหม่ และใช้ A+/A− ปรับขนาด</li>
+        <li><b>🟨 Area</b> เปิดโหมดวาดพื้นหลัง: ลากเพื่อสร้าง/ย้าย, ใช้จุดรอบกรอบปรับขนาด, ใส่ชื่อ Description และ Note; ออกจากโหมดด้วย <kbd>Esc</kbd> แล้วพื้น Area จะคลิกทะลุได้</li>
+        <li>A+/A− กดหนึ่งครั้งปรับหนึ่งระดับ หรือกดค้างเพื่อปรับต่อเนื่อง; ใช้กับ Node, Text ลอย และข้อความ Area</li>
+    </ul>
 </details>
 <details>
     <summary>⌨️ Hotkeys</summary>
-    <ul><li><kbd>Alt</kbd> + คลิกเส้นเชื่อม วนหัวลูกศร</li><li><kbd>Alt</kbd> + ลาก คัดลอก Node/รูป, Line หรือ Text ลอย; Node/รูปที่มีชุดเลือกจะคัดลอกทั้งชุด</li><li><kbd>Shift</kbd> + ลาก Floating Text ล็อกแนวนอนหรือแนวตั้ง</li><li><kbd>Alt</kbd> + <kbd>S</kbd> <b>💾 HTML</b></li><li><kbd>Alt</kbd> + <kbd>Z</kbd> <b>↩️ Undo</b> / <kbd>Alt</kbd> + <kbd>Y</kbd> <b>↪️ Redo</b></li><li><kbd>Alt</kbd> + <kbd>B</kbd> คัดลอก Bookmark</li><li><kbd>Alt</kbd> + <kbd>R</kbd> Fit graph / กลับมุมมองเดิม</li><li><kbd>Alt</kbd> + <kbd>U</kbd>, <kbd>J</kbd>, <kbd>M</kbd> สำหรับ T/C/B-Align</li><li><kbd>Alt</kbd> + <kbd>I</kbd>, <kbd>O</kbd>, <kbd>P</kbd> สำหรับ L/C/R-Align</li><li><kbd>Alt</kbd> + <kbd>K</kbd> / <kbd>L</kbd> สำหรับ ↔ Dist / ↕ Dist</li><li><kbd>Alt</kbd> + <kbd>1</kbd> ถึง <kbd>'</kbd> เลือกสีกรอบ, <kbd>Alt</kbd> + <kbd>\</kbd> ล้างสีกรอบ</li><li><kbd>Delete</kbd> ลบ node, รูป, Line, Text ลอย หรือ Area ที่เลือก (นอกช่องพิมพ์)</li><li><kbd>Esc</kbd> ออกจากโหมด Area หรือยกเลิกการลาก Area; <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> สลับหัวข้อและรายละเอียด; ใน <b>🔎 Find</b> ใช้ <kbd>Enter</kbd> / <kbd>Shift</kbd> + <kbd>Enter</kbd> เปลี่ยนผลค้นหา</li></ul>
+    <ul>
+        <li><kbd>Alt</kbd> + ลาก — คัดลอกวัตถุหรือชุดที่เลือก</li>
+        <li><kbd>Alt</kbd> + คลิกซ้ายเส้น — วนหัวลูกศร; <kbd>Alt</kbd> + เมาส์กลางบนเส้น — วนรูปแบบเส้น</li>
+        <li><kbd>Alt</kbd> + <kbd>S</kbd> — <b>💾 HTML</b>; <kbd>Alt</kbd> + <kbd>B</kbd> — คัดลอก Bookmark; <kbd>Alt</kbd> + <kbd>R</kbd> — Fit/กลับมุมมอง</li>
+        <li><kbd>Alt</kbd> + <kbd>Z</kbd> — <b>↩️ Undo</b>; <kbd>Alt</kbd> + <kbd>Y</kbd> — <b>↪️ Redo</b></li>
+        <li><kbd>Alt</kbd> + <kbd>U</kbd>/<kbd>J</kbd>/<kbd>M</kbd> — T/C/B-Align; <kbd>Alt</kbd> + <kbd>I</kbd>/<kbd>O</kbd>/<kbd>P</kbd> — L/C/R-Align</li>
+        <li><kbd>Alt</kbd> + <kbd>K</kbd>/<kbd>L</kbd> — กระจายแนวนอน/แนวตั้ง</li>
+        <li><kbd>Alt</kbd> + <kbd>1</kbd> ถึง <kbd>'</kbd> — เลือกสีกรอบ; <kbd>Alt</kbd> + <kbd>\</kbd> — ล้างสีกรอบ</li>
+        <li><kbd>Delete</kbd> — ลบชุดที่เลือก; <kbd>Esc</kbd> — ปิดหน้าต่าง/ออกโหมด Area; <kbd>Tab</kbd>/<kbd>Shift</kbd> + <kbd>Tab</kbd> — สลับหัวข้อกับรายละเอียด</li>
+        <li>ใน <b>🔎 Find</b> ใช้ <kbd>Enter</kbd>/<kbd>Shift</kbd> + <kbd>Enter</kbd> เพื่อไปผลถัดไป/ก่อนหน้า</li>
+    </ul>
 </details>
 <details>
-    <summary>🤝 การแบ่งปัน (เครดิต)</summary>
-    <p>สร้างสรรค์สำหรับใช้ส่วนตัว และเผยแผ่เป็นธรรมทานโดย:<br><b>พระเจตภาณุ สุตธโร (P.Chetphanu Sutadharo)<br>🪷 วัดสวนธรรมพุทธรังสี จ.พระนครศรีอยุธยา (ธรรมอารี)</b></p><p>🙏 ฟังธรรมและปฏิบัติธรรมออนไลน์ร่วมกันได้ที่<br>🔵 Facebook: ธรรมอารี <a href="https://www.facebook.com/dhammaaree/" target="_blank">คลิกที่นี่</a><br>🔴 YouTube: ธรรมอารี <a href="https://www.youtube.com/dhamma_aree/" target="_blank">คลิกที่นี่</a><br>📅 ทุกวัน เวลา ☀️7.00 น. และ 🌙18.30 น.</p><p>📢 สนใจสมัครคอร์สปฏิบัติธรรม: <a href="https://www.dhammaaree.com/other" target="_blank">ลิงก์สมัคร</a><br>🟩 Line OA ธรรมอารี-คอร์สอบรม: <a href="https://line.me/R/ti/p/@course_aree" target="_blank">ลิงก์แอด</a><br>หรือพิมพ์เพิ่มเพื่อนในไลน์ว่า @course_aree</p><p style="margin:22px 0 0;text-align:center;opacity:0.7;">© 2026 Chetphanu Sutadharo</p>
+    <summary>🤝 เครดิต</summary>
+    <p>สร้างสรรค์สำหรับใช้ส่วนตัว และเผยแผ่เป็นธรรมทานโดย:<br><b>พระเจตภาณุ สุตธโร (P.Chetphanu Sutadharo)<br>🪷 วัดสวนธรรมพุทธรังสี จ.พระนครศรีอยุธยา (ธรรมอารี)</b></p>
+    <p>🙏 ฟังธรรมและปฏิบัติธรรมออนไลน์ร่วมกันได้ที่<br>🔵 Facebook: ธรรมอารี <a href="https://www.facebook.com/dhammaaree/" target="_blank">คลิกที่นี่</a><br>🔴 YouTube: ธรรมอารี <a href="https://www.youtube.com/dhamma_aree/" target="_blank">คลิกที่นี่</a><br>📅 ทุกวัน เวลา ☀️7.00 น. และ 🌙18.30 น.</p>
+    <p>📢 สนใจสมัครคอร์สปฏิบัติธรรม: <a href="https://www.dhammaaree.com/other" target="_blank">ลิงก์สมัคร</a><br>🟩 Line OA ธรรมอารี-คอร์สอบรม: <a href="https://line.me/R/ti/p/@course_aree" target="_blank">ลิงก์แอด</a><br>หรือพิมพ์เพิ่มเพื่อนในไลน์ว่า @course_aree</p>
+    <p style="margin:22px 0 0;text-align:center;opacity:0.7;">© 2026 Chetphanu Sutadharo</p>
 </details>
         </div>
     </div>
@@ -310,8 +352,8 @@
         <!-- Block 1: Tools -->
         <div class="ui-col no-border" style="align-items:center; justify-content:center;">
             <button class="tool-btn" style="background:rgb(255,255,255); color:rgb(0,0,0); border-radius:4px; border:1px solid rgb(170,170,170); margin-bottom:4px; text-shadow:none !important;" onclick="window.toggleUI()" title="ซ่อนแถบเครื่องมือ">🛠️</button>
-            <button class="tool-btn" style="margin-bottom:4px;" onclick="window.changeFontSize('+')" title="เพิ่มขนาดตัวอักษรกล่องที่เลือก">A+</button>
-            <button class="tool-btn" onclick="window.changeFontSize('-')" title="ลดขนาดตัวอักษรกล่องที่เลือก">A-</button>
+            <button class="tool-btn" style="margin-bottom:4px;" onmousedown="window.startFontSizeHold(event,'+')" title="เพิ่มขนาดตัวอักษรของ Node, Text ลอย หรือ Area ที่เลือก">A+</button>
+            <button class="tool-btn" onmousedown="window.startFontSizeHold(event,'-')" title="ลดขนาดตัวอักษรของ Node, Text ลอย หรือ Area ที่เลือก">A-</button>
         </div>
         
         <!-- Block 2: Colors -->
@@ -342,14 +384,14 @@
                 <button onclick="window.setShape('ellipse')" title="Ellipse">⭕</button>
                 <button onclick="window.setShape('diamond')" title="Diamond">🔷</button>
                 <button onclick="window.setShape('scroll')" title="Scroll">📜</button>
+                <button onclick="window.addAnnotationLine()" title="Line — เส้นแบ่งแนวตั้งอิสระบน Canvas">│</button>
+                <button onclick="window.addAnnotationText()" title="Floating Text — หัวข้อหรือข้อความลอยบน Canvas">T</button>
             </div>
             <div class="flex-row" style="margin-bottom:4px;">
                 <button onclick="window.setShape('folder')" title="Folder">📁</button>
                 <button onclick="window.setShape('tag')" title="Tag">🏷️</button>
                 <button onclick="window.setShape('speech-box')" title="Speech Bubble">💬</button>
                 <button onclick="window.setShape('think')" title="Think Bubble">💭</button>
-                <button onclick="window.addAnnotationLine()" title="Line — เส้นแบ่งแนวตั้งอิสระบน Canvas">│</button>
-                <button onclick="window.addAnnotationText()" title="Floating Text — หัวข้อหรือข้อความลอยบน Canvas">T</button>
                 <button id="area-mode-btn" onclick="window.toggleAreaMode(event)" title="Area — วาดพื้นที่สีพื้นหลังแบบคลิกทะลุ">🟨 Area</button>
             </div>
             <div class="flex-row" style="justify-content:center;">
@@ -835,14 +877,20 @@
         document.getElementById('find-ui').addEventListener('keydown', function(e) { if(e.key === 'Escape') { e.preventDefault(); window.closeFind(); } });
         window.addEventListener('resize', updateFindPosition);
 
+        function setSharedControlsHidden(hidden) {
+            ['hub-back-link','tool-switch-btn'].forEach(id => { let el = document.getElementById(id); if(el) el.style.display = hidden ? 'none' : ''; });
+            let flyout = document.getElementById('tool-switch-flyout'); if(flyout) flyout.style.display = 'none';
+        }
         window.toggleUI = function() {
             uiHidden = !uiHidden;
             if(uiHidden) {
                 document.getElementById('mm-ui').style.display = 'none';
                 document.getElementById('float-ui-btn').style.display = 'flex';
+                setSharedControlsHidden(true);
             } else {
                 document.getElementById('float-ui-btn').style.display = 'none';
                 document.getElementById('mm-ui').style.display = 'flex';
+                setSharedControlsHidden(false);
             }
             updateFindPosition();
         };
@@ -983,16 +1031,22 @@
         window.cycleMindmapTheme = function() {
             if(b.classList.contains('canvas-dark')) {
                 b.classList.remove('canvas-dark');
+                document.body.classList.remove('canvas-dark-viewport');
+                document.body.style.removeProperty('background');
                 if(window.setBaseTheme) window.setBaseTheme('sepia'); else { bd.classList.remove('dark', 'white'); }
             } else if(bd.classList.contains('dark')) {
                 if(window.setBaseTheme) window.setBaseTheme('sepia'); else { bd.classList.remove('dark', 'white'); }
                 b.classList.add('canvas-dark');
+                document.body.classList.add('canvas-dark-viewport');
+                document.body.style.setProperty('background', 'rgb(24,24,24)', 'important');
             } else {
+                document.body.classList.remove('canvas-dark-viewport');
+                document.body.style.removeProperty('background');
                 if(window.setBaseTheme) window.setBaseTheme('dark'); else { bd.classList.remove('white'); bd.classList.add('dark'); }
             }
         };
         window.setTheme = function(t) {
-            if(t === 'sepia') { b.classList.remove('canvas-dark'); if(window.setBaseTheme) window.setBaseTheme('sepia'); else bd.classList.remove('dark', 'white'); }
+            if(t === 'sepia') { b.classList.remove('canvas-dark'); document.body.classList.remove('canvas-dark-viewport'); document.body.style.removeProperty('background'); if(window.setBaseTheme) window.setBaseTheme('sepia'); else bd.classList.remove('dark', 'white'); }
             else if(t === 'dark') window.cycleMindmapTheme();
             else if(t === 'shader') bd.classList.toggle('shader');
         };
@@ -1006,12 +1060,21 @@
                 top: Math.round((top + height / 2) / 40) * 40 - height / 2
             };
         }
+        function normalizeStoredColor(value, fallback) {
+            if(typeof value !== 'string' || !value) return fallback || '';
+            let legacy = /^var\(--c([1-9]|1[0-6])\)$/.exec(value.trim());
+            return legacy ? 'var(--normal-c' + legacy[1] + ')' : value;
+        }
+        function selectedPaletteColor(index) {
+            if(!index) return '';
+            return 'var(--' + (bd.classList.contains('hl-mode') ? 'highlight' : 'normal') + '-c' + index + ')';
+        }
         function normalizedAnnotations(value) {
             let lines = value && Array.isArray(value.lines) ? value.lines : [], texts = value && Array.isArray(value.texts) ? value.texts : [], areas = value && Array.isArray(value.areas) ? value.areas : [];
             return {
-                lines: lines.filter(line => line && typeof line.id === 'string' && [line.x1,line.y1,line.x2,line.y2].every(Number.isFinite)).map(line => ({ id: line.id, x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, color: typeof line.color === 'string' ? line.color : 'var(--c9)' })),
-                texts: texts.filter(text => text && typeof text.id === 'string' && typeof text.text === 'string' && [text.x,text.y].every(Number.isFinite)).map(text => ({ id:text.id, x:text.x, y:text.y, text:text.text, description:typeof text.description === 'string' ? text.description : '', color:typeof text.color === 'string' ? text.color : 'var(--c9)', fontSize:Number.isFinite(text.fontSize) && text.fontSize > 0 ? text.fontSize : 28 })),
-                areas: areas.filter(area => area && typeof area.id === 'string' && [area.x,area.y,area.w,area.h].every(Number.isFinite) && area.w > 0 && area.h > 0).map(area => ({ id:area.id, x:area.x, y:area.y, w:area.w, h:area.h, color:typeof area.color === 'string' ? area.color : 'var(--c4)', opacity:Number.isFinite(area.opacity) ? Math.min(.3, Math.max(.04, area.opacity)) : .1, name:typeof area.name === 'string' ? area.name : '', description:typeof area.description === 'string' ? area.description : '', note:typeof area.note === 'string' ? area.note : '', fontSize:Number.isFinite(area.fontSize) && area.fontSize > 0 ? area.fontSize : 28 }))
+                lines: lines.filter(line => line && typeof line.id === 'string' && [line.x1,line.y1,line.x2,line.y2].every(Number.isFinite)).map(line => ({ id: line.id, x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, color:normalizeStoredColor(line.color, 'var(--normal-c9)') })),
+                texts: texts.filter(text => text && typeof text.id === 'string' && typeof text.text === 'string' && [text.x,text.y].every(Number.isFinite)).map(text => ({ id:text.id, x:text.x, y:text.y, text:text.text, description:typeof text.description === 'string' ? text.description : '', color:normalizeStoredColor(text.color, 'var(--normal-c9)'), fontSize:Number.isFinite(text.fontSize) && text.fontSize > 0 ? text.fontSize : 28 })),
+                areas: areas.filter(area => area && typeof area.id === 'string' && [area.x,area.y,area.w,area.h].every(Number.isFinite) && area.w > 0 && area.h > 0).map(area => ({ id:area.id, x:area.x, y:area.y, w:area.w, h:area.h, color:normalizeStoredColor(area.color, 'var(--normal-c4)'), opacity:Number.isFinite(area.opacity) ? Math.min(.3, Math.max(.04, area.opacity)) : .1, name:typeof area.name === 'string' ? area.name : '', description:typeof area.description === 'string' ? area.description : '', note:typeof area.note === 'string' ? area.note : '', fontSize:Number.isFinite(area.fontSize) && area.fontSize > 0 ? area.fontSize : 28 }))
             };
         }
         function annotationsFromDom() {
@@ -1205,9 +1268,9 @@
             function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; window.doSaveState(); }
             document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
         }
-        window.addAnnotationLine = function() { let viewport = getUsableViewport(), y = (viewport.centerY - cy) / zoom, x = (viewport.centerX - cx) / zoom; let line = { id: newId('annotation'), x1: x, y1: y - 200, x2: x, y2: y + 200, color:'var(--c9)' }; if(snapGrid) { line.x1=snapPoint(line.x1); line.y1=snapPoint(line.y1); line.x2=snapPoint(line.x2); line.y2=snapPoint(line.y2); } annotations.lines.push(line); selectAnnotation(line.id); window.doSaveState(); };
+        window.addAnnotationLine = function() { let viewport = getUsableViewport(), y = (viewport.centerY - cy) / zoom, x = (viewport.centerX - cx) / zoom; let line = { id: newId('annotation'), x1: x, y1: y - 200, x2: x, y2: y + 200, color:selectedPaletteColor(9) }; if(snapGrid) { line.x1=snapPoint(line.x1); line.y1=snapPoint(line.y1); line.x2=snapPoint(line.x2); line.y2=snapPoint(line.y2); } annotations.lines.push(line); selectAnnotation(line.id); window.doSaveState(); };
         window.deleteAnnotationLine = function(id) { annotations.lines = annotations.lines.filter(line => line.id !== id); selectionRegistry.items.delete(selectionKey('line', id)); syncSelectionVisuals(); window.doSaveState(); };
-        window.addAnnotationText = function() { let viewport = getUsableViewport(), x = snapPoint((viewport.centerX - cx) / zoom), y = snapPoint((viewport.centerY - cy) / zoom); let text = { id:newId('annotation_text'), x:x, y:y, text:'หัวข้อช่วงเวลา...', description:'คำอธิบายช่วงเวลา...', color:'var(--c9)', fontSize:28 }; annotations.texts.push(text); selectAnnotationText(text.id, true); window.doSaveState(); };
+        window.addAnnotationText = function() { let viewport = getUsableViewport(), x = snapPoint((viewport.centerX - cx) / zoom), y = snapPoint((viewport.centerY - cy) / zoom); let text = { id:newId('annotation_text'), x:x, y:y, text:'หัวข้อช่วงเวลา...', description:'คำอธิบายช่วงเวลา...', color:selectedPaletteColor(9), fontSize:28 }; annotations.texts.push(text); selectAnnotationText(text.id, true); window.doSaveState(); };
         window.editAnnotationText = function(id) { if(!annotations.texts.some(text => text.id === id)) return; selectAnnotationText(id, true); };
         window.deleteAnnotationText = function(id) { annotations.texts = annotations.texts.filter(text => text.id !== id); selectionRegistry.items.delete(selectionKey('text', id)); if(editingAnnotationTextId === id) editingAnnotationTextId = null; syncSelectionVisuals(); window.doSaveState(); };
         function startAreaGesture(e, id, mode) {
@@ -1248,7 +1311,7 @@
             let geometry = draw(startX, startY);
             function cleanup() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.removeEventListener('keydown', keydown, true); window.removeEventListener('blur', cancel); document.body.style.userSelect = ''; if(draft.isConnected) draft.remove(); if(activeAreaGestureCancel === cancel) activeAreaGestureCancel = null; }
             function move(event) { geometry = draw(snapPoint((event.clientX - cx) / zoom), snapPoint((event.clientY - cy) / zoom)); }
-            function up() { if(finished) return; finished = true; cleanup(); if(geometry.w < 20 || geometry.h < 20) { selectedAreaId = null; renderAreas(); return; } let area = { id:newId('annotation_area'), x:geometry.left, y:geometry.top, w:Math.max(40, geometry.w), h:Math.max(40, geometry.h), color:'var(--c4)', opacity:.1, name:'', description:'', note:'', fontSize:28 }; annotations.areas.push(area); selectArea(area.id); window.doSaveState(); }
+            function up() { if(finished) return; finished = true; cleanup(); if(geometry.w < 20 || geometry.h < 20) { selectedAreaId = null; renderAreas(); return; } let area = { id:newId('annotation_area'), x:geometry.left, y:geometry.top, w:Math.max(40, geometry.w), h:Math.max(40, geometry.h), color:selectedPaletteColor(4), opacity:.1, name:'', description:'', note:'', fontSize:28 }; annotations.areas.push(area); selectArea(area.id); window.doSaveState(); }
             function cancel() { if(finished) return; finished = true; cleanup(); renderAreas(); }
             function keydown(event) { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancel(); } }
             activeAreaGestureCancel = cancel; document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); document.addEventListener('keydown', keydown, true); window.addEventListener('blur', cancel);
@@ -1325,7 +1388,9 @@
         function currentMindmapState() {
             let state = mmHistory[curStep] || { nodes: [], lines: [], images: [], annotations: { lines: [], texts: [], areas: [] }, nid: nid };
             let copy = cloneMindmapState(state);
-            copy.nodes = copy.nodes || []; copy.lines = copy.lines || []; copy.images = copy.images || []; copy.annotations = normalizedAnnotations(copy.annotations);
+            copy.nodes = (copy.nodes || []).map(node => Object.assign({}, node, { bg:normalizeStoredColor(node.bg, ''), fg:normalizeStoredColor(node.fg, ''), bd:normalizeStoredColor(node.bd, '') }));
+            copy.lines = (copy.lines || []).map(line => Object.assign({}, line, { arrow:normalizeConnectorArrow(line.arrow), style:normalizeConnectorStyle(line.style), routeLabels:normalizeConnectorRouteLabels(line.routeLabels) }));
+            copy.images = copy.images || []; copy.annotations = normalizedAnnotations(copy.annotations);
             copy.nid = typeof copy.nid === 'number' ? copy.nid : nid;
             copy.views = { cx: cx, cy: cy, zoom: zoom };
             return copy;
@@ -1405,7 +1470,8 @@
             let source = documentData && documentData.mindmap && documentData.mindmap.nodes ? documentData.mindmap : documentData;
             if(!source || !Array.isArray(source.nodes)) throw new Error('ไม่พบข้อมูล node ของ Mindmap ในไฟล์นี้');
             let state = cloneMindmapState(source);
-            state.lines = Array.isArray(state.lines) ? state.lines : [];
+            state.nodes = state.nodes.map(node => Object.assign({}, node, { bg:normalizeStoredColor(node.bg, ''), fg:normalizeStoredColor(node.fg, ''), bd:normalizeStoredColor(node.bd, '') }));
+            state.lines = (Array.isArray(state.lines) ? state.lines : []).map(line => Object.assign({}, line, { arrow:normalizeConnectorArrow(line.arrow), style:normalizeConnectorStyle(line.style), routeLabels:normalizeConnectorRouteLabels(line.routeLabels) }));
             state.images = Array.isArray(state.images) ? state.images : [];
             state.annotations = normalizedAnnotations(state.annotations);
             if(documentData && documentData.views && !state.views) state.views = documentData.views;
@@ -1431,7 +1497,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.96', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.99', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1476,29 +1542,43 @@
         };
         window.importJSON = window.importMindmapFile;
 
+        let fontSizeHold = null;
+        function applyFontSizeStep(action) {
+            let delta = action === '+' ? 2 : -2, changed = false, textChanged = false, areaChanged = false;
+            selectedIds('node').map(id => document.getElementById(id)).filter(node => node && !node.classList.contains('j')).forEach(node => {
+                let nt = node.querySelector('.nt'), nd = node.querySelector('.nd');
+                if(nt) { let next = Math.max(8, (parseInt(window.getComputedStyle(nt).fontSize) || 18) + delta); if(next !== parseInt(window.getComputedStyle(nt).fontSize)) { nt.style.fontSize = next + 'px'; changed = true; } }
+                if(nd) { let next = Math.max(8, (parseInt(window.getComputedStyle(nd).fontSize) || 14) + delta); if(next !== parseInt(window.getComputedStyle(nd).fontSize)) { nd.style.fontSize = next + 'px'; changed = true; } }
+            });
+            selectedIds('text').map(id => annotations.texts.find(text => text.id === id)).filter(Boolean).forEach(text => { let next = Math.max(10, text.fontSize + delta); if(next !== text.fontSize) { text.fontSize = next; changed = true; textChanged = true; } });
+            selectedIds('area').map(id => annotations.areas.find(area => area.id === id)).filter(Boolean).forEach(area => { let next = Math.max(10, area.fontSize + delta); if(next !== area.fontSize) { area.fontSize = next; changed = true; areaChanged = true; } });
+            if(textChanged) renderAnnotationTexts();
+            if(areaChanged) renderAreas();
+            return changed;
+        }
+        function finishFontSizeHold(save) {
+            if(!fontSizeHold) return;
+            clearTimeout(fontSizeHold.delayTimer); clearInterval(fontSizeHold.repeatTimer);
+            document.removeEventListener('mouseup', fontSizeHold.finish);
+            window.removeEventListener('blur', fontSizeHold.cancel);
+            let changed = fontSizeHold.changed; fontSizeHold = null;
+            if(save && changed) window.doSaveState();
+        }
+        window.startFontSizeHold = function(event, action) {
+            if(event.button !== 0) return;
+            event.preventDefault(); event.stopPropagation(); finishFontSizeHold(true);
+            let hold = { changed:applyFontSizeStep(action), delayTimer:null, repeatTimer:null, finish:null, cancel:null };
+            if(!hold.changed) { window.showToast('⚠️ โปรดเลือก Node, Text ลอย หรือ Area ก่อนครับ'); return; }
+            fontSizeHold = hold;
+            hold.finish = () => finishFontSizeHold(true);
+            hold.cancel = () => finishFontSizeHold(true);
+            document.addEventListener('mouseup', hold.finish);
+            window.addEventListener('blur', hold.cancel);
+            hold.delayTimer = setTimeout(() => { if(fontSizeHold !== hold) return; hold.repeatTimer = setInterval(() => { if(fontSizeHold === hold) hold.changed = applyFontSizeStep(action) || hold.changed; }, 100); }, 400);
+        };
         window.changeFontSize = function(action) {
-            let annotationText = selectedAnnotationText();
-            if(annotationText) { annotationText.fontSize = Math.max(10, annotationText.fontSize + (action === '+' ? 2 : -2)); renderAnnotationTexts(); window.doSaveState(); return; }
-            let sels = nodes.filter(n => n.classList.contains('sel'));
-            if(sels.length > 0) {
-                sels.forEach(n => {
-                    let nt = n.querySelector('.nt');
-                    if(nt) {
-                        let currentSize = parseInt(window.getComputedStyle(nt).fontSize) || 18;
-                        if(action === '+') currentSize += 2; else if(action === '-') currentSize = Math.max(8, currentSize - 2);
-                        nt.style.fontSize = currentSize + 'px';
-                    }
-                    let nd = n.querySelector('.nd');
-                    if(nd) {
-                        let cSize = parseInt(window.getComputedStyle(nd).fontSize) || 14;
-                        if(action === '+') cSize += 2; else if(action === '-') cSize = Math.max(8, cSize - 2);
-                        nd.style.fontSize = cSize + 'px';
-                    }
-                });
-                window.doSaveState();
-            } else {
-                window.showToast('⚠️ โปรดเลือกกล่องข้อความเพื่อปรับขนาดตัวอักษร');
-            }
+            if(applyFontSizeStep(action)) window.doSaveState();
+            else window.showToast('⚠️ โปรดเลือก Node, Text ลอย หรือ Area ก่อนครับ');
         };
 
         let cHtml = '<div class="flex-row" style="margin-bottom:8px;">', r2 = '<div class="flex-row" style="margin-bottom:8px;">', r3 = '<div class="flex-row">';
@@ -1513,14 +1593,14 @@
         document.getElementById('mm-colors').innerHTML = cHtml + r2 + r3;
 
         window.setCol = function(t, i) {
-            let v = i === 15 ? 'var(--c15)' : (i === 16 ? 'var(--c16)' : (i ? 'var(--c'+i+')' : ''));
+            let v = selectedPaletteColor(i);
             let rgb = i === 15 ? 'rgb(60,60,60)' : (i === 16 ? 'rgb(220,220,220)' : (i ? 'rgb(255,'+i+',1)' : 'transparent'));
             let annotation = selectedAnnotation();
             if(annotation) { annotation.color = v || 'var(--bc)'; renderAnnotations(); window.doSaveState(); return; }
             let annotationText = selectedAnnotationText();
             if(annotationText) { annotationText.color = v || 'var(--fg)'; renderAnnotationTexts(); window.doSaveState(); return; }
             let area = selectedArea();
-            if(area && areaEditMode) { area.color = v || 'var(--c4)'; renderAreas(); window.doSaveState(); return; }
+            if(area && areaEditMode) { area.color = v || 'var(--normal-c4)'; renderAreas(); window.doSaveState(); return; }
             
             let sel = window.getSelection();
             if((t === 'fg' || t === 'bg') && sel.toString().length > 0) {
@@ -1547,7 +1627,7 @@
         window.setShape = function(s) { let sels = nodes.filter(n => n.classList.contains('sel')); if(sels.length === 0) return window.showToast('⚠️ โปรดเลือกกล่องก่อนครับ'); sels.forEach(n => { n.dataset.shape = s; }); window.doSaveState(); updateAll(); };
 
         function nodeStateFromElement(n) {
-            return { id:n.id, x:n.style.left, y:n.style.top, bg:n.style.background, fg:n.style.color, bd:n.style.borderColor, shape:n.dataset.shape || 'box', fs:n.querySelector('.nt') ? n.querySelector('.nt').style.fontSize : '', dfs:n.querySelector('.nd') ? n.querySelector('.nd').style.fontSize : '', txt:n.querySelector('.nt') ? n.querySelector('.nt').innerHTML : '', desc:n.querySelector('.nd') ? n.querySelector('.nd').innerHTML : '', note:n.dataset.note || '', type:n.classList.contains('j') ? 'j' : 'n' };
+            return { id:n.id, x:n.style.left, y:n.style.top, bg:normalizeStoredColor(n.style.background, ''), fg:normalizeStoredColor(n.style.color, ''), bd:normalizeStoredColor(n.style.borderColor, ''), shape:n.dataset.shape || 'box', fs:n.querySelector('.nt') ? n.querySelector('.nt').style.fontSize : '', dfs:n.querySelector('.nd') ? n.querySelector('.nd').style.fontSize : '', txt:n.querySelector('.nt') ? n.querySelector('.nt').innerHTML : '', desc:n.querySelector('.nd') ? n.querySelector('.nd').innerHTML : '', note:n.dataset.note || '', type:n.classList.contains('j') ? 'j' : 'n' };
         }
         function selectNodeImageGroup(nodeIds, imageIds) {
             selectionRegistry.items.clear(); nodeIds.forEach(id => { if(document.getElementById(id)) selectionRegistry.items.set(selectionKey('node', id), selectionEntry('node', id)); }); imageIds.forEach(id => { if(imagePlacementById(id)) selectionRegistry.items.set(selectionKey('image', id), selectionEntry('image', id)); });
@@ -1558,7 +1638,7 @@
             let nidBefore = nid, nodeMap = new Map(), copiedNodeIds = [], copiedImageIds = [], copiedConnectorIds = [];
             originalNodes.forEach(node => { let state = cloneMindmapState(nodeStateFromElement(node)); state.id = 'n' + nid++; nodeMap.set(node.id, state.id); createNodeFromState(state); copiedNodeIds.push(state.id); });
             originalImages.forEach(placement => { let copy = cloneMindmapState(placement); copy.id = 'im' + nid++; imagePlacements.push(copy); copiedImageIds.push(copy.id); });
-            Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(line => nodeMap.has(line.dataset.n1) && nodeMap.has(line.dataset.n2)).forEach(line => { let copy = createConnectorFromState({ id:newId('l'), n1:nodeMap.get(line.dataset.n1), n2:nodeMap.get(line.dataset.n2), arrow:normalizeConnectorArrow(line.dataset.arrow), routeLabels:connectorRouteLabels(line) }, false); copiedConnectorIds.push(copy.id); updateLine(copy); });
+            Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(line => nodeMap.has(line.dataset.n1) && nodeMap.has(line.dataset.n2)).forEach(line => { let copy = createConnectorFromState({ id:newId('l'), n1:nodeMap.get(line.dataset.n1), n2:nodeMap.get(line.dataset.n2), arrow:normalizeConnectorArrow(line.dataset.arrow), style:normalizeConnectorStyle(line.dataset.style), routeLabels:connectorRouteLabels(line) }, false); copiedConnectorIds.push(copy.id); updateLine(copy); });
             renderImageLayer();
             return { nidBefore:nidBefore, nodeMap:nodeMap, copiedNodeIds:copiedNodeIds, copiedImageIds:copiedImageIds, copiedConnectorIds:copiedConnectorIds };
         }
@@ -1590,7 +1670,7 @@
         window.doSaveState = function() { 
             pruneConnectorHitLines();
             let state = nodes.map(nodeStateFromElement);
-            let lines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).map(l => ({ id: l.id, n1: l.dataset.n1, n2: l.dataset.n2, arrow: normalizeConnectorArrow(l.dataset.arrow), routeLabels: connectorRouteLabels(l) }));
+            let lines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).map(l => ({ id: l.id, n1: l.dataset.n1, n2: l.dataset.n2, arrow: normalizeConnectorArrow(l.dataset.arrow), style:normalizeConnectorStyle(l.dataset.style), routeLabels: connectorRouteLabels(l) }));
             let imgState = cloneMindmapState(imagePlacements);
             if(curStep < mmHistory.length - 1) mmHistory = mmHistory.slice(0, curStep + 1);
             let annotationState = normalizedAnnotations(annotations);
@@ -1633,11 +1713,11 @@
         const NODE_HISTORY_FIELDS = ['x','y','bg','fg','bd','shape','fs','dfs','txt','desc','note','type'];
         function nodeHistoryStateMatches(first, second) { return !!first && !!second && NODE_HISTORY_FIELDS.every(field => (first[field] || '') === (second[field] || '')); }
         function nodeHistoryChangeAffectsGeometry(first, second) { return !first || ['x','y','shape','fs','dfs','txt','desc','type'].some(field => (first[field] || '') !== (second[field] || '')); }
-        function lineHistoryStateMatches(first, second) { return !!first && !!second && first.n1 === second.n1 && first.n2 === second.n2 && normalizeConnectorArrow(first.arrow) === normalizeConnectorArrow(second.arrow) && JSON.stringify(normalizeConnectorRouteLabels(first.routeLabels)) === JSON.stringify(normalizeConnectorRouteLabels(second.routeLabels)); }
+        function lineHistoryStateMatches(first, second) { return !!first && !!second && first.n1 === second.n1 && first.n2 === second.n2 && normalizeConnectorArrow(first.arrow) === normalizeConnectorArrow(second.arrow) && normalizeConnectorStyle(first.style) === normalizeConnectorStyle(second.style) && JSON.stringify(normalizeConnectorRouteLabels(first.routeLabels)) === JSON.stringify(normalizeConnectorRouteLabels(second.routeLabels)); }
         function patchNodeFromState(node, state) {
             let title = node.querySelector('.nt'), description = node.querySelector('.nd'), nextTitle = typeof state.txt === 'string' ? state.txt : '', nextDescription = typeof state.desc === 'string' ? state.desc : '';
             node.style.left = state.x; node.style.top = state.y; node.dataset.note = state.note || ''; node.dataset.shape = state.shape || 'box';
-            setNodeStateStyle(node, 'background', state.bg, '--n-bg'); setNodeStateStyle(node, 'color', state.fg); setNodeStateStyle(node, 'borderColor', state.bd, '--n-bd');
+            setNodeStateStyle(node, 'background', normalizeStoredColor(state.bg, ''), '--n-bg'); setNodeStateStyle(node, 'color', normalizeStoredColor(state.fg, '')); setNodeStateStyle(node, 'borderColor', normalizeStoredColor(state.bd, ''), '--n-bd');
             if(title) { if(title.innerHTML !== nextTitle) title.innerHTML = nextTitle; title.style.fontSize = state.fs || ''; delete title.dataset.m; }
             if(description) { if(description.innerHTML !== nextDescription) description.innerHTML = nextDescription; description.style.fontSize = state.dfs || ''; delete description.dataset.m; }
         }
@@ -1649,7 +1729,7 @@
             let node = document.createElement('div'); node.className = normalizedHistoryNodeType(state.type) === 'j' ? 'n j' : 'n'; node.id = state.id; node.innerHTML = nodeContentsForState(state); b.appendChild(node); nodes.push(node); patchNodeFromState(node, state); attachNodeEvents(node); return node;
         }
         function createConnectorFromState(state, render) {
-            let line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('stroke', 'var(--bc)'); line.setAttribute('stroke-width', '3'); line.id = state.id; line.dataset.n1 = state.n1; line.dataset.n2 = state.n2; line.dataset.arrow = normalizeConnectorArrow(state.arrow); setConnectorRouteLabels(line, state.routeLabels); s.appendChild(line); if(render !== false) updateLine(line); return line;
+            let line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('stroke', 'var(--bc)'); line.setAttribute('stroke-width', '3'); line.id = state.id; line.dataset.n1 = state.n1; line.dataset.n2 = state.n2; line.dataset.arrow = normalizeConnectorArrow(state.arrow); line.dataset.style = normalizeConnectorStyle(state.style); setConnectorRouteLabels(line, state.routeLabels); s.appendChild(line); if(render !== false) updateLine(line); return line;
         }
         function removeConnectorElement(line) {
             if(!line) return; let middle = document.getElementById('mb_' + line.id), hit = document.getElementById('hit_' + line.id); if(middle) middle.remove(); if(hit) hit.remove(); line.remove();
@@ -1668,8 +1748,8 @@
             resetTransientStateForLoad(); let changedGeometryNodeIds = new Set(), affectedLines = new Set();
             nodes.forEach(node => { let next = topology.nodeStates.get(node.id), before = previousNodes.get(node.id); if(nodeHistoryStateMatches(before, next)) return; if(nodeHistoryChangeAffectsGeometry(before, next)) changedGeometryNodeIds.add(node.id); patchNodeFromState(node, next); });
             topology.domLines.forEach(line => {
-                let ls = topology.lineStates.get(line.id), nextArrow = normalizeConnectorArrow(ls.arrow), nextLabels = JSON.stringify(normalizeConnectorRouteLabels(ls.routeLabels));
-                if(!lineHistoryStateMatches(previousLines.get(line.id), ls) || line.dataset.arrow !== nextArrow || line.dataset.routeLabels !== nextLabels) { line.dataset.arrow = nextArrow; line.dataset.routeLabels = nextLabels; affectedLines.add(line); }
+                let ls = topology.lineStates.get(line.id), nextArrow = normalizeConnectorArrow(ls.arrow), nextStyle = normalizeConnectorStyle(ls.style), nextLabels = JSON.stringify(normalizeConnectorRouteLabels(ls.routeLabels));
+                if(!lineHistoryStateMatches(previousLines.get(line.id), ls) || line.dataset.arrow !== nextArrow || line.dataset.style !== nextStyle || line.dataset.routeLabels !== nextLabels) { line.dataset.arrow = nextArrow; line.dataset.style = nextStyle; line.dataset.routeLabels = nextLabels; affectedLines.add(line); }
                 if(changedGeometryNodeIds.has(line.dataset.n1) || changedGeometryNodeIds.has(line.dataset.n2)) affectedLines.add(line);
             });
             affectedLines.forEach(line => updateLine(line));
@@ -1696,8 +1776,8 @@
                 let line = document.getElementById(ls.id);
                 if(!line || line.namespaceURI !== 'http://www.w3.org/2000/svg' || line.tagName.toLowerCase() !== 'line') { line = createConnectorFromState(ls, false); affectedLines.add(line); }
                 else {
-                    let nextArrow = normalizeConnectorArrow(ls.arrow), nextLabels = JSON.stringify(normalizeConnectorRouteLabels(ls.routeLabels));
-                    if(!lineHistoryStateMatches(previousLines.get(ls.id), ls) || line.dataset.arrow !== nextArrow || line.dataset.routeLabels !== nextLabels) { line.dataset.arrow = nextArrow; line.dataset.routeLabels = nextLabels; affectedLines.add(line); }
+                    let nextArrow = normalizeConnectorArrow(ls.arrow), nextStyle = normalizeConnectorStyle(ls.style), nextLabels = JSON.stringify(normalizeConnectorRouteLabels(ls.routeLabels));
+                    if(!lineHistoryStateMatches(previousLines.get(ls.id), ls) || line.dataset.arrow !== nextArrow || line.dataset.style !== nextStyle || line.dataset.routeLabels !== nextLabels) { line.dataset.arrow = nextArrow; line.dataset.style = nextStyle; line.dataset.routeLabels = nextLabels; affectedLines.add(line); }
                 }
                 if(changedGeometryNodeIds.has(ls.n1) || changedGeometryNodeIds.has(ls.n2)) affectedLines.add(line);
             }
@@ -1770,6 +1850,7 @@
         function removeImagePlacement(id) { let index = imagePlacements.findIndex(p => p.id === id); if(index < 0) return false; selectionRegistry.items.delete(selectionKey('image', id)); selectedImageIds.delete(id); imagePlacements.splice(index, 1); removeImageDom(id); return true; }
         window.delImage = function(id) { if(removeImagePlacement(id)) { syncSelectionVisuals(); window.doSaveState(); } };
         function normalizeConnectorArrow(value) { return ['none', 'forward', 'reverse', 'both'].includes(value) ? value : 'none'; }
+        function normalizeConnectorStyle(value) { return ['solid', 'dotted', 'dashed'].includes(value) ? value : 'solid'; }
         function clampConnectorRoutePosition(value, fallback) { return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback; }
         function normalizeConnectorRouteLabels(value) {
             let n1 = value && value.n1 || {}, n2 = value && value.n2 || {};
@@ -1800,9 +1881,17 @@
             if(arrow === 'forward' || arrow === 'both') l.setAttribute('marker-end', 'url(#connector-arrowhead)');
             if(arrow === 'reverse' || arrow === 'both') l.setAttribute('marker-start', 'url(#connector-arrowhead)');
         }
+        function applyConnectorStyle(line) {
+            let style = normalizeConnectorStyle(line.dataset.style); line.dataset.style = style;
+            if(style === 'dotted') { line.setAttribute('stroke-dasharray', '1 9'); line.setAttribute('stroke-linecap', 'round'); }
+            else if(style === 'dashed') { line.setAttribute('stroke-dasharray', '12 8'); line.setAttribute('stroke-linecap', 'butt'); }
+            else { line.removeAttribute('stroke-dasharray'); line.setAttribute('stroke-linecap', 'butt'); }
+        }
         function connectorArrowMeta(arrow) { return { none:{ icon:'—', title:'หัวลูกศร: ไม่มี — คลิกเพื่อเปลี่ยนเป็น →' }, forward:{ icon:'→', title:'หัวลูกศร: ไปข้างหน้า — คลิกเพื่อเปลี่ยนเป็น ←' }, reverse:{ icon:'←', title:'หัวลูกศร: ย้อนกลับ — คลิกเพื่อเปลี่ยนเป็น ↔' }, both:{ icon:'↔', title:'หัวลูกศร: สองหัว — คลิกเพื่อปิดหัวลูกศร' } }[normalizeConnectorArrow(arrow)]; }
         window.cycleConnectorArrow = function(e, lineId) { e.preventDefault(); e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let modes = ['none', 'forward', 'reverse', 'both'], current = normalizeConnectorArrow(line.dataset.arrow); line.dataset.arrow = modes[(modes.indexOf(current) + 1) % modes.length]; updateLine(line); window.doSaveState(); };
-        window.createLine = function(id1, id2) { return createConnectorFromState({ id:'l_' + id1 + '_' + id2 + '_' + Date.now(), n1:id1, n2:id2, arrow:'none', routeLabels:null }, true); };
+        window.cycleConnectorStyle = function(e, lineId) { e.preventDefault(); e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let modes = ['solid', 'dotted', 'dashed'], current = normalizeConnectorStyle(line.dataset.style); line.dataset.style = modes[(modes.indexOf(current) + 1) % modes.length]; applyConnectorStyle(line); window.doSaveState(); };
+        function connectorAppearance(line) { return line ? { arrow:normalizeConnectorArrow(line.dataset.arrow), style:normalizeConnectorStyle(line.dataset.style), routeLabels:connectorRouteLabels(line) } : { arrow:'none', style:'solid', routeLabels:normalizeConnectorRouteLabels() }; }
+        window.createLine = function(id1, id2, appearance) { let look = appearance || {}; return createConnectorFromState({ id:'l_' + id1 + '_' + id2 + '_' + Date.now(), n1:id1, n2:id2, arrow:normalizeConnectorArrow(look.arrow), style:normalizeConnectorStyle(look.style), routeLabels:look.routeLabels || null }, true); };
         window.startLineDrag = function(e, pid, dir) { e.stopPropagation(); let startX = e.clientX; let startY = e.clientY; let pNode = document.getElementById(pid); if(!pNode) return; let x1 = pNode.offsetLeft + pNode.offsetWidth / 2; let y1 = pNode.offsetTop + pNode.offsetHeight / 2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', x1); tl.setAttribute('y1', y1); tl.setAttribute('x2', x1); tl.setAttribute('y2', y1); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = s.querySelectorAll('line[data-n1][data-n2]'); allLines.forEach(l => { if(l !== tl) { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; } }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetNode = me.target.closest('.n'); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLine = document.getElementById(targetMb.id.replace(/^mb_/, '')); if(mbLine) { targetLine = mbLine; targetNode = null; } } if(targetNode && targetNode.id !== pid) { let existing = document.querySelector('line[data-n1="' + pid + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + pid + '"][data-n1="' + targetNode.id + '"]'); if(!existing) { window.createLine(pid, targetNode.id); window.doSaveState(); } } else if(targetLine && targetLine.id.startsWith('l_') && targetLine.dataset.n1 !== pid && targetLine.dataset.n2 !== pid) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); let j = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(tn1, j.id); window.createLine(j.id, tn2); window.createLine(pid, j.id); window.doSaveState(); } else if(moved) { let nx = (me.clientX - cx) / zoom; let ny = (me.clientY - cy) / zoom; addNode(nx - 50, ny - 30, pid); window.doSaveState(); } else { window.addLink(pid, dir); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
         function removeNode(id) { if(nodeNoteId === id) window.closeNodeNote(); let n = document.getElementById(id); if(!n) return false; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); selectionRegistry.items.delete(selectionKey('node', id)); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(removeConnectorElement); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } return true; }
         window.del = function(id) { if(removeNode(id)) { syncSelectionVisuals(); window.doSaveState(); } };
@@ -1824,19 +1913,21 @@
             return changed;
         }
         window.addLink = function(pid, dir) { let p = document.getElementById(pid); if(!p) return; let x = parseFloat(p.style.left); let y = parseFloat(p.style.top); if(dir === 'r') { x += 220; y += (Math.random() * 20 - 10); } else if(dir === 'l') { x -= 220; y += (Math.random() * 20 - 10); } else if(dir === 't') { y -= 160; x += (Math.random() * 20 - 10); } else if(dir === 'b') { y += 160; x += (Math.random() * 20 - 10); } else { x += 220; y += (Math.random() * 20 - 10); } let w = 150, h = 80; let isOverlap = function(nx, ny) { return nodes.some(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top); let nw = n.offsetWidth || 150, nh = n.offsetHeight || 80; return !(nx + w + 20 < nl || nx > nl + nw + 20 || ny + h + 20 < nt || ny > nt + nh + 20); }); }; if(dir === 'l' || dir === 'r') { while(isOverlap(x, y)) y += 100; } else if(dir === 't' || dir === 'b') { while(isOverlap(x, y)) x += 180; } else { while(isOverlap(x, y)) y += 100; } addNode(x, y, pid); window.doSaveState(); };
-        function updateLine(l) { let n1 = document.getElementById(l.dataset.n1), n2 = document.getElementById(l.dataset.n2); if(n1 && n2) { let points = connectorPointsAtNodeEdges(n1, n2); l.setAttribute('x1', points.x1); l.setAttribute('y1', points.y1); l.setAttribute('x2', points.x2); l.setAttribute('y2', points.y2); applyConnectorArrow(l); let mx = (points.x1 + points.x2) / 2, my = (points.y1 + points.y2) / 2; let mb = document.getElementById('mb_' + l.id); if(!mb) { mb = document.createElement('div'); mb.id = 'mb_' + l.id; mb.className = 'mb'; mb.innerHTML = '+'; mb.title = "ลากเพื่อแตกแขนง (ไปยังที่ว่าง/Node/เส้นอื่น) หรือคลิกเฉยๆ"; mb.onmousedown = function(e) { window.startLineDragFromMid(e, l.id); }; let ma = document.createElement('button'); ma.type = 'button'; ma.className = 'ma'; ma.onmousedown = function(e) { window.cycleConnectorArrow(e, l.id); }; mb.appendChild(ma); document.getElementById('b').appendChild(mb); } let ma = mb.querySelector('.ma'), meta = connectorArrowMeta(l.dataset.arrow); if(ma) { ma.textContent = meta.icon; ma.title = meta.title; } mb.classList.toggle('crowded', connectorMiddleControlIsCrowded(mx, my, n1, n2)); mb.style.left = mx + 'px'; mb.style.top = my + 'px'; } else { l.remove(); let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); } }
+        function updateLine(l) { let n1 = document.getElementById(l.dataset.n1), n2 = document.getElementById(l.dataset.n2); if(n1 && n2) { let points = connectorPointsAtNodeEdges(n1, n2); l.setAttribute('x1', points.x1); l.setAttribute('y1', points.y1); l.setAttribute('x2', points.x2); l.setAttribute('y2', points.y2); applyConnectorArrow(l); applyConnectorStyle(l); let mx = (points.x1 + points.x2) / 2, my = (points.y1 + points.y2) / 2; let mb = document.getElementById('mb_' + l.id); if(!mb) { mb = document.createElement('div'); mb.id = 'mb_' + l.id; mb.className = 'mb'; mb.innerHTML = '+'; mb.title = "ลากเพื่อแตกแขนง (ไปยังที่ว่าง/Node/เส้นอื่น) หรือคลิกเฉยๆ"; mb.onmousedown = function(e) { window.startLineDragFromMid(e, l.id); }; let ma = document.createElement('button'); ma.type = 'button'; ma.className = 'ma'; ma.onmousedown = function(e) { window.cycleConnectorArrow(e, l.id); }; mb.appendChild(ma); document.getElementById('b').appendChild(mb); } let ma = mb.querySelector('.ma'), meta = connectorArrowMeta(l.dataset.arrow); if(ma) { ma.textContent = meta.icon; ma.title = meta.title; } mb.classList.toggle('crowded', connectorMiddleControlIsCrowded(mx, my, n1, n2)); mb.style.left = mx + 'px'; mb.style.top = my + 'px'; } else { l.remove(); let mb = document.getElementById('mb_' + l.id); if(mb) mb.remove(); } }
         window.startLineDragFromMid = function(e, lineId) { e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let mb = document.getElementById('mb_' + lineId); let startX = e.clientX, startY = e.clientY; let mx = mb ? parseFloat(mb.style.left) : (parseFloat(line.getAttribute('x1')) + parseFloat(line.getAttribute('x2'))) / 2; let my = mb ? parseFloat(mb.style.top) : (parseFloat(line.getAttribute('y1')) + parseFloat(line.getAttribute('y2'))) / 2; let n1_id = line.dataset.n1, n2_id = line.dataset.n2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', mx); tl.setAttribute('y1', my); tl.setAttribute('x2', mx); tl.setAttribute('y2', my); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l !== tl && l !== line); allLines.forEach(l => { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetNode = me.target.closest('.n'); let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLineId = targetMb.id.replace(/^mb_/, ''); if(mbLineId !== lineId) { let mbLine = document.getElementById(mbLineId); if(mbLine) { targetLine = mbLine; targetNode = null; } } } let dropX = (me.clientX - cx) / zoom, dropY = (me.clientY - cy) / zoom; if(!moved) { let jNode = addNode(mx - 8, my - 8, null, 'j'); addNode(mx + 100, my + 80, jNode.id, 'n'); line.remove(); if(mb) mb.remove(); window.createLine(n1_id, jNode.id); window.createLine(jNode.id, n2_id); window.doSaveState(); return; } if(targetLine && targetLine.id.startsWith('l_') && targetLine.id !== lineId) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); line.remove(); if(mb) mb.remove(); let j1 = addNode(mx - 8, my - 8, null, 'j'); let j2 = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(n1_id, j1.id); window.createLine(j1.id, n2_id); window.createLine(tn1, j2.id); window.createLine(j2.id, tn2); window.createLine(j1.id, j2.id); window.doSaveState(); } else if(targetNode) { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); let existing = document.querySelector('line[data-n1="' + j.id + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + j.id + '"][data-n1="' + targetNode.id + '"]'); if(!existing) window.createLine(j.id, targetNode.id); window.doSaveState(); } else { line.remove(); if(mb) mb.remove(); let j = addNode(mx - 8, my - 8, null, 'j'); addNode(dropX - 75, dropY - 40, j.id, 'n'); window.createLine(n1_id, j.id); window.createLine(j.id, n2_id); window.doSaveState(); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
         function splitConnectorAtPoint(line, point) {
             if(!line || !document.getElementById(line.id)) return null;
-            let n1Id = line.dataset.n1, n2Id = line.dataset.n2, arrow = normalizeConnectorArrow(line.dataset.arrow), labels = connectorRouteLabels(line), middle = document.getElementById('mb_' + line.id), hit = document.getElementById('hit_' + line.id);
+            let n1Id = line.dataset.n1, n2Id = line.dataset.n2, arrow = normalizeConnectorArrow(line.dataset.arrow), style = normalizeConnectorStyle(line.dataset.style), labels = connectorRouteLabels(line), middle = document.getElementById('mb_' + line.id), hit = document.getElementById('hit_' + line.id);
             removeConnectorElement(line);
             let junction = addNode(point.x - 8, point.y - 8, null, 'j'), first = window.createLine(n1Id, junction.id), second = window.createLine(junction.id, n2Id);
             setConnectorRouteLabels(first, { n1:labels.n1 }); setConnectorRouteLabels(second, { n2:labels.n2 });
-            first.dataset.arrow = arrow; second.dataset.arrow = arrow; updateLine(first); updateLine(second);
+            first.dataset.arrow = arrow; second.dataset.arrow = arrow; first.dataset.style = style; second.dataset.style = style; updateLine(first); updateLine(second);
             return junction;
         }
         function startConnectorLineGesture(event, line) {
-            if(event.button !== 0 || !line || !document.getElementById(line.id)) return;
+            if(!line || !document.getElementById(line.id)) return;
+            if(event.button === 1 && event.altKey) { window.cycleConnectorStyle(event, line.id); return; }
+            if(event.button !== 0) return;
             event.preventDefault(); event.stopPropagation();
             if(event.altKey) { window.cycleConnectorArrow(event, line.id); return; }
             clearSel(); let x = (event.clientX - cx) / zoom, y = (event.clientY - cy) / zoom, point = connectorPointAt(line, connectorPositionAtCanvasPoint(line, x, y)), startX = event.clientX, startY = event.clientY, moved = false, guide = null;
@@ -2029,8 +2120,10 @@
         function restoreUI() {
             if(!uiHidden) {
                 document.getElementById('mm-ui').style.display = 'flex';
+                setSharedControlsHidden(false);
             } else {
                 document.getElementById('float-ui-btn').style.display = 'flex';
+                setSharedControlsHidden(true);
             }
             document.getElementById('about-btn').style.display = 'flex';
         }
@@ -2075,6 +2168,8 @@
 
         function init() {
             b.classList.remove('canvas-dark');
+            document.body.classList.remove('canvas-dark-viewport');
+            document.body.style.removeProperty('background');
             let isSavedHTML = document.querySelectorAll('.n').length > 0;
             
             if(isSavedHTML) {

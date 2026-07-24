@@ -517,3 +517,36 @@ generated page and saved standalone HTML therefore stay self-contained.
 - Run `git diff --check`.
 - Local `file://` page navigation was previously blocked by automated browser
   policy, so ask the user to refresh and perform final interaction checks.
+
+## V3.97–V3.99 Implementation (Automated and User Verified)
+
+- V3.97 replaces the separate selection paths with one transient Selection
+  Registry for Node, image, Timeline Line, Floating Text, and Area. Marquee,
+  Shift-toggle, mixed drag/Snap, Align/Dist, batch Delete, Undo/Redo, primary
+  handles, and Alt-drag Area copy now use that shared selection state.
+- V3.98 adds optional `name`, `description`, `note`, and `fontSize` fields to
+  Area without changing `mindmap-project formatVersion: 1`. Area labels and
+  `📝` render at the lower-left; the shared Note dialog and Global Find support
+  Area metadata. Area Find centers the lower-left label/Note corner, and Node
+  navigation reports every overlapping named Area.
+- V3.99 adds connector `solid`, `dotted`, and `dashed` styles. Alt+left-click
+  still cycles arrow direction; Alt+middle-click cycles line style while plain
+  middle drag remains Canvas pan. Split/copy/history/import/export normalize
+  and preserve both arrow and style, with missing style treated as `solid`.
+- Board colors now persist as explicit Normal or Highlight palette families;
+  pressing `🎨` changes only the family used for the next color operation.
+  Legacy `var(--cN)` values migrate to the same-numbered Normal family.
+- A+/A− works across selected Node, Floating Text, and Area labels. A press
+  changes one level; after 400 ms it repeats every 100 ms, and the whole hold
+  is one history activity.
+- Toolbar Shape rows, complete toolbar hiding, Sepia with Dark Canvas outer
+  viewport, and the six-section default-closed Info/Hotkeys content were
+  updated as approved. Credits and `© 2026 Chetphanu Sutadharo` remain.
+- Automated verification on 2026-07-24 passed with MindMap V3.99 using the
+  browser harness fixture of exactly 1,000 regular Nodes and 975 connectors.
+  It covered all V3.97–V3.99 paths plus the existing regression suite, with no
+  paint fallbacks or throttled paints. The generated `tools/mindmap.html`,
+  source page, and harness also pass inline JavaScript parsing and
+  `git diff --check`.
+- User interaction verification on the local `file://` page passed on
+  2026-07-24 for the complete approved V3.97–V3.99 plan.

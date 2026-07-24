@@ -790,7 +790,7 @@
       const resizeAfter = win.eval('cloneMindmapState(annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + '))');
       assertion(report, 'Area southeast handle resizes width and height', resizeAfter.w > moveAfter.w && resizeAfter.h > moveAfter.h, JSON.stringify({ moveAfter, resizeAfter }));
       win.setCol('bg', 8);
-      assertion(report, 'palette recolours selected Area without changing faint opacity', win.eval('annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + ').color') === 'var(--c8)' && win.eval('annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + ').opacity') === .1);
+      assertion(report, 'palette recolours selected Area without changing faint opacity', win.eval('annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + ').color') === 'var(--normal-c8)' && win.eval('annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + ').opacity') === .1);
       const stepBeforeDelete = win.eval('curStep');
       pressDelete(win);
       assertion(report, 'Delete removes selected Area in one history activity', win.eval('!annotations.areas.some(area => area.id === ' + JSON.stringify(areaId) + ') && curStep === ' + (stepBeforeDelete + 1)));
@@ -951,6 +951,86 @@
       win.closeFind();
     }
 
+    async function runV399RefinementChecks(win, report) {
+      progress('10/10 ทดสอบ V3.99: connector style, stable palette, hold controls, toolbar และ Dark Canvas');
+      win.eval(`clearSel(); if(areaEditMode) window.toggleAreaMode(); bd.classList.remove('hl-mode');`);
+      const connectorId = win.eval(`document.querySelector('#s line[data-n1][data-n2]').id`);
+      const connectorHit = win.document.getElementById('hit_' + connectorId);
+      const legacyStyle = win.eval(`normalizeConnectorStyle(undefined)`);
+      assertion(report, 'legacy connector without style defaults to solid', legacyStyle === 'solid');
+
+      const styleBefore = win.eval(`({step:curStep,style:document.getElementById(${JSON.stringify(connectorId)}).dataset.style})`);
+      mouse(win, connectorHit, 'mousedown', 420, 320, { button: 1, buttons: 4, altKey: true });
+      const styleAfter = win.eval(`({step:curStep,style:document.getElementById(${JSON.stringify(connectorId)}).dataset.style,dash:document.getElementById(${JSON.stringify(connectorId)}).getAttribute('stroke-dasharray')})`);
+      assertion(report, 'Alt+middle-click connector cycles Solid to Dotted in one history activity', styleBefore.style === 'solid' && styleAfter.style === 'dotted' && styleAfter.dash === '1 9' && styleAfter.step === styleBefore.step + 1, JSON.stringify({styleBefore,styleAfter}));
+
+      const arrowBefore = win.eval(`({step:curStep,arrow:document.getElementById(${JSON.stringify(connectorId)}).dataset.arrow})`);
+      mouse(win, connectorHit, 'mousedown', 420, 320, { altKey: true });
+      const arrowAfter = win.eval(`({step:curStep,arrow:document.getElementById(${JSON.stringify(connectorId)}).dataset.arrow})`);
+      assertion(report, 'Alt+left-click connector still cycles only its arrow mode', arrowAfter.step === arrowBefore.step + 1 && arrowAfter.arrow !== arrowBefore.arrow && win.eval(`document.getElementById(${JSON.stringify(connectorId)}).dataset.style`) === 'dotted', JSON.stringify({arrowBefore,arrowAfter}));
+
+      const plainMiddle = win.eval(`(() => {const hit=document.getElementById('hit_'+${JSON.stringify(connectorId)}),event=new MouseEvent('mousedown',{bubbles:true,cancelable:true,button:1,buttons:4});hit.dispatchEvent(event);document.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:1}));return{prevented:event.defaultPrevented,style:document.getElementById(${JSON.stringify(connectorId)}).dataset.style};})()`);
+      assertion(report, 'plain middle-click remains available to Canvas pan and does not change connector style', !plainMiddle.prevented && plainMiddle.style === 'dotted', JSON.stringify(plainMiddle));
+
+      const split = win.eval(`(() => {
+        const line=document.getElementById(${JSON.stringify(connectorId)});
+        line.dataset.style='dashed'; line.dataset.arrow='both'; updateLine(line); window.doSaveState();
+        const p=connectorPointAt(line,.5), junction=splitConnectorAtPoint(line,p); window.doSaveState();
+        const children=Array.from(document.querySelectorAll('#s line[data-n1][data-n2]')).filter(item=>item.dataset.n1===junction.id||item.dataset.n2===junction.id);
+        return {junction:junction.id,children:children.map(item=>({style:item.dataset.style,arrow:item.dataset.arrow})),state:currentMindmapState().lines.filter(item=>children.some(child=>child.id===item.id)).map(item=>({style:item.style,arrow:item.arrow}))};
+      })()`);
+      assertion(report, 'splitting a connector preserves style and arrow on both new segments and persisted state', split.children.length === 2 && split.children.every(item => item.style === 'dashed' && item.arrow === 'both') && split.state.every(item => item.style === 'dashed' && item.arrow === 'both'), JSON.stringify(split));
+
+      const legacyColor = win.eval(`normalizeStoredColor('var(--c8)','')`);
+      win.eval(`clearSel(); replaceSelection('node','n40'); bd.classList.remove('hl-mode'); window.setCol('bg',3);`);
+      const stableBefore = win.eval(`({stored:document.getElementById('n40').style.background,computed:getComputedStyle(document.getElementById('n40')).backgroundColor})`);
+      win.toggleHlMode();
+      const stableAfter = win.eval(`({stored:document.getElementById('n40').style.background,computed:getComputedStyle(document.getElementById('n40')).backgroundColor})`);
+      win.setCol('bd', 4);
+      const futureHighlight = win.eval(`document.getElementById('n40').style.borderColor`);
+      assertion(report, 'legacy var(--cN) migrates to Normal and 🎨 changes only future colour choices', legacyColor === 'var(--normal-c8)' && stableBefore.stored === 'var(--normal-c3)' && stableAfter.stored === stableBefore.stored && stableAfter.computed === stableBefore.computed && futureHighlight === 'var(--highlight-c4)', JSON.stringify({legacyColor,stableBefore,stableAfter,futureHighlight}));
+
+      const fontSetup = win.eval(`(() => {
+        clearSel(); replaceSelection('node','n41');
+        const text={id:newId('annotation_text'),x:500,y:500,text:'font',description:'',color:selectedPaletteColor(9),fontSize:28};
+        const area={id:newId('annotation_area'),x:600,y:500,w:200,h:120,color:selectedPaletteColor(4),opacity:.1,name:'font area',description:'',note:'',fontSize:28};
+        const line={id:newId('annotation'),x1:500,y1:700,x2:700,y2:700,color:selectedPaletteColor(9)};
+        annotations.texts.push(text); annotations.areas.push(area); annotations.lines.push(line);
+        window.toggleAreaMode(); addSelection('text',text.id); addSelection('area',area.id); addSelection('line',line.id); renderAnnotationTexts();renderAreas();renderAnnotations();window.doSaveState();
+        const node=document.getElementById('n41'),title=node.querySelector('.nt');
+        return {textId:text.id,areaId:area.id,lineId:line.id,nodeSize:parseInt(getComputedStyle(title).fontSize),textSize:text.fontSize,areaSize:area.fontSize,line:JSON.stringify(line),step:curStep};
+      })()`);
+      const plusButton = Array.from(win.document.querySelectorAll('#mm-ui .tool-btn')).find(button => button.textContent.trim() === 'A+');
+      mouse(win, plusButton, 'mousedown', 20, 48);
+      documentMouse(win, 'mouseup', 20, 48);
+      const fontClick = win.eval(`(() => {const text=annotations.texts.find(item=>item.id===${JSON.stringify(fontSetup.textId)}),area=annotations.areas.find(item=>item.id===${JSON.stringify(fontSetup.areaId)}),line=annotations.lines.find(item=>item.id===${JSON.stringify(fontSetup.lineId)});return{nodeSize:parseInt(getComputedStyle(document.querySelector('#n41 .nt')).fontSize),textSize:text.fontSize,areaSize:area.fontSize,line:JSON.stringify(line),step:curStep};})()`);
+      assertion(report, 'one A+ click changes selected Node/Text/Area once, ignores Line, and records one activity', fontClick.nodeSize === fontSetup.nodeSize + 2 && fontClick.textSize === fontSetup.textSize + 2 && fontClick.areaSize === fontSetup.areaSize + 2 && fontClick.line === fontSetup.line && fontClick.step === fontSetup.step + 1, JSON.stringify({fontSetup,fontClick}));
+      const holdStep = fontClick.step;
+      mouse(win, plusButton, 'mousedown', 20, 48);
+      await new Promise(resolve => setTimeout(resolve, 570));
+      documentMouse(win, 'mouseup', 20, 48);
+      const fontHold = win.eval(`({size:parseInt(getComputedStyle(document.querySelector('#n41 .nt')).fontSize),step:curStep})`);
+      assertion(report, 'holding A+ after 400 ms repeats while remaining one Undo activity', fontHold.size >= fontClick.nodeSize + 4 && fontHold.step === holdStep + 1, JSON.stringify({fontClick,fontHold}));
+
+      const toolbar = win.eval(`(() => {const scroll=Array.from(document.querySelectorAll('#mm-ui button')).find(button=>button.textContent.trim()==='📜'),line=Array.from(document.querySelectorAll('#mm-ui button')).find(button=>button.textContent.trim()==='│'),text=Array.from(document.querySelectorAll('#mm-ui button')).find(button=>button.textContent.trim()==='T'),think=Array.from(document.querySelectorAll('#mm-ui button')).find(button=>button.textContent.trim()==='💭'),area=document.getElementById('area-mode-btn');return{top:scroll.parentElement===line.parentElement&&line.parentElement===text.parentElement&&scroll.compareDocumentPosition(line)&Node.DOCUMENT_POSITION_FOLLOWING&&line.compareDocumentPosition(text)&Node.DOCUMENT_POSITION_FOLLOWING,bottom:think.parentElement===area.parentElement&&think.compareDocumentPosition(area)&Node.DOCUMENT_POSITION_FOLLOWING};})()`);
+      assertion(report, 'toolbar places │ and T after 📜 and 🟨 Area after 💭', Boolean(toolbar.top && toolbar.bottom), JSON.stringify(toolbar));
+
+      win.eval(`if(uiHidden) window.toggleUI(); window.toggleUI();`);
+      const hiddenUI = win.eval(`({restore:getComputedStyle(document.getElementById('float-ui-btn')).display,hub:document.getElementById('hub-back-link')?getComputedStyle(document.getElementById('hub-back-link')).display:'none',tools:document.getElementById('tool-switch-btn')?getComputedStyle(document.getElementById('tool-switch-btn')).display:'none',flyout:document.getElementById('tool-switch-flyout')?getComputedStyle(document.getElementById('tool-switch-flyout')).display:'none'})`);
+      assertion(report, 'hiding toolbar also hides Hub, Tools, and flyout while leaving restore control', hiddenUI.restore !== 'none' && hiddenUI.hub === 'none' && hiddenUI.tools === 'none' && hiddenUI.flyout === 'none', JSON.stringify(hiddenUI));
+      win.toggleUI();
+
+      win.setTheme('sepia'); win.cycleMindmapTheme(); win.cycleMindmapTheme();
+      await new Promise(resolve => setTimeout(resolve, 350));
+      const darkCanvas = win.eval(`({canvas:b.classList.contains('canvas-dark'),viewport:document.body.classList.contains('canvas-dark-viewport'),inline:document.body.style.backgroundColor,style:document.body.getAttribute('style'),body:getComputedStyle(document.body).backgroundColor,toolbar:getComputedStyle(document.getElementById('mm-ui')).backgroundColor})`);
+      assertion(report, 'Sepia with Dark Canvas darkens the viewport outside the 20,000px Board but keeps Sepia toolbar', darkCanvas.canvas && darkCanvas.viewport && darkCanvas.body === 'rgb(24, 24, 24)' && darkCanvas.toolbar !== darkCanvas.body, JSON.stringify(darkCanvas));
+      win.cycleMindmapTheme();
+
+      const help = win.eval(`({summaries:Array.from(document.querySelectorAll('#about-ui .about-card details>summary')).map(el=>el.textContent.trim()),open:Array.from(document.querySelectorAll('#about-ui .about-card details')).filter(el=>el.open).length})`);
+      assertion(report, 'Help uses the six approved default-closed sections and preserves copyright', JSON.stringify(help.summaries) === JSON.stringify(['🌿 แนะนำเบื้องต้น','🌱 วิธีใช้งาน Basic','🧰 วิธีใช้งาน Intermediate','🛠️ วิธีใช้งาน Advanced','⌨️ Hotkeys','🤝 เครดิต']) && help.open === 0 && win.document.querySelector('#about-ui .about-card').textContent.includes('© 2026 Chetphanu Sutadharo'), JSON.stringify(help));
+      if (win.eval('areaEditMode')) win.toggleAreaMode();
+    }
+
     async function runBenchmark() {
       let report;
       try {
@@ -984,6 +1064,7 @@
         await runV396AreaAndTextLockChecks(win, report);
         await runV397UnifiedSelectionChecks(win, report);
         await runV398AreaMetadataChecks(win, report);
+        await runV399RefinementChecks(win, report);
         report.paintFallbacks = paintFallbackCount;
         report.throttledPaints = throttledPaintCount;
         report.overall = paintFallbackCount > 0 || throttledPaintCount > 0 ? 'PARTIAL' : 'PASS';
