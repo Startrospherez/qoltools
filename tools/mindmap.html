@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MindMap V3.97</title>
+<title>MindMap V3.98</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -76,6 +76,13 @@
         #annotation-area-layer.area-editing { pointer-events:auto; cursor:crosshair; }
         .annotation-area { position:absolute; box-sizing:border-box; pointer-events:none; --area-color:var(--c4); --area-opacity:.1; }
         .annotation-area::before { content:""; position:absolute; inset:0; background:var(--area-color); opacity:var(--area-opacity); pointer-events:none; }
+        .annotation-area-label { position:absolute; left:18px; bottom:8px; max-width:calc(100% - 26px); pointer-events:none; line-height:1.2; white-space:pre-wrap; overflow-wrap:anywhere; }
+        .annotation-area-name { color:var(--area-color); font-weight:700; }
+        .annotation-area-description { margin-top:4px; color:var(--fg); font-size:.58em; font-weight:400; line-height:1.35; opacity:.78; }
+        .annotation-area-note { position:absolute; left:0; bottom:0; width:22px; height:22px; padding:0; border:1px solid color-mix(in srgb, var(--tb) 85%, var(--fg)); border-radius:50%; background:var(--tb); color:var(--c9); cursor:pointer; font-size:12px; line-height:20px; transform:translate(-50%,50%); pointer-events:auto; z-index:4; box-shadow:0 2px 4px rgba(0,0,0,.15); }
+        .annotation-area-note:hover { background:var(--c9); color:#fff; border-color:var(--c9); }
+        .annotation-area-note.find-note-hit { background:rgb(255,193,7); color:rgb(60,50,0); border-color:rgb(255,193,7); box-shadow:0 0 0 3px rgba(255,193,7,.35),0 2px 4px rgba(0,0,0,.2); }
+        .annotation-area.find-hit { outline:4px solid rgb(255,193,7); outline-offset:3px; }
         #annotation-area-layer.area-editing .annotation-area { pointer-events:auto; cursor:grab; }
         .annotation-area.selected { outline:2px dashed rgb(33,150,243); outline-offset:-2px; }
         .annotation-area.selected:not(.primary-sel) { outline-color:rgba(33,150,243,.62); }
@@ -224,11 +231,14 @@
     <div id="node-note-ui" role="dialog" aria-modal="true" aria-labelledby="node-note-title" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000000;display:none;justify-content:center;align-items:center;padding:24px;box-sizing:border-box;">
         <div style="width:min(760px,92vw);height:min(82vh,720px);display:flex;flex-direction:column;background:var(--tb);border:1px solid var(--bc);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.35);padding:18px;color:var(--fg);box-sizing:border-box;">
             <div class="node-note-head" style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">
-                <div style="flex:1;min-width:0;text-align:left;"><div id="node-note-title" style="font-size:20px;font-weight:bold;word-break:break-word;"></div><div id="node-note-desc" style="margin-top:4px;font-size:14px;opacity:0.75;white-space:pre-wrap;word-break:break-word;"></div></div>
+                <div style="flex:1;min-width:0;text-align:left;">
+                    <div id="node-note-heading"><div id="node-note-title" style="font-size:20px;font-weight:bold;word-break:break-word;"></div><div id="node-note-desc" style="margin-top:4px;font-size:14px;opacity:0.75;white-space:pre-wrap;word-break:break-word;"></div></div>
+                    <div id="area-note-heading" style="display:none;gap:6px;"><input id="area-note-name" type="text" placeholder="ชื่อ Area" aria-label="ชื่อ Area" style="width:100%;box-sizing:border-box;border:1px solid var(--bc);border-radius:5px;padding:7px;background:var(--bg);color:var(--fg);font:700 18px/1.3 sans-serif;"><textarea id="area-note-description" rows="2" placeholder="Description" aria-label="คำอธิบาย Area" style="width:100%;box-sizing:border-box;border:1px solid var(--bc);border-radius:5px;padding:7px;background:var(--bg);color:var(--fg);font:14px/1.4 sans-serif;resize:vertical;"></textarea></div>
+                </div>
                 <div id="note-find-ui" style="display:flex;flex:0 1 330px;min-width:210px;align-items:center;gap:4px;"><input id="note-find-input" type="search" placeholder="ค้นหาในบันทึก…" autocomplete="off" aria-label="ค้นหาในบันทึก" style="flex:1;min-width:0;height:28px;padding:3px 8px;box-sizing:border-box;border:1px solid var(--bc);border-radius:4px;background:var(--bg);color:var(--fg);"><span id="note-find-count" style="min-width:44px;text-align:center;font-size:12px;">0 / 0</span><button id="note-find-prev" type="button" onclick="window.navigateNoteFind(-1)" title="คำก่อนหน้า" style="height:28px;">▲</button><button id="note-find-next" type="button" onclick="window.navigateNoteFind(1)" title="คำถัดไป" style="height:28px;">▼</button><button type="button" onclick="window.clearNoteFind()" title="ล้างคำค้นหา" style="height:28px;">×</button></div>
                 <button type="button" onclick="window.closeNodeNote()" title="ปิดบันทึก (Esc)" aria-label="ปิดบันทึก" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button>
             </div>
-            <textarea id="node-note-input" aria-label="บันทึกประจำ node" placeholder="เขียนบันทึกเพิ่มเติมที่นี่…" style="flex:1;min-height:220px;width:100%;resize:none;box-sizing:border-box;border:1px solid var(--bc);border-radius:6px;background:var(--bg);color:var(--fg);padding:12px;font:15px/1.6 sans-serif;white-space:pre-wrap;"></textarea>
+            <textarea id="node-note-input" aria-label="บันทึกเพิ่มเติม" placeholder="เขียนบันทึกเพิ่มเติมที่นี่…" style="flex:1;min-height:220px;width:100%;resize:none;box-sizing:border-box;border:1px solid var(--bc);border-radius:6px;background:var(--bg);color:var(--fg);padding:12px;font:15px/1.6 sans-serif;white-space:pre-wrap;"></textarea>
         </div>
     </div>
     <div id="image-detail-ui" role="dialog" aria-modal="true" aria-labelledby="image-detail-title" onclick="if(event.target===this)window.closeImageDetail()">
@@ -245,7 +255,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.97</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.98</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <details>
     <summary>📖 วิธีใช้งาน</summary>
     <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เนื้อหา และข้อมูลประกอบในหน้าเดียว</p>
@@ -463,7 +473,7 @@
 
         let findMatches = [];
         let findIndex = -1;
-        let nodeNoteId = null;
+        let nodeNoteId = null, areaNoteId = null;
         let nodeNoteTimer = null;
         let noteFindMatches = [];
         let noteFindIndex = -1;
@@ -613,7 +623,7 @@
             editingConnectorRouteLabel = null; renderConnectorRouteLabels(); if(save) window.doSaveState();
         }
         window.editConnectorRouteLabel = function(lineId, side) { let line = document.getElementById(lineId); if(!line) return; let labels = connectorRouteLabels(line); editingConnectorRouteLabel = { lineId:lineId, side:side, originalText:labels[side].text }; cancelConnectorNavigationHide(); renderConnectorRouteLabels(); };
-        function jumpToConnectorRouteTarget(lineId, side) { let line = document.getElementById(lineId), target = line && connectorRouteTarget(line, side); if(!target) return; let viewport = getUsableViewport(), bounds = nodeCanvasBounds(target); cx = viewport.centerX - (bounds.left + bounds.right) / 2 * zoom; cy = viewport.centerY - (bounds.top + bounds.bottom) / 2 * zoom; updateTransform(); clearFitRestore(); window.showToast('🧭 ไปยัง node ที่เชื่อมอยู่'); }
+        function jumpToConnectorRouteTarget(lineId, side) { let line = document.getElementById(lineId), target = line && connectorRouteTarget(line, side); if(!target) return; let viewport = getUsableViewport(), bounds = nodeCanvasBounds(target); cx = viewport.centerX - (bounds.left + bounds.right) / 2 * zoom; cy = viewport.centerY - (bounds.top + bounds.bottom) / 2 * zoom; updateTransform(); clearFitRestore(); window.showToast('🧭 ไปยัง node ที่เชื่อมอยู่'); showNodeAreaContext(target); }
         function beginConnectorRouteLabelPointer(e, lineId, side) {
             e.preventDefault(); e.stopPropagation(); cancelConnectorNavigationHide(); let line = document.getElementById(lineId); if(!line || editingConnectorRouteLabel) return; let labels = connectorRouteLabels(line), label = labels[side];
             let startX = e.clientX, startY = e.clientY, moved = false, key = lineId + ':' + side;
@@ -694,6 +704,8 @@
         function clearFindHighlight() {
             document.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
             document.querySelectorAll('.note-btn.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
+            document.querySelectorAll('.annotation-area.find-hit').forEach(area => area.classList.remove('find-hit'));
+            document.querySelectorAll('.annotation-area-note.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
             document.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(document.createTextNode(mark.textContent || '')));
         }
 
@@ -731,20 +743,45 @@
             updateTransform();
             clearFitRestore();
         }
+        function centerFindArea(area) {
+            let viewport = getUsableViewport(), targetX = area.x, targetY = area.y + area.h;
+            cx = viewport.centerX - targetX * zoom; cy = viewport.centerY - targetY * zoom; updateTransform(); clearFitRestore();
+        }
+        function areaNamesForNode(node) {
+            let bounds = nodeCanvasBounds(node); return Array.from(new Set(annotations.areas.filter(area => rectanglesOverlap(bounds, {left:area.x,top:area.y,right:area.x+area.w,bottom:area.y+area.h})).map(area => (area.name || '').trim()).filter(Boolean)));
+        }
+        function showNodeAreaContext(node) {
+            let names = areaNamesForNode(node), toast = document.getElementById('area-context-toast');
+            if(!names.length) { if(toast) toast.style.opacity = '0'; return; }
+            if(!toast) { toast = document.createElement('div'); toast.id = 'area-context-toast'; toast.style.cssText = 'position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:rgba(30,90,145,.92);color:#fff;padding:9px 18px;border-radius:24px;z-index:9999999;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 3px 9px rgba(0,0,0,.28);text-align:center;'; document.body.appendChild(toast); }
+            toast.textContent = '🟨 ' + names.join(' · '); toast.style.opacity = '1'; if(toast.tm) clearTimeout(toast.tm); toast.tm = setTimeout(() => { toast.style.opacity = '0'; }, 4500);
+        }
 
         function showFindResult() {
             clearFindHighlight();
             if(findIndex < 0 || !findMatches[findIndex]) { updateFindControls(); return; }
-            let match = findMatches[findIndex], node = match.node;
-            if(match.title || match.detail) node.classList.add('find-hit');
-            if(match.title) markTextMatches(node.querySelector('.nt'), match.query);
-            if(match.detail) markTextMatches(node.querySelector('.nd'), match.query);
-            if(match.note) { let noteButton = node.querySelector('.note-btn'); if(noteButton) noteButton.classList.add('find-note-hit'); }
-            centerFindNode(node);
+            let match = findMatches[findIndex];
+            if(match.kind === 'area') {
+                let contextToast = document.getElementById('area-context-toast'); if(contextToast) contextToast.style.opacity = '0';
+                let area = annotations.areas.find(item => item.id === match.id), element = b.querySelector('.annotation-area[data-annotation-area-id="' + match.id + '"]'); if(!area || !element) { updateFindControls(); return; }
+                if(match.title || match.detail) element.classList.add('find-hit');
+                if(match.title) markTextMatches(element.querySelector('.annotation-area-name'), match.query);
+                if(match.detail) markTextMatches(element.querySelector('.annotation-area-description'), match.query);
+                if(match.note) { let noteButton = element.querySelector('.annotation-area-note'); if(noteButton) noteButton.classList.add('find-note-hit'); }
+                centerFindArea(area);
+            } else {
+                let node = match.node;
+                if(match.title || match.detail) node.classList.add('find-hit');
+                if(match.title) markTextMatches(node.querySelector('.nt'), match.query);
+                if(match.detail) markTextMatches(node.querySelector('.nd'), match.query);
+                if(match.note) { let noteButton = node.querySelector('.note-btn'); if(noteButton) noteButton.classList.add('find-note-hit'); }
+                centerFindNode(node); showNodeAreaContext(node);
+            }
             updateFindControls();
         }
 
-        window.refreshFind = function(preferredNode) {
+        function findResultKey(match) { return match ? match.kind + ':' + match.id : ''; }
+        window.refreshFind = function(preferredResult) {
             let query = document.getElementById('find-input').value.trim().toLocaleLowerCase();
             let includeDetails = document.getElementById('find-scope').value === 'all';
             clearFindHighlight();
@@ -754,20 +791,21 @@
             findMatches = nodes.reduce((matches, n) => {
                 if(!n.isConnected || n.classList.contains('j')) return matches;
                 let title = n.querySelector('.nt'), detail = n.querySelector('.nd'), titleMatch = !!(title && title.textContent.toLocaleLowerCase().includes(query)), detailMatch = !!(includeDetails && detail && detail.textContent.toLocaleLowerCase().includes(query)), noteMatch = !!(includeDetails && (n.dataset.note || '').toLocaleLowerCase().includes(query));
-                if(titleMatch || detailMatch || noteMatch) matches.push({ node: n, title: titleMatch, detail: detailMatch, note: noteMatch, query: query });
+                if(titleMatch || detailMatch || noteMatch) matches.push({ kind:'node', id:n.id, node:n, title:titleMatch, detail:detailMatch, note:noteMatch, query:query });
                 return matches;
             }, []);
-            findIndex = preferredNode ? findMatches.findIndex(match => match.node === preferredNode) : 0;
+            annotations.areas.forEach(area => { let titleMatch=(area.name||'').toLocaleLowerCase().includes(query),detailMatch=!!(includeDetails&&(area.description||'').toLocaleLowerCase().includes(query)),noteMatch=!!(includeDetails&&(area.note||'').toLocaleLowerCase().includes(query));if(titleMatch||detailMatch||noteMatch)findMatches.push({kind:'area',id:area.id,area:area,title:titleMatch,detail:detailMatch,note:noteMatch,query:query}); });
+            let preferredKey = findResultKey(preferredResult); findIndex = preferredKey ? findMatches.findIndex(match => findResultKey(match) === preferredKey) : 0;
             if(findIndex < 0 && findMatches.length) findIndex = 0;
             if(!findMatches.length) findIndex = -1;
             showFindResult();
         };
 
         window.navigateFind = function(direction) {
-            let current = findMatches[findIndex] && findMatches[findIndex].node;
+            let current = findMatches[findIndex];
             window.refreshFind(current);
             if(!findMatches.length) return;
-            let currentIndex = current ? findMatches.findIndex(match => match.node === current) : -1;
+            let currentKey = findResultKey(current), currentIndex = currentKey ? findMatches.findIndex(match => findResultKey(match) === currentKey) : -1;
             findIndex = currentIndex < 0 ? (direction > 0 ? 0 : findMatches.length - 1) : (currentIndex + direction + findMatches.length) % findMatches.length;
             showFindResult();
         };
@@ -777,7 +815,7 @@
             let input = document.getElementById('find-input');
             findUI.style.display = 'flex';
             updateFindPosition();
-            window.refreshFind(findMatches[findIndex] && findMatches[findIndex].node);
+            window.refreshFind(findMatches[findIndex]);
             input.focus(); input.select();
         };
 
@@ -790,7 +828,7 @@
         };
 
         document.getElementById('find-input').addEventListener('input', function() { window.refreshFind(); });
-        document.getElementById('find-scope').addEventListener('change', function() { window.refreshFind(findMatches[findIndex] && findMatches[findIndex].node); });
+        document.getElementById('find-scope').addEventListener('change', function() { window.refreshFind(findMatches[findIndex]); });
         document.getElementById('find-input').addEventListener('keydown', function(e) {
             if(e.key === 'Enter') { e.preventDefault(); window.navigateFind(e.shiftKey ? -1 : 1); }
         });
@@ -847,10 +885,14 @@
 
         function saveNodeNote() {
             if(nodeNoteTimer) { clearTimeout(nodeNoteTimer); nodeNoteTimer = null; }
-            if(!nodeNoteId) return;
-            let node = document.getElementById(nodeNoteId);
             let input = document.getElementById('node-note-input');
-            if(!node || !input) return;
+            if(areaNoteId) {
+                let area = annotations.areas.find(item => item.id === areaNoteId); if(!area || !input) return;
+                let next = { name:document.getElementById('area-note-name').value, description:document.getElementById('area-note-description').value, note:input.value };
+                if(area.name !== next.name || area.description !== next.description || area.note !== next.note) { Object.assign(area, next); renderAreas(); window.doSaveState(); }
+                return;
+            }
+            if(!nodeNoteId) return; let node = document.getElementById(nodeNoteId); if(!node || !input) return;
             if((node.dataset.note || '') !== input.value) { node.dataset.note = input.value; window.doSaveState(); }
         }
 
@@ -878,8 +920,10 @@
         window.openNodeNote = function(id) {
             let node = document.getElementById(id);
             if(!node || node.classList.contains('j')) return;
-            if(nodeNoteId && nodeNoteId !== id) window.closeNodeNote();
-            nodeNoteId = id;
+            if((nodeNoteId && nodeNoteId !== id) || areaNoteId) window.closeNodeNote();
+            nodeNoteId = id; areaNoteId = null;
+            document.getElementById('node-note-heading').style.display = '';
+            document.getElementById('area-note-heading').style.display = 'none';
             document.getElementById('node-note-title').textContent = node.querySelector('.nt')?.textContent || '';
             document.getElementById('node-note-desc').textContent = node.querySelector('.nd')?.textContent || '';
             let input = document.getElementById('node-note-input');
@@ -887,6 +931,20 @@
             document.getElementById('node-note-ui').style.display = 'flex';
             let globalQuery = document.getElementById('find-input').value.trim(), isNoteQuery = globalQuery && document.getElementById('find-scope').value === 'all' && input.value.toLocaleLowerCase().includes(globalQuery.toLocaleLowerCase());
             if(isNoteQuery) window.openNoteFind(globalQuery); else { window.clearNoteFind(); input.focus(); }
+        };
+        window.openAreaNote = function(id) {
+            let area = annotations.areas.find(item => item.id === id); if(!area) return;
+            if((areaNoteId && areaNoteId !== id) || nodeNoteId) window.closeNodeNote();
+            nodeNoteId = null; areaNoteId = id;
+            document.getElementById('node-note-heading').style.display = 'none';
+            document.getElementById('area-note-heading').style.display = 'flex';
+            document.getElementById('area-note-heading').style.flexDirection = 'column';
+            document.getElementById('area-note-name').value = area.name || '';
+            document.getElementById('area-note-description').value = area.description || '';
+            let input = document.getElementById('node-note-input'); input.value = area.note || '';
+            document.getElementById('node-note-ui').style.display = 'flex';
+            let globalQuery = document.getElementById('find-input').value.trim(), isNoteQuery = globalQuery && document.getElementById('find-scope').value === 'all' && input.value.toLocaleLowerCase().includes(globalQuery.toLocaleLowerCase());
+            if(isNoteQuery) window.openNoteFind(globalQuery); else { window.clearNoteFind(); document.getElementById('area-note-name').focus(); }
         };
 
         window.openImageDetail = async function(id) {
@@ -909,7 +967,7 @@
         window.closeNodeNote = function() {
             saveNodeNote();
             window.clearNoteFind();
-            nodeNoteId = null;
+            nodeNoteId = null; areaNoteId = null;
             document.getElementById('node-note-ui').style.display = 'none';
         };
 
@@ -918,6 +976,7 @@
             nodeNoteTimer = setTimeout(saveNodeNote, 500);
             window.refreshNoteFind();
         });
+        ['area-note-name','area-note-description'].forEach(id => document.getElementById(id).addEventListener('input', function() { if(nodeNoteTimer) clearTimeout(nodeNoteTimer); nodeNoteTimer = setTimeout(saveNodeNote, 500); }));
         document.getElementById('note-find-input').addEventListener('input', function() { window.refreshNoteFind(); });
         document.getElementById('note-find-input').addEventListener('keydown', function(e) { if(e.key === 'Enter') { e.preventDefault(); window.navigateNoteFind(e.shiftKey ? -1 : 1); } if(e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); window.clearNoteFind(); document.getElementById('node-note-input').focus(); } });
 
@@ -952,14 +1011,14 @@
             return {
                 lines: lines.filter(line => line && typeof line.id === 'string' && [line.x1,line.y1,line.x2,line.y2].every(Number.isFinite)).map(line => ({ id: line.id, x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, color: typeof line.color === 'string' ? line.color : 'var(--c9)' })),
                 texts: texts.filter(text => text && typeof text.id === 'string' && typeof text.text === 'string' && [text.x,text.y].every(Number.isFinite)).map(text => ({ id:text.id, x:text.x, y:text.y, text:text.text, description:typeof text.description === 'string' ? text.description : '', color:typeof text.color === 'string' ? text.color : 'var(--c9)', fontSize:Number.isFinite(text.fontSize) && text.fontSize > 0 ? text.fontSize : 28 })),
-                areas: areas.filter(area => area && typeof area.id === 'string' && [area.x,area.y,area.w,area.h].every(Number.isFinite) && area.w > 0 && area.h > 0).map(area => ({ id:area.id, x:area.x, y:area.y, w:area.w, h:area.h, color:typeof area.color === 'string' ? area.color : 'var(--c4)', opacity:Number.isFinite(area.opacity) ? Math.min(.3, Math.max(.04, area.opacity)) : .1 }))
+                areas: areas.filter(area => area && typeof area.id === 'string' && [area.x,area.y,area.w,area.h].every(Number.isFinite) && area.w > 0 && area.h > 0).map(area => ({ id:area.id, x:area.x, y:area.y, w:area.w, h:area.h, color:typeof area.color === 'string' ? area.color : 'var(--c4)', opacity:Number.isFinite(area.opacity) ? Math.min(.3, Math.max(.04, area.opacity)) : .1, name:typeof area.name === 'string' ? area.name : '', description:typeof area.description === 'string' ? area.description : '', note:typeof area.note === 'string' ? area.note : '', fontSize:Number.isFinite(area.fontSize) && area.fontSize > 0 ? area.fontSize : 28 }))
             };
         }
         function annotationsFromDom() {
             return normalizedAnnotations({
                 lines: Array.from(s.querySelectorAll('.annotation-line')).map(el => ({ id:el.dataset.annotationId, x1:parseFloat(el.getAttribute('x1')), y1:parseFloat(el.getAttribute('y1')), x2:parseFloat(el.getAttribute('x2')), y2:parseFloat(el.getAttribute('y2')), color:el.getAttribute('stroke') || 'var(--c9)' })),
                 texts: Array.from(b.querySelectorAll('.annotation-text')).map(el => { let content = el.querySelector('.annotation-text-content'), description = el.querySelector('.annotation-text-description'); return { id:el.dataset.annotationTextId, x:parseFloat(el.style.left), y:parseFloat(el.style.top), text:content ? content.innerText.replace(/\r/g, '') : '', description:description ? description.innerText.replace(/\r/g, '') : '', color:el.style.color || 'var(--c9)', fontSize:parseFloat(el.style.fontSize) || 28 }; }),
-                areas: Array.from(b.querySelectorAll('.annotation-area')).map(el => ({ id:el.dataset.annotationAreaId, x:parseFloat(el.style.left), y:parseFloat(el.style.top), w:parseFloat(el.style.width), h:parseFloat(el.style.height), color:el.style.getPropertyValue('--area-color') || 'var(--c4)', opacity:parseFloat(el.style.getPropertyValue('--area-opacity')) || .1 }))
+                areas: Array.from(b.querySelectorAll('.annotation-area')).map(el => { let source = annotations.areas.find(area => area.id === el.dataset.annotationAreaId) || {}; return { id:el.dataset.annotationAreaId, x:parseFloat(el.style.left), y:parseFloat(el.style.top), w:parseFloat(el.style.width), h:parseFloat(el.style.height), color:el.style.getPropertyValue('--area-color') || 'var(--c4)', opacity:parseFloat(el.style.getPropertyValue('--area-opacity')) || .1, name:source.name || '', description:source.description || '', note:source.note || '', fontSize:source.fontSize || 28 }; })
             });
         }
         function selectedAnnotation() { return annotations.lines.find(line => line.id === selectedAnnotationId); }
@@ -973,6 +1032,10 @@
             let layer = ensureAnnotationAreaLayer(); layer.innerHTML = ''; layer.classList.toggle('area-editing', areaEditMode);
             annotations.areas.forEach(area => {
                 let el = document.createElement('div'); el.className = 'annotation-area'; el.dataset.annotationAreaId = area.id; el.style.left = area.x + 'px'; el.style.top = area.y + 'px'; el.style.width = area.w + 'px'; el.style.height = area.h + 'px'; el.style.setProperty('--area-color', area.color); el.style.setProperty('--area-opacity', area.opacity);
+                let label = document.createElement('div'); label.className = 'annotation-area-label'; label.style.fontSize = area.fontSize + 'px';
+                let name = document.createElement('div'); name.className = 'annotation-area-name'; name.textContent = area.name || '';
+                let description = document.createElement('div'); description.className = 'annotation-area-description'; description.textContent = area.description || ''; label.append(name, description); el.appendChild(label);
+                let note = document.createElement('button'); note.type = 'button'; note.className = 'annotation-area-note'; note.textContent = '📝'; note.title = 'ชื่อ คำอธิบาย และบันทึกของ Area'; note.dataset.html2canvasIgnore = 'true'; note.onmousedown = e => { e.preventDefault(); e.stopPropagation(); }; note.onclick = e => { e.preventDefault(); e.stopPropagation(); window.openAreaNote(area.id); }; el.appendChild(note);
                 if(isSelected('area', area.id)) el.classList.add('selected');
                 if(selectedAreaId === area.id) el.classList.add('primary-sel');
                 if(areaEditMode) {
@@ -1185,7 +1248,7 @@
             let geometry = draw(startX, startY);
             function cleanup() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.removeEventListener('keydown', keydown, true); window.removeEventListener('blur', cancel); document.body.style.userSelect = ''; if(draft.isConnected) draft.remove(); if(activeAreaGestureCancel === cancel) activeAreaGestureCancel = null; }
             function move(event) { geometry = draw(snapPoint((event.clientX - cx) / zoom), snapPoint((event.clientY - cy) / zoom)); }
-            function up() { if(finished) return; finished = true; cleanup(); if(geometry.w < 20 || geometry.h < 20) { selectedAreaId = null; renderAreas(); return; } let area = { id:newId('annotation_area'), x:geometry.left, y:geometry.top, w:Math.max(40, geometry.w), h:Math.max(40, geometry.h), color:'var(--c4)', opacity:.1 }; annotations.areas.push(area); selectArea(area.id); window.doSaveState(); }
+            function up() { if(finished) return; finished = true; cleanup(); if(geometry.w < 20 || geometry.h < 20) { selectedAreaId = null; renderAreas(); return; } let area = { id:newId('annotation_area'), x:geometry.left, y:geometry.top, w:Math.max(40, geometry.w), h:Math.max(40, geometry.h), color:'var(--c4)', opacity:.1, name:'', description:'', note:'', fontSize:28 }; annotations.areas.push(area); selectArea(area.id); window.doSaveState(); }
             function cancel() { if(finished) return; finished = true; cleanup(); renderAreas(); }
             function keydown(event) { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancel(); } }
             activeAreaGestureCancel = cancel; document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); document.addEventListener('keydown', keydown, true); window.addEventListener('blur', cancel);
@@ -1194,7 +1257,7 @@
             if(activeAreaGestureCancel) activeAreaGestureCancel();
             areaEditMode = !areaEditMode; if(!areaEditMode) clearSelectionKinds(['area']); let button = document.getElementById('area-mode-btn'); if(button) button.classList.toggle('active', areaEditMode); syncSelectionVisuals(); window.showToast(areaEditMode ? '🟨 โหมด Area — ลากพื้นที่ว่างเพื่อสร้างพื้นที่สี' : '🟨 ปิดโหมด Area — พื้นที่กลับไปคลิกทะลุได้');
         };
-        window.deleteArea = function(id) { annotations.areas = annotations.areas.filter(area => area.id !== id); selectionRegistry.items.delete(selectionKey('area', id)); syncSelectionVisuals(); window.doSaveState(); };
+        window.deleteArea = function(id) { if(areaNoteId === id) window.closeNodeNote(); annotations.areas = annotations.areas.filter(area => area.id !== id); selectionRegistry.items.delete(selectionKey('area', id)); syncSelectionVisuals(); window.doSaveState(); };
         window.toggleHlMode = function() { bd.classList.toggle('hl-mode'); };
 
         window.saveBackup = function() {
@@ -1210,6 +1273,8 @@
             let clone = document.documentElement.cloneNode(true);
             clone.querySelectorAll('.n.find-hit').forEach(n => n.classList.remove('find-hit'));
             clone.querySelectorAll('.note-btn.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
+            clone.querySelectorAll('.annotation-area.find-hit').forEach(area => area.classList.remove('find-hit'));
+            clone.querySelectorAll('.annotation-area-note.find-note-hit').forEach(button => button.classList.remove('find-note-hit'));
             clone.querySelectorAll('.find-text-hit').forEach(mark => mark.replaceWith(clone.ownerDocument.createTextNode(mark.textContent || '')));
             clone.querySelectorAll('[data-annotation-ui], .mb, .connector-route-label, .junction-mini-tools, .connector-hit-line').forEach(control => control.remove());
             clone.querySelectorAll('.annotation-text.selected').forEach(text => text.classList.remove('selected'));
@@ -1533,7 +1598,7 @@
             curStep++; window.saveBackup(); projectStore.saveGraph({nodes: state, lines: lines, images: imgState, annotations: annotationState, nid: nid}).catch(err => console.warn('Image project autosave:', err)); renderConnectorRouteLabels(); renderJunctionMiniTools();
         };
         
-        window.doUndo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep > 0) window.loadState(curStep - 1); }; window.doRedo = function() { if(nodeNoteId) window.closeNodeNote(); if(curStep < mmHistory.length - 1) window.loadState(curStep + 1); };
+        window.doUndo = function() { if(nodeNoteId || areaNoteId) window.closeNodeNote(); if(curStep > 0) window.loadState(curStep - 1); }; window.doRedo = function() { if(nodeNoteId || areaNoteId) window.closeNodeNote(); if(curStep < mmHistory.length - 1) window.loadState(curStep + 1); };
 
         function normalizedHistoryNodeType(value) { return value === 'j' ? 'j' : 'n'; }
         function validatedGraphState(state) {
@@ -1596,7 +1661,7 @@
         }
         function resetTransientStateForLoad() {
             if(activeAreaGestureCancel) activeAreaGestureCancel(); cancelActiveNodeDragForStateLoad(); clearFindHighlight(); connectorNavHoverId = null; selectedAnnotationId = null; selectedAnnotationTextId = null; selectedAreaId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null;
-            selectionRegistry.items.clear(); selectionRegistry.primary = null; selectedImageIds.clear(); nodes.forEach(node => node.classList.remove('sel','primary-sel')); document.querySelectorAll('.connector-route-label, .junction-mini-tools').forEach(el => el.remove());
+            nodeNoteId = null; areaNoteId = null; document.getElementById('node-note-ui').style.display = 'none'; selectionRegistry.items.clear(); selectionRegistry.primary = null; selectedImageIds.clear(); nodes.forEach(node => node.classList.remove('sel','primary-sel')); document.querySelectorAll('.connector-route-label, .junction-mini-tools').forEach(el => el.remove());
         }
         function patchCompatibleState(state, step, topology) {
             let previous = mmHistory[curStep] || {}, previousNodes = new Map((previous.nodes || []).map(item => [item.id, item])), previousLines = new Map((previous.lines || []).map(item => [item.id, item]));
@@ -1973,7 +2038,7 @@
         window.addEventListener('keydown', function(e) {
             if(e.key === 'Escape' && document.getElementById('about-ui').style.display !== 'none') { e.preventDefault(); window.closeAbout(); return; }
             if(e.key === 'Escape' && document.getElementById('image-detail-ui').classList.contains('open')) { e.preventDefault(); window.closeImageDetail(); return; }
-            if(e.key === 'Escape' && nodeNoteId) { e.preventDefault(); window.closeNodeNote(); return; }
+            if(e.key === 'Escape' && (nodeNoteId || areaNoteId)) { e.preventDefault(); window.closeNodeNote(); return; }
             if(e.key === 'Escape' && areaEditMode) { e.preventDefault(); if(activeAreaGestureCancel) activeAreaGestureCancel(); areaEditMode = false; clearSelectionKinds(['area']); let button = document.getElementById('area-mode-btn'); if(button) button.classList.remove('active'); syncSelectionVisuals(); window.showToast('🟨 ปิดโหมด Area'); return; }
             if(e.key === 'Tab') {
                 let active = document.activeElement;

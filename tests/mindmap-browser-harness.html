@@ -889,6 +889,68 @@
       if (win.eval('areaEditMode')) win.toggleAreaMode();
     }
 
+    async function runV398AreaMetadataChecks(win, report) {
+      progress('9/9 ทดสอบ V3.98: Area metadata, Note, Find และ navigation context');
+      const legacy = win.eval(`normalizedAnnotations({areas:[{id:'legacy_area',x:1,y:2,w:100,h:80,color:'var(--c4)',opacity:.1}]}).areas[0]`);
+      assertion(report, 'legacy Area normalizes optional metadata without a format bump', legacy.name === '' && legacy.description === '' && legacy.note === '' && legacy.fontSize === 28 && win.eval('MM_PROJECT_VERSION') === 1, JSON.stringify(legacy));
+
+      const areaSetup = win.eval(`(() => {
+        clearSel(); if(areaEditMode) window.toggleAreaMode();
+        const node=document.getElementById('n30'),bounds=nodeCanvasBounds(node);
+        const area={id:newId('annotation_area'),x:bounds.left-20,y:bounds.top-20,w:bounds.right-bounds.left+40,h:bounds.bottom-bounds.top+40,color:'var(--c8)',opacity:.1,name:'Area เดิม',description:'รายละเอียดเดิม',note:'บันทึกเดิม',fontSize:28};
+        const peer={id:newId('annotation_area'),x:bounds.left-10,y:bounds.top-10,w:bounds.right-bounds.left+20,h:bounds.bottom-bounds.top+20,color:'var(--c4)',opacity:.1,name:'พื้นที่ร่วม',description:'',note:'',fontSize:28};
+        const duplicate={...peer,id:newId('annotation_area')};
+        annotations.areas.push(area,peer,duplicate);renderAreas();window.doSaveState();
+        return {areaId:area.id,peerId:peer.id,duplicateId:duplicate.id,nodeId:node.id,step:curStep};
+      })()`);
+      let areaElement = win.document.querySelector('.annotation-area[data-annotation-area-id="' + areaSetup.areaId + '"]');
+      let areaNoteButton = areaElement.querySelector('.annotation-area-note');
+      assertion(report, 'Area renders bottom-left Name/Description and an always-clickable Note button while its body stays click-through', areaElement.querySelector('.annotation-area-name').textContent === 'Area เดิม' && areaElement.querySelector('.annotation-area-description').textContent === 'รายละเอียดเดิม' && win.getComputedStyle(areaElement).pointerEvents === 'none' && win.getComputedStyle(areaNoteButton).pointerEvents === 'auto' && areaNoteButton.dataset.html2canvasIgnore === 'true');
+
+      areaNoteButton.click();
+      assertion(report, 'Area Note reuses the shared dialog with editable metadata', win.eval('areaNoteId') === areaSetup.areaId && win.document.getElementById('area-note-heading').style.display === 'flex');
+      const editStepBefore = win.eval('curStep');
+      win.document.getElementById('area-note-name').value = 'ยุคพุทธกาล';
+      win.document.getElementById('area-note-description').value = 'ช่วงเวลาทดสอบ V3.98';
+      win.document.getElementById('node-note-input').value = 'แหล่งข้อมูลลับ V3.98 หลายตำแหน่ง V3.98';
+      win.closeNodeNote();
+      const edited = win.eval(`({step:curStep,area:cloneMindmapState(annotations.areas.find(item=>item.id===${JSON.stringify(areaSetup.areaId)}))})`);
+      assertion(report, 'closing Area Note saves Name, Description, and Note in one history activity', edited.step === editStepBefore + 1 && edited.area.name === 'ยุคพุทธกาล' && edited.area.description === 'ช่วงเวลาทดสอบ V3.98' && edited.area.note.includes('แหล่งข้อมูลลับ'), JSON.stringify(edited));
+      win.doUndo();
+      assertion(report, 'one Undo restores the complete previous Area metadata', win.eval(`annotations.areas.find(item=>item.id===${JSON.stringify(areaSetup.areaId)}).name`) === 'Area เดิม');
+      win.doRedo();
+      assertion(report, 'one Redo restores the complete edited Area metadata', win.eval(`annotations.areas.find(item=>item.id===${JSON.stringify(areaSetup.areaId)}).name`) === 'ยุคพุทธกาล');
+
+      win.openAreaNote(areaSetup.areaId);
+      win.document.getElementById('note-find-input').value = 'V3.98';
+      win.refreshNoteFind();
+      assertion(report, 'shared Note Find finds every matching position inside an Area Note', win.eval('noteFindMatches.length') === 2);
+      win.closeNodeNote();
+
+      win.document.getElementById('find-scope').value = 'title';
+      win.document.getElementById('find-input').value = 'ยุคพุทธกาล';
+      win.refreshFind();
+      const titleFind = win.eval(`({matches:findMatches.map(findResultKey),index:findIndex,corner:(()=>{const a=annotations.areas.find(item=>item.id===${JSON.stringify(areaSetup.areaId)});return{x:a.x*zoom+cx,y:(a.y+a.h)*zoom+cy}})(),viewport:getUsableViewport()})`);
+      assertion(report, 'title Find includes Area name and navigates to its bottom-left Note/name corner', titleFind.matches.includes('area:' + areaSetup.areaId) && Math.abs(titleFind.corner.x-titleFind.viewport.centerX)<1 && Math.abs(titleFind.corner.y-titleFind.viewport.centerY)<1, JSON.stringify(titleFind));
+      areaElement = win.document.querySelector('.annotation-area[data-annotation-area-id="' + areaSetup.areaId + '"]');
+      assertion(report, 'Area name match highlights visible label text', Boolean(areaElement.querySelector('.annotation-area-name .find-text-hit')));
+
+      win.document.getElementById('find-scope').value = 'all';
+      win.document.getElementById('find-input').value = 'แหล่งข้อมูลลับ';
+      win.refreshFind();
+      areaElement = win.document.querySelector('.annotation-area[data-annotation-area-id="' + areaSetup.areaId + '"]');
+      assertion(report, 'note-only Global Find reveals and highlights the Area Note button', areaElement.querySelector('.annotation-area-note').classList.contains('find-note-hit') && !areaElement.classList.contains('find-hit'));
+
+      const contextNames = win.eval(`areaNamesForNode(document.getElementById(${JSON.stringify(areaSetup.nodeId)}))`);
+      win.eval(`showNodeAreaContext(document.getElementById(${JSON.stringify(areaSetup.nodeId)}))`);
+      const contextToast = win.document.getElementById('area-context-toast');
+      assertion(report, 'Node navigation context lists every overlapping named Area once', contextNames.length === 2 && contextNames.includes('ยุคพุทธกาล') && contextNames.includes('พื้นที่ร่วม') && contextToast.textContent.includes('ยุคพุทธกาล · พื้นที่ร่วม'), JSON.stringify({contextNames,text:contextToast.textContent}));
+
+      const persisted = win.eval(`(() => {const state=currentMindmapState(),area=state.annotations.areas.find(item=>item.id===${JSON.stringify(areaSetup.areaId)}),roundTrip=normalizedImportState(JSON.parse(JSON.stringify(state))).annotations.areas.find(item=>item.id===${JSON.stringify(areaSetup.areaId)});return{area,roundTrip,format:MM_PROJECT_VERSION};})()`);
+      assertion(report, 'Area metadata survives normalized history/JSON/Project state paths', persisted.format === 1 && JSON.stringify(persisted.area) === JSON.stringify(persisted.roundTrip) && persisted.area.note.includes('V3.98'), JSON.stringify(persisted));
+      win.closeFind();
+    }
+
     async function runBenchmark() {
       let report;
       try {
@@ -921,6 +983,7 @@
         await runV395InteractionChecks(win, report);
         await runV396AreaAndTextLockChecks(win, report);
         await runV397UnifiedSelectionChecks(win, report);
+        await runV398AreaMetadataChecks(win, report);
         report.paintFallbacks = paintFallbackCount;
         report.throttledPaints = throttledPaintCount;
         report.overall = paintFallbackCount > 0 || throttledPaintCount > 0 ? 'PARTIAL' : 'PASS';
