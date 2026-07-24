@@ -1,17 +1,16 @@
 # MindMap Handoff
 
-Updated: 2026-07-18 (Asia/Bangkok)
+Updated: 2026-07-24 (Asia/Bangkok)
 
 ## Current Baseline
 
 - Repository: `Startrospherez/qoltools`
-- Current MindMap build: **V3.95** (Canvas-scaled route labels, easier Timeline
-  Line selection, and Alt-drag copy), automated and user-verified on
-  2026-07-18. The user tested real images, mixed selection, group movement,
-  Snap, individual resize, mixed Delete Undo/Redo, and the complete Alt-drag
-  copy refinement successfully. V3.93 activity-based batch Delete history
-  remains user-verified: multi-Node Delete and one-step Undo/Redo worked with
-  the current real working map.
+- Current MindMap build: **V3.96** (borderless background Areas and Floating
+  Text Shift axis-lock), automated and user-verified on 2026-07-24. The full
+  foreground browser harness passed with the 1,000-Node synthetic fixture
+  after regeneration from `decoded/mindmap.html`. V3.95 Canvas-scaled route
+  labels, easier Timeline Line selection, Alt-drag copy, and the complete
+  direct-copy refinement remain user-verified.
 - Latest verified baseline: V3.86 centred automatic route labels, after V3.84
   directional route-label expansion and selected-junction mini tools, V3.83
   route-label docking, V3.82
@@ -29,6 +28,26 @@ Updated: 2026-07-18 (Asia/Bangkok)
   not be mistaken for study data.
 
 ## Completed Recently
+
+## V3.96: Background Areas and Floating Text Axis Lock (Automated and User Verified)
+
+- `🟨 Area` creates faint, borderless rectangular Canvas annotations behind
+  connectors, Lines, Floating Text, images, and Nodes. Outside Area mode they
+  are pointer-transparent, so normal Node work, marquee, pan, and Canvas
+  gestures continue through them.
+- Area mode supports drag-create, selection, movement, edge/corner resize,
+  palette colour, Grid Snap, Delete, Escape cancellation, Undo/Redo, Zoom to
+  fit, local backup, JSON/Project ZIP, standalone HTML, and PNG output.
+- `annotations.areas` is optional and normalized alongside Lines and Floating
+  Text while `mindmap-project formatVersion` remains 1.
+- Floating Text now supports `Shift` axis-lock during ordinary drag and
+  `Alt+Shift` copy, including Grid Snap and one-step Undo/Redo.
+- The user completed the requested local `file://` interaction checks and
+  reported all V3.96 behavior working correctly.
+- The regenerated V3.96 page passed inline JavaScript syntax validation,
+  `git diff --check`, and the full localhost browser harness on 2026-07-24:
+  1,000 regular Nodes, 975 connectors, all legacy checks, Area interaction and
+  persistence, Floating Text axis-lock, and one-step history checks passed.
 
 ## V3.95: Scaled Labels, Line Hit Areas, and Alt-drag Copy (Automated and User Verified)
 

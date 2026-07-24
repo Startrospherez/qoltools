@@ -601,7 +601,7 @@
     }
 
     async function runV395InteractionChecks(win, report) {
-      progress('6/6 ทดสอบ V3.95: scale, Line hit area, และ Alt+ลากคัดลอก');
+      progress('6/7 ทดสอบ V3.95: scale, Line hit area, และ Alt+ลากคัดลอก');
       const source = win.document.getElementById('n4');
       const internalLine = win.document.querySelector('#s line[data-n1="n4"], #s line[data-n2="n4"]');
       const paired = internalLine && win.document.getElementById(internalLine.dataset.n1 === source.id ? internalLine.dataset.n2 : internalLine.dataset.n1);
@@ -763,6 +763,65 @@
       assertion(report, 'Alt-click without dragging creates no copy and preserves selection', JSON.stringify(noDragAfter) === JSON.stringify(noDragBefore), JSON.stringify({ noDragBefore, noDragAfter }));
     }
 
+    async function runV396AreaAndTextLockChecks(win, report) {
+      progress('7/7 ทดสอบ V3.96: Background Area และ Shift axis-lock');
+      win.eval('clearSel(); if(areaEditMode) window.toggleAreaMode();');
+      const areaBefore = win.eval('({ count:annotations.areas.length, step:curStep })');
+      win.toggleAreaMode();
+      const areaLayer = win.document.getElementById('annotation-area-layer');
+      assertion(report, 'Area mode visibly activates its toolbar and Canvas layer', win.document.getElementById('area-mode-btn').classList.contains('active') && areaLayer.classList.contains('area-editing'));
+      mouse(win, areaLayer, 'mousedown', 180, 180);
+      documentMouse(win, 'mousemove', 380, 330);
+      documentMouse(win, 'mouseup', 380, 330);
+      await nextPaint(win);
+      const areaCreated = win.eval('({ count:annotations.areas.length, step:curStep, area:annotations.areas[annotations.areas.length - 1], selected:selectedAreaId })');
+      assertion(report, 'Area drag creates one persisted selected Area in one history activity', areaCreated.count === areaBefore.count + 1 && areaCreated.step === areaBefore.step + 1 && areaCreated.area && areaCreated.selected === areaCreated.area.id && areaCreated.area.w > 40 && areaCreated.area.h > 40, JSON.stringify({ areaBefore, areaCreated }));
+      const areaId = areaCreated.area.id;
+      const areaEl = win.document.querySelector('.annotation-area[data-annotation-area-id="' + areaId + '"]');
+      const areaRect = areaEl.getBoundingClientRect();
+      const moveBefore = win.eval('cloneMindmapState(annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + '))');
+      mouse(win, areaEl, 'mousedown', areaRect.left + areaRect.width / 2, areaRect.top + areaRect.height / 2);
+      documentMouse(win, 'mousemove', areaRect.left + areaRect.width / 2 + 36, areaRect.top + areaRect.height / 2 + 24);
+      documentMouse(win, 'mouseup', areaRect.left + areaRect.width / 2 + 36, areaRect.top + areaRect.height / 2 + 24);
+      const moveAfter = win.eval('cloneMindmapState(annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + '))');
+      assertion(report, 'selected Area moves and preserves its size', Math.abs(moveAfter.x - moveBefore.x) > 1 && Math.abs(moveAfter.y - moveBefore.y) > 1 && moveAfter.w === moveBefore.w && moveAfter.h === moveBefore.h, JSON.stringify({ moveBefore, moveAfter }));
+      const se = win.document.querySelector('.annotation-area[data-annotation-area-id="' + areaId + '"] .annotation-area-handle[data-handle="se"]');
+      const seRect = se.getBoundingClientRect();
+      mouse(win, se, 'mousedown', seRect.left + seRect.width / 2, seRect.top + seRect.height / 2);
+      documentMouse(win, 'mousemove', seRect.left + seRect.width / 2 + 42, seRect.top + seRect.height / 2 + 28);
+      documentMouse(win, 'mouseup', seRect.left + seRect.width / 2 + 42, seRect.top + seRect.height / 2 + 28);
+      const resizeAfter = win.eval('cloneMindmapState(annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + '))');
+      assertion(report, 'Area southeast handle resizes width and height', resizeAfter.w > moveAfter.w && resizeAfter.h > moveAfter.h, JSON.stringify({ moveAfter, resizeAfter }));
+      win.setCol('bg', 8);
+      assertion(report, 'palette recolours selected Area without changing faint opacity', win.eval('annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + ').color') === 'var(--c8)' && win.eval('annotations.areas.find(area => area.id === ' + JSON.stringify(areaId) + ').opacity') === .1);
+      const stepBeforeDelete = win.eval('curStep');
+      pressDelete(win);
+      assertion(report, 'Delete removes selected Area in one history activity', win.eval('!annotations.areas.some(area => area.id === ' + JSON.stringify(areaId) + ') && curStep === ' + (stepBeforeDelete + 1)));
+      await measured(win, () => win.doUndo());
+      assertion(report, 'one Undo restores the deleted Area', win.eval('annotations.areas.some(area => area.id === ' + JSON.stringify(areaId) + ')'));
+      win.eval('if(areaEditMode) window.toggleAreaMode();');
+      assertion(report, 'outside Area mode every Area and its layer are click-through', win.getComputedStyle(areaLayer).pointerEvents === 'none' && Array.from(win.document.querySelectorAll('.annotation-area')).every(area => win.getComputedStyle(area).pointerEvents === 'none'));
+
+      win.addAnnotationText();
+      const textId = win.eval('editingAnnotationTextId = null; renderAnnotationTexts(); annotations.texts[annotations.texts.length - 1].id');
+      let textEl = win.document.querySelector('.annotation-text[data-annotation-text-id="' + textId + '"]');
+      let textRect = textEl.getBoundingClientRect();
+      const textBefore = win.eval('cloneMindmapState(annotations.texts.find(text => text.id === ' + JSON.stringify(textId) + '))');
+      mouse(win, textEl.querySelector('.annotation-text-content'), 'mousedown', textRect.left + 4, textRect.top + 4);
+      documentMouse(win, 'mousemove', textRect.left + 84, textRect.top + 27, { shiftKey: true });
+      documentMouse(win, 'mouseup', textRect.left + 84, textRect.top + 27, { shiftKey: true });
+      const textAfter = win.eval('cloneMindmapState(annotations.texts.find(text => text.id === ' + JSON.stringify(textId) + '))');
+      assertion(report, 'Shift-drag Floating Text locks to its dominant horizontal axis', Math.abs(textAfter.x - textBefore.x) > 20 && Math.abs(textAfter.y - textBefore.y) < .01, JSON.stringify({ textBefore, textAfter }));
+      textEl = win.document.querySelector('.annotation-text[data-annotation-text-id="' + textId + '"]');
+      textRect = textEl.getBoundingClientRect();
+      const copyBefore = win.eval('({ count:annotations.texts.length, step:curStep })');
+      mouse(win, textEl.querySelector('.annotation-text-content'), 'mousedown', textRect.left + 4, textRect.top + 4, { altKey: true, shiftKey: true });
+      documentMouse(win, 'mousemove', textRect.left + 25, textRect.top + 74, { altKey: true, shiftKey: true });
+      documentMouse(win, 'mouseup', textRect.left + 25, textRect.top + 74, { altKey: true, shiftKey: true });
+      const copyAfter = win.eval('({ count:annotations.texts.length, step:curStep, copy:annotations.texts[annotations.texts.length - 1], original:annotations.texts.find(text => text.id === ' + JSON.stringify(textId) + ') })');
+      assertion(report, 'Alt+Shift-drag copies Floating Text on the dominant vertical axis in one activity', copyAfter.count === copyBefore.count + 1 && copyAfter.step === copyBefore.step + 1 && Math.abs(copyAfter.copy.x - copyAfter.original.x) < .01 && Math.abs(copyAfter.copy.y - copyAfter.original.y) > 20, JSON.stringify({ copyBefore, copyAfter }));
+    }
+
     async function runBenchmark() {
       let report;
       try {
@@ -793,6 +852,7 @@
         await runStructuralChecks(win, report);
         await runMixedImageSelectionChecks(win, report);
         await runV395InteractionChecks(win, report);
+        await runV396AreaAndTextLockChecks(win, report);
         report.paintFallbacks = paintFallbackCount;
         report.throttledPaints = throttledPaintCount;
         report.overall = paintFallbackCount > 0 || throttledPaintCount > 0 ? 'PARTIAL' : 'PASS';

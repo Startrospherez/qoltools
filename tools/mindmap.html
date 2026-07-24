@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MindMap V3.95</title>
+<title>MindMap V3.96</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -72,6 +72,24 @@
         .huge-canvas.show-grid { background-image: linear-gradient(rgba(128,128,128,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,.3) 1px, transparent 1px); background-size: 40px 40px; }
         .huge-canvas.canvas-dark.show-grid { background-image: linear-gradient(rgba(210,210,210,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(210,210,210,.28) 1px, transparent 1px); }
         svg { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        #annotation-area-layer { position:absolute; inset:0; z-index:0; pointer-events:none; }
+        #annotation-area-layer.area-editing { pointer-events:auto; cursor:crosshair; }
+        .annotation-area { position:absolute; box-sizing:border-box; pointer-events:none; --area-color:var(--c4); --area-opacity:.1; }
+        .annotation-area::before { content:""; position:absolute; inset:0; background:var(--area-color); opacity:var(--area-opacity); pointer-events:none; }
+        #annotation-area-layer.area-editing .annotation-area { pointer-events:auto; cursor:grab; }
+        .annotation-area.selected { outline:2px dashed rgb(33,150,243); outline-offset:-2px; }
+        .annotation-area-draft { position:absolute; box-sizing:border-box; border:2px dashed rgb(33,150,243); background:rgba(33,150,243,.08); pointer-events:none; }
+        .annotation-area-handle { position:absolute; width:12px; height:12px; box-sizing:border-box; border:2px solid rgb(33,150,243); border-radius:50%; background:var(--tb); transform:translate(-50%,-50%); pointer-events:auto; }
+        .annotation-area-handle[data-handle="n"] { left:50%; top:0; cursor:ns-resize; }
+        .annotation-area-handle[data-handle="s"] { left:50%; top:100%; cursor:ns-resize; }
+        .annotation-area-handle[data-handle="e"] { left:100%; top:50%; cursor:ew-resize; }
+        .annotation-area-handle[data-handle="w"] { left:0; top:50%; cursor:ew-resize; }
+        .annotation-area-handle[data-handle="nw"] { left:0; top:0; cursor:nwse-resize; }
+        .annotation-area-handle[data-handle="ne"] { left:100%; top:0; cursor:nesw-resize; }
+        .annotation-area-handle[data-handle="sw"] { left:0; top:100%; cursor:nesw-resize; }
+        .annotation-area-handle[data-handle="se"] { left:100%; top:100%; cursor:nwse-resize; }
+        .annotation-area-delete { position:absolute; left:0; top:0; width:22px; height:22px; padding:0; border:0; border-radius:50%; background:rgb(255,77,77); color:#fff; font:bold 15px/20px sans-serif; transform:translate(-115%,-115%); cursor:pointer; pointer-events:auto; }
+        #area-mode-btn.active { background:var(--c4); box-shadow:inset 0 0 0 2px rgba(0,0,0,.18); }
         #annotation-layer { pointer-events: auto; }
         .annotation-line { fill:none; stroke-width:4; pointer-events:none; }
         .annotation-line-hit { fill:none; stroke:rgba(0,0,0,.001); stroke-width:20; vector-effect:non-scaling-stroke; pointer-events:stroke; cursor:pointer; }
@@ -224,7 +242,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.95</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.96</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <details>
     <summary>📖 วิธีใช้งาน</summary>
     <p>MindMap ใช้จัดความคิดให้เห็นความสัมพันธ์ของหัวข้อ เนื้อหา และข้อมูลประกอบในหน้าเดียว</p>
@@ -240,11 +258,11 @@
 </details>
 <details>
     <summary>✨ นอกจาก node ที่เห็นแล้วมีอะไรอีก?</summary>
-    <ul><li>กด <b>🖼️ IMG</b> หรือวางไฟล์ภาพลงบน Canvas ได้; <b>🌄 ภาพ</b> ใช้ซ่อน/แสดงภาพชั่วคราวเพื่อลดภาระการแสดงผลโดยไม่ลบข้อมูล</li><li>คลิกภาพเพื่อย้าย, ลากจุดมุมเพื่อปรับขนาด; กด <kbd>Shift</kbd> เพื่อรักษาสัดส่วน, <kbd>Ctrl</kbd> เพื่อรักษาจุดศูนย์กลาง, หรือกดทั้งคู่พร้อมกัน</li><li>ดับเบิลคลิกภาพ หรือกด <b>i</b> ข้างภาพ เพื่อดูภาพเต็มและบันทึกคำบรรยาย, แหล่งที่มา, และบันทึกเพิ่มเติม</li><li>กด <b>📝</b> ที่มุมซ้ายล่างของ node เพื่อเปิดพื้นที่บันทึกข้อความหลายบรรทัด</li><li>กด <b>│</b> ตำแหน่งสุดท้ายของ Shape เพื่อเพิ่มเส้นแบ่งแนวตั้ง; เลือกเส้นแล้วลากปลายเส้นเพื่อกำหนดมุม, กด <kbd>Shift</kbd> เพื่อล็อกแนวนอนหรือแนวตั้ง, ใช้ <b>🧲 Snap</b> เพื่อล็อกปลายเส้นเข้ากริด และกด <kbd>Delete</kbd> เพื่อลบ</li><li>กด <b>T</b> ต่อจาก <b>│</b> เพื่อสร้างหัวข้อช่วงเวลา พร้อมคำอธิบายบรรทัดเล็กด้านล่าง; พิมพ์แทนข้อความเริ่มต้นได้ทันที, ดับเบิลคลิกเพื่อแก้ไขอีกครั้ง, กด <kbd>Shift</kbd> + <kbd>Enter</kbd> เพื่อขึ้นบรรทัดใหม่, ลากเพื่อย้าย และใช้ A+/A- หรือแถบสีเพื่อปรับรูปแบบ</li></ul>
+    <ul><li>กด <b>🖼️ IMG</b> หรือวางไฟล์ภาพลงบน Canvas ได้; <b>🌄 ภาพ</b> ใช้ซ่อน/แสดงภาพชั่วคราวเพื่อลดภาระการแสดงผลโดยไม่ลบข้อมูล</li><li>คลิกภาพเพื่อย้าย, ลากจุดมุมเพื่อปรับขนาด; กด <kbd>Shift</kbd> เพื่อรักษาสัดส่วน, <kbd>Ctrl</kbd> เพื่อรักษาจุดศูนย์กลาง, หรือกดทั้งคู่พร้อมกัน</li><li>ดับเบิลคลิกภาพ หรือกด <b>i</b> ข้างภาพ เพื่อดูภาพเต็มและบันทึกคำบรรยาย, แหล่งที่มา, และบันทึกเพิ่มเติม</li><li>กด <b>📝</b> ที่มุมซ้ายล่างของ node เพื่อเปิดพื้นที่บันทึกข้อความหลายบรรทัด</li><li>กด <b>│</b> เพื่อเพิ่มเส้นแบ่งแนวตั้ง; เลือกเส้นแล้วลากปลายเส้นเพื่อกำหนดมุม, กด <kbd>Shift</kbd> เพื่อล็อกแนวนอนหรือแนวตั้ง, ใช้ <b>🧲 Snap</b> เพื่อล็อกปลายเส้นเข้ากริด และกด <kbd>Delete</kbd> เพื่อลบ</li><li>กด <b>T</b> เพื่อสร้างหัวข้อช่วงเวลา พร้อมคำอธิบายบรรทัดเล็กด้านล่าง; พิมพ์แทนข้อความเริ่มต้นได้ทันที, ดับเบิลคลิกเพื่อแก้ไขอีกครั้ง, กด <kbd>Shift</kbd> + <kbd>Enter</kbd> เพื่อขึ้นบรรทัดใหม่, ลากเพื่อย้าย และใช้ A+/A- หรือแถบสีเพื่อปรับรูปแบบ; ระหว่างลากกด <kbd>Shift</kbd> เพื่อล็อกการเคลื่อนที่แนวนอนหรือแนวตั้ง</li><li>กด <b>🟨 Area</b> เพื่อเข้าโหมดวาดพื้นหลัง: ลากพื้นที่ว่างเพื่อสร้าง, ลากพื้นที่เพื่อย้าย, ใช้จุดรอบกรอบเพื่อปรับขนาด และเลือกสีจากแถบสี; กด <kbd>Esc</kbd> หรือ <b>🟨 Area</b> ซ้ำเพื่อออกจากโหมด แล้วพื้นที่สีจะคลิกทะลุได้ตามปกติ</li></ul>
 </details>
 <details>
     <summary>⌨️ Hotkeys</summary>
-    <ul><li><kbd>Alt</kbd> + คลิกเส้นเชื่อม วนหัวลูกศร</li><li><kbd>Alt</kbd> + ลาก คัดลอก Node/รูป, Line หรือ Text ลอย; Node/รูปที่มีชุดเลือกจะคัดลอกทั้งชุด</li><li><kbd>Alt</kbd> + <kbd>S</kbd> <b>💾 HTML</b></li><li><kbd>Alt</kbd> + <kbd>Z</kbd> <b>↩️ Undo</b> / <kbd>Alt</kbd> + <kbd>Y</kbd> <b>↪️ Redo</b></li><li><kbd>Alt</kbd> + <kbd>B</kbd> คัดลอก Bookmark</li><li><kbd>Alt</kbd> + <kbd>R</kbd> Fit graph / กลับมุมมองเดิม</li><li><kbd>Alt</kbd> + <kbd>U</kbd>, <kbd>J</kbd>, <kbd>M</kbd> สำหรับ T/C/B-Align</li><li><kbd>Alt</kbd> + <kbd>I</kbd>, <kbd>O</kbd>, <kbd>P</kbd> สำหรับ L/C/R-Align</li><li><kbd>Alt</kbd> + <kbd>K</kbd> / <kbd>L</kbd> สำหรับ ↔ Dist / ↕ Dist</li><li><kbd>Alt</kbd> + <kbd>1</kbd> ถึง <kbd>'</kbd> เลือกสีกรอบ, <kbd>Alt</kbd> + <kbd>\</kbd> ล้างสีกรอบ</li><li><kbd>Delete</kbd> ลบ node หรือรูปที่เลือก (นอกช่องพิมพ์)</li><li><kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> สลับหัวข้อและรายละเอียด; ใน <b>🔎 Find</b> ใช้ <kbd>Enter</kbd> / <kbd>Shift</kbd> + <kbd>Enter</kbd> เปลี่ยนผลค้นหา; <kbd>Esc</kbd> ปิด Find หรือ Note</li></ul>
+    <ul><li><kbd>Alt</kbd> + คลิกเส้นเชื่อม วนหัวลูกศร</li><li><kbd>Alt</kbd> + ลาก คัดลอก Node/รูป, Line หรือ Text ลอย; Node/รูปที่มีชุดเลือกจะคัดลอกทั้งชุด</li><li><kbd>Shift</kbd> + ลาก Floating Text ล็อกแนวนอนหรือแนวตั้ง</li><li><kbd>Alt</kbd> + <kbd>S</kbd> <b>💾 HTML</b></li><li><kbd>Alt</kbd> + <kbd>Z</kbd> <b>↩️ Undo</b> / <kbd>Alt</kbd> + <kbd>Y</kbd> <b>↪️ Redo</b></li><li><kbd>Alt</kbd> + <kbd>B</kbd> คัดลอก Bookmark</li><li><kbd>Alt</kbd> + <kbd>R</kbd> Fit graph / กลับมุมมองเดิม</li><li><kbd>Alt</kbd> + <kbd>U</kbd>, <kbd>J</kbd>, <kbd>M</kbd> สำหรับ T/C/B-Align</li><li><kbd>Alt</kbd> + <kbd>I</kbd>, <kbd>O</kbd>, <kbd>P</kbd> สำหรับ L/C/R-Align</li><li><kbd>Alt</kbd> + <kbd>K</kbd> / <kbd>L</kbd> สำหรับ ↔ Dist / ↕ Dist</li><li><kbd>Alt</kbd> + <kbd>1</kbd> ถึง <kbd>'</kbd> เลือกสีกรอบ, <kbd>Alt</kbd> + <kbd>\</kbd> ล้างสีกรอบ</li><li><kbd>Delete</kbd> ลบ node, รูป, Line, Text ลอย หรือ Area ที่เลือก (นอกช่องพิมพ์)</li><li><kbd>Esc</kbd> ออกจากโหมด Area หรือยกเลิกการลาก Area; <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> สลับหัวข้อและรายละเอียด; ใน <b>🔎 Find</b> ใช้ <kbd>Enter</kbd> / <kbd>Shift</kbd> + <kbd>Enter</kbd> เปลี่ยนผลค้นหา</li></ul>
 </details>
 <details>
     <summary>🤝 การแบ่งปัน (เครดิต)</summary>
@@ -319,6 +337,7 @@
                 <button onclick="window.setShape('think')" title="Think Bubble">💭</button>
                 <button onclick="window.addAnnotationLine()" title="Line — เส้นแบ่งแนวตั้งอิสระบน Canvas">│</button>
                 <button onclick="window.addAnnotationText()" title="Floating Text — หัวข้อหรือข้อความลอยบน Canvas">T</button>
+                <button id="area-mode-btn" onclick="window.toggleAreaMode(event)" title="Area — วาดพื้นที่สีพื้นหลังแบบคลิกทะลุ">🟨 Area</button>
             </div>
             <div class="flex-row" style="justify-content:center;">
                 <button onclick="window.toggleGrid()" title="แสดง/ซ่อนตารางพื้นหลัง" style="flex:1;">▦ Grid</button>
@@ -369,7 +388,7 @@
     </div>
 
     <div id="b" class="huge-canvas" style="transform:translate(-10000px,-10000px) scale(1)" data-cx="-10000" data-cy="-10000" data-zoom="1">
-        <svg id="s"><g id="annotation-layer"></g></svg><div id="annotation-text-layer"></div>
+        <div id="annotation-area-layer"></div><svg id="s"><g id="annotation-layer"></g></svg><div id="annotation-text-layer"></div>
         <div id="selBox" class="selBox" style="left: 10811px; top: 10286px; width: 0px; height: 0px; display: none;"></div>
     <div class="n" id="n0" data-shape="box" data-note="" style="left: 10000px; top: 10000px;"><div class="dx" onclick="del('n0')" title="ลบกล่องนี้">x</div><button class="note-btn" type="button" onclick="window.openNodeNote('n0')" onmousedown="event.stopPropagation()" title="บันทึกเพิ่มเติม">📝</button><div class="nt" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">หัวข้อ...</div><div class="nd" contenteditable="true" oninput="this.dataset.m=1" onblur="if(this.dataset.m){window.doSaveState();this.dataset.m=''}" onmousedown="event.stopPropagation()">รายละเอียด...</div><div class="p p-r" onmousedown="window.startLineDrag(event, 'n0','r')">+</div><div class="p p-l" onmousedown="window.startLineDrag(event, 'n0','l')">+</div><div class="p p-t" onmousedown="window.startLineDrag(event, 'n0','t')">+</div><div class="p p-b" onmousedown="window.startLineDrag(event, 'n0','b')">+</div></div></div>
 
@@ -389,7 +408,7 @@
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
         let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], dragImageStartPos = [], dragAnchorKind = null, dragConnectorLines = [], dragRenderFrame = null, pendingDragPointer = null, images = [];
         let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
-        let annotations = { lines: [], texts: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, editingAnnotationTextId = null, lastAnnotationTextClick = { id:null, at:0 }, connectorNavHoverId = null, connectorNavHideTimer = null, editingConnectorRouteLabel = null, connectorRouteClickTimer = null;
+        let annotations = { lines: [], texts: [], areas: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, selectedAreaId = null, editingAnnotationTextId = null, areaEditMode = false, activeAreaGestureCancel = null, lastAnnotationTextClick = { id:null, at:0 }, connectorNavHoverId = null, connectorNavHideTimer = null, editingConnectorRouteLabel = null, connectorRouteClickTimer = null;
         const imageDomById = new Map(), imageThumbUrlByAsset = new Map(), selectedImageIds = new Set();
         let activeProjectId = 'local-' + Date.now().toString(36);
         const MM_PROJECT_FORMAT = 'mindmap-project';
@@ -595,7 +614,7 @@
         }
 
         function fitGraphView() {
-            let elements = nodes.map(el => ({ left: parseFloat(el.style.left) || 0, top: parseFloat(el.style.top) || 0, width: el.offsetWidth, height: el.offsetHeight })).concat(imagePlacements.map(p => { let d = placementDimensions(p); return { left:d.x, top:d.y, width:d.w, height:d.h }; }), annotations.lines.map(line => ({ left:Math.min(line.x1,line.x2), top:Math.min(line.y1,line.y2), width:Math.max(1,Math.abs(line.x2-line.x1)), height:Math.max(1,Math.abs(line.y2-line.y1)) })), annotations.texts.map(text => { let el = b.querySelector('.annotation-text[data-annotation-text-id="' + text.id + '"]'), textLines = (text.text + '\n' + (text.description || '')).split('\n'), width = el ? el.offsetWidth : Math.max(20, Math.max(...textLines.map(line => line.length || 1)) * text.fontSize * .62), height = el ? el.offsetHeight : Math.max(text.fontSize * 1.2, textLines.length * text.fontSize * 1.2); return { left:text.x, top:text.y, width:width, height:height }; }));
+            let elements = nodes.map(el => ({ left: parseFloat(el.style.left) || 0, top: parseFloat(el.style.top) || 0, width: el.offsetWidth, height: el.offsetHeight })).concat(imagePlacements.map(p => { let d = placementDimensions(p); return { left:d.x, top:d.y, width:d.w, height:d.h }; }), annotations.lines.map(line => ({ left:Math.min(line.x1,line.x2), top:Math.min(line.y1,line.y2), width:Math.max(1,Math.abs(line.x2-line.x1)), height:Math.max(1,Math.abs(line.y2-line.y1)) })), annotations.texts.map(text => { let el = b.querySelector('.annotation-text[data-annotation-text-id="' + text.id + '"]'), textLines = (text.text + '\n' + (text.description || '')).split('\n'), width = el ? el.offsetWidth : Math.max(20, Math.max(...textLines.map(line => line.length || 1)) * text.fontSize * .62), height = el ? el.offsetHeight : Math.max(text.fontSize * 1.2, textLines.length * text.fontSize * 1.2); return { left:text.x, top:text.y, width:width, height:height }; }), annotations.areas.map(area => ({ left:area.x, top:area.y, width:area.w, height:area.h })));
             if(!elements.length) return false;
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             elements.forEach(el => { minX = Math.min(minX, el.left); minY = Math.min(minY, el.top); maxX = Math.max(maxX, el.left + el.width); maxY = Math.max(maxY, el.top + el.height); });
@@ -892,23 +911,42 @@
             };
         }
         function normalizedAnnotations(value) {
-            let lines = value && Array.isArray(value.lines) ? value.lines : [], texts = value && Array.isArray(value.texts) ? value.texts : [];
+            let lines = value && Array.isArray(value.lines) ? value.lines : [], texts = value && Array.isArray(value.texts) ? value.texts : [], areas = value && Array.isArray(value.areas) ? value.areas : [];
             return {
                 lines: lines.filter(line => line && typeof line.id === 'string' && [line.x1,line.y1,line.x2,line.y2].every(Number.isFinite)).map(line => ({ id: line.id, x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, color: typeof line.color === 'string' ? line.color : 'var(--c9)' })),
-                texts: texts.filter(text => text && typeof text.id === 'string' && typeof text.text === 'string' && [text.x,text.y].every(Number.isFinite)).map(text => ({ id:text.id, x:text.x, y:text.y, text:text.text, description:typeof text.description === 'string' ? text.description : '', color:typeof text.color === 'string' ? text.color : 'var(--c9)', fontSize:Number.isFinite(text.fontSize) && text.fontSize > 0 ? text.fontSize : 28 }))
+                texts: texts.filter(text => text && typeof text.id === 'string' && typeof text.text === 'string' && [text.x,text.y].every(Number.isFinite)).map(text => ({ id:text.id, x:text.x, y:text.y, text:text.text, description:typeof text.description === 'string' ? text.description : '', color:typeof text.color === 'string' ? text.color : 'var(--c9)', fontSize:Number.isFinite(text.fontSize) && text.fontSize > 0 ? text.fontSize : 28 })),
+                areas: areas.filter(area => area && typeof area.id === 'string' && [area.x,area.y,area.w,area.h].every(Number.isFinite) && area.w > 0 && area.h > 0).map(area => ({ id:area.id, x:area.x, y:area.y, w:area.w, h:area.h, color:typeof area.color === 'string' ? area.color : 'var(--c4)', opacity:Number.isFinite(area.opacity) ? Math.min(.3, Math.max(.04, area.opacity)) : .1 }))
             };
         }
         function annotationsFromDom() {
             return normalizedAnnotations({
                 lines: Array.from(s.querySelectorAll('.annotation-line')).map(el => ({ id:el.dataset.annotationId, x1:parseFloat(el.getAttribute('x1')), y1:parseFloat(el.getAttribute('y1')), x2:parseFloat(el.getAttribute('x2')), y2:parseFloat(el.getAttribute('y2')), color:el.getAttribute('stroke') || 'var(--c9)' })),
-                texts: Array.from(b.querySelectorAll('.annotation-text')).map(el => { let content = el.querySelector('.annotation-text-content'), description = el.querySelector('.annotation-text-description'); return { id:el.dataset.annotationTextId, x:parseFloat(el.style.left), y:parseFloat(el.style.top), text:content ? content.innerText.replace(/\r/g, '') : '', description:description ? description.innerText.replace(/\r/g, '') : '', color:el.style.color || 'var(--c9)', fontSize:parseFloat(el.style.fontSize) || 28 }; })
+                texts: Array.from(b.querySelectorAll('.annotation-text')).map(el => { let content = el.querySelector('.annotation-text-content'), description = el.querySelector('.annotation-text-description'); return { id:el.dataset.annotationTextId, x:parseFloat(el.style.left), y:parseFloat(el.style.top), text:content ? content.innerText.replace(/\r/g, '') : '', description:description ? description.innerText.replace(/\r/g, '') : '', color:el.style.color || 'var(--c9)', fontSize:parseFloat(el.style.fontSize) || 28 }; }),
+                areas: Array.from(b.querySelectorAll('.annotation-area')).map(el => ({ id:el.dataset.annotationAreaId, x:parseFloat(el.style.left), y:parseFloat(el.style.top), w:parseFloat(el.style.width), h:parseFloat(el.style.height), color:el.style.getPropertyValue('--area-color') || 'var(--c4)', opacity:parseFloat(el.style.getPropertyValue('--area-opacity')) || .1 }))
             });
         }
         function selectedAnnotation() { return annotations.lines.find(line => line.id === selectedAnnotationId); }
         function selectedAnnotationText() { return annotations.texts.find(text => text.id === selectedAnnotationTextId); }
+        function selectedArea() { return annotations.areas.find(area => area.id === selectedAreaId); }
         function snapPoint(value) { return snapGrid ? Math.round(value / 40) * 40 : value; }
+        function ensureAnnotationAreaLayer() { let layer = b.querySelector('#annotation-area-layer'); if(!layer) { layer = document.createElement('div'); layer.id = 'annotation-area-layer'; b.insertBefore(layer, b.firstChild); } return layer; }
         function ensureAnnotationLayer() { let layer = s.querySelector('#annotation-layer'); if(!layer) { layer = document.createElementNS('http://www.w3.org/2000/svg', 'g'); layer.id = 'annotation-layer'; s.insertBefore(layer, s.firstChild); } return layer; }
         function ensureAnnotationTextLayer() { let layer = b.querySelector('#annotation-text-layer'); if(!layer) { layer = document.createElement('div'); layer.id = 'annotation-text-layer'; s.insertAdjacentElement('afterend', layer); } return layer; }
+        function renderAreas() {
+            let layer = ensureAnnotationAreaLayer(); layer.innerHTML = ''; layer.classList.toggle('area-editing', areaEditMode);
+            annotations.areas.forEach(area => {
+                let el = document.createElement('div'); el.className = 'annotation-area'; el.dataset.annotationAreaId = area.id; el.style.left = area.x + 'px'; el.style.top = area.y + 'px'; el.style.width = area.w + 'px'; el.style.height = area.h + 'px'; el.style.setProperty('--area-color', area.color); el.style.setProperty('--area-opacity', area.opacity);
+                if(areaEditMode) {
+                    el.onmousedown = e => { if(e.button !== 0) return; e.preventDefault(); e.stopPropagation(); startAreaGesture(e, area.id, 'move'); };
+                    if(selectedAreaId === area.id) {
+                        el.classList.add('selected');
+                        ['n','s','e','w','nw','ne','sw','se'].forEach(handle => { let control = document.createElement('span'); control.className = 'annotation-area-handle'; control.dataset.annotationUi = 'true'; control.dataset.handle = handle; control.onmousedown = e => { if(e.button !== 0) return; e.preventDefault(); e.stopPropagation(); startAreaGesture(e, area.id, handle); }; el.appendChild(control); });
+                        let remove = document.createElement('button'); remove.type = 'button'; remove.className = 'annotation-area-delete'; remove.dataset.annotationUi = 'true'; remove.textContent = '×'; remove.title = 'ลบพื้นที่'; remove.onmousedown = e => { e.preventDefault(); e.stopPropagation(); window.deleteArea(area.id); }; el.appendChild(remove);
+                    }
+                }
+                layer.appendChild(el);
+            });
+        }
         function renderAnnotations() {
             let layer = ensureAnnotationLayer(); layer.innerHTML = '';
             annotations.lines.forEach(line => {
@@ -944,12 +982,14 @@
             });
             if(editingAnnotationTextId) requestAnimationFrame(() => { let content = layer.querySelector('.annotation-text[data-annotation-text-id="' + editingAnnotationTextId + '"] .annotation-text-content'); if(!content) return; content.focus(); let range = document.createRange(); range.selectNodeContents(content); let selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range); });
         }
-        function selectAnnotation(id) { selectedAnnotationId = id; selectedAnnotationTextId = null; editingAnnotationTextId = null; clearObjectSelection(); renderAnnotations(); renderAnnotationTexts(); }
-        function selectAnnotationText(id, edit) { selectedAnnotationId = null; selectedAnnotationTextId = id; editingAnnotationTextId = edit ? id : null; clearObjectSelection(); renderAnnotations(); renderAnnotationTexts(); }
-        function selectionSnapshot() { return { nodeIds:nodes.filter(node => node.classList.contains('sel')).map(node => node.id), imageIds:Array.from(selectedImageIds), annotationId:selectedAnnotationId, annotationTextId:selectedAnnotationTextId }; }
+        function selectAnnotation(id) { selectedAnnotationId = id; selectedAnnotationTextId = null; selectedAreaId = null; editingAnnotationTextId = null; clearObjectSelection(); renderAreas(); renderAnnotations(); renderAnnotationTexts(); }
+        function selectAnnotationText(id, edit) { selectedAnnotationId = null; selectedAnnotationTextId = id; selectedAreaId = null; editingAnnotationTextId = edit ? id : null; clearObjectSelection(); renderAreas(); renderAnnotations(); renderAnnotationTexts(); }
+        function selectArea(id) { selectedAnnotationId = null; selectedAnnotationTextId = null; selectedAreaId = id; editingAnnotationTextId = null; clearObjectSelection(); renderAreas(); renderAnnotations(); renderAnnotationTexts(); }
+        function selectionSnapshot() { return { nodeIds:nodes.filter(node => node.classList.contains('sel')).map(node => node.id), imageIds:Array.from(selectedImageIds), annotationId:selectedAnnotationId, annotationTextId:selectedAnnotationTextId, areaId:selectedAreaId }; }
         function restoreSelectionSnapshot(snapshot) {
             if(snapshot.annotationId && annotations.lines.some(line => line.id === snapshot.annotationId)) { selectAnnotation(snapshot.annotationId); return; }
             if(snapshot.annotationTextId && annotations.texts.some(text => text.id === snapshot.annotationTextId)) { selectAnnotationText(snapshot.annotationTextId, false); return; }
+            if(snapshot.areaId && annotations.areas.some(area => area.id === snapshot.areaId)) { selectArea(snapshot.areaId); return; }
             selectNodeImageGroup(snapshot.nodeIds, snapshot.imageIds);
         }
         function startSelectedAnnotationCopyDrag(e, kind, id) {
@@ -967,7 +1007,7 @@
                 if(kind === 'line') {
                     if(event.shiftKey) { if(Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0; }
                     copy.x1 = snapPoint(original.x1 + dx); copy.y1 = snapPoint(original.y1 + dy); copy.x2 = snapPoint(original.x2 + dx); copy.y2 = snapPoint(original.y2 + dy);
-                } else { copy.x = snapPoint(original.x + dx); copy.y = snapPoint(original.y + dy); }
+                } else { if(event.shiftKey) { if(Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0; } copy.x = snapPoint(original.x + dx); copy.y = snapPoint(original.y + dy); }
                 render();
             }
             function cancel() { clearListeners(); if(started) { let index = items.indexOf(copy); if(index >= 0) items.splice(index, 1); restoreSelectionSnapshot(originalSelection); } document.body.style.userSelect = ''; }
@@ -981,7 +1021,7 @@
             e.preventDefault(); e.stopPropagation(); let text = annotations.texts.find(item => item.id === id); if(!text) return;
             let now = Date.now(); if(lastAnnotationTextClick.id === id && now - lastAnnotationTextClick.at < 500) { lastAnnotationTextClick = { id:null, at:0 }; window.editAnnotationText(id); return; } lastAnnotationTextClick = { id:id, at:now }; selectAnnotationText(id, false);
             let startX = e.clientX, startY = e.clientY, original = { x:text.x, y:text.y }, moved = false; document.body.style.userSelect = 'none';
-            function move(event) { let dx = (event.clientX - startX) / zoom, dy = (event.clientY - startY) / zoom; if(Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true; text.x = snapPoint(original.x + dx); text.y = snapPoint(original.y + dy); renderAnnotationTexts(); }
+            function move(event) { let dx = (event.clientX - startX) / zoom, dy = (event.clientY - startY) / zoom; if(Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true; if(event.shiftKey) { if(Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0; } text.x = snapPoint(original.x + dx); text.y = snapPoint(original.y + dy); renderAnnotationTexts(); }
             function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; if(moved) window.doSaveState(); }
             document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
         }
@@ -1005,11 +1045,47 @@
         window.addAnnotationText = function() { let viewport = getUsableViewport(), x = snapPoint((viewport.centerX - cx) / zoom), y = snapPoint((viewport.centerY - cy) / zoom); let text = { id:newId('annotation_text'), x:x, y:y, text:'หัวข้อช่วงเวลา...', description:'คำอธิบายช่วงเวลา...', color:'var(--c9)', fontSize:28 }; annotations.texts.push(text); selectAnnotationText(text.id, true); window.doSaveState(); };
         window.editAnnotationText = function(id) { if(!annotations.texts.some(text => text.id === id)) return; selectAnnotationText(id, true); };
         window.deleteAnnotationText = function(id) { annotations.texts = annotations.texts.filter(text => text.id !== id); if(selectedAnnotationTextId === id) { selectedAnnotationTextId = null; editingAnnotationTextId = null; } renderAnnotationTexts(); window.doSaveState(); };
+        function startAreaGesture(e, id, mode) {
+            let area = annotations.areas.find(item => item.id === id); if(!area || !areaEditMode) return;
+            selectArea(id); let startX = e.clientX, startY = e.clientY, original = { x:area.x, y:area.y, w:area.w, h:area.h }, changed = false, finished = false; document.body.style.userSelect = 'none';
+            function cleanup() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.removeEventListener('keydown', keydown, true); window.removeEventListener('blur', cancel); document.body.style.userSelect = ''; if(activeAreaGestureCancel === cancel) activeAreaGestureCancel = null; }
+            function move(event) {
+                let dx = (event.clientX - startX) / zoom, dy = (event.clientY - startY) / zoom, left = original.x, top = original.y, right = original.x + original.w, bottom = original.y + original.h;
+                if(mode === 'move') { left = snapPoint(original.x + dx); top = snapPoint(original.y + dy); right = left + original.w; bottom = top + original.h; }
+                else {
+                    if(mode.includes('w')) left = snapPoint(original.x + dx); if(mode.includes('e')) right = snapPoint(original.x + original.w + dx);
+                    if(mode.includes('n')) top = snapPoint(original.y + dy); if(mode.includes('s')) bottom = snapPoint(original.y + original.h + dy);
+                    if(right - left < 40) { if(mode.includes('w')) left = right - 40; else right = left + 40; }
+                    if(bottom - top < 40) { if(mode.includes('n')) top = bottom - 40; else bottom = top + 40; }
+                }
+                area.x = left; area.y = top; area.w = right - left; area.h = bottom - top; changed = JSON.stringify(original) !== JSON.stringify({ x:area.x, y:area.y, w:area.w, h:area.h }); renderAreas();
+            }
+            function up() { if(finished) return; finished = true; cleanup(); if(changed) window.doSaveState(); }
+            function cancel() { if(finished) return; finished = true; Object.assign(area, original); cleanup(); renderAreas(); }
+            function keydown(event) { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancel(); } }
+            activeAreaGestureCancel = cancel; document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); document.addEventListener('keydown', keydown, true); window.addEventListener('blur', cancel);
+        }
+        function startAreaCreation(e) {
+            let layer = ensureAnnotationAreaLayer(), startX = snapPoint((e.clientX - cx) / zoom), startY = snapPoint((e.clientY - cy) / zoom), draft = document.createElement('div'), finished = false; draft.className = 'annotation-area-draft'; layer.appendChild(draft); document.body.style.userSelect = 'none';
+            function draw(x, y) { let left = Math.min(startX, x), top = Math.min(startY, y), right = Math.max(startX, x), bottom = Math.max(startY, y); draft.style.left = left + 'px'; draft.style.top = top + 'px'; draft.style.width = (right - left) + 'px'; draft.style.height = (bottom - top) + 'px'; return { left:left, top:top, w:right-left, h:bottom-top }; }
+            let geometry = draw(startX, startY);
+            function cleanup() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.removeEventListener('keydown', keydown, true); window.removeEventListener('blur', cancel); document.body.style.userSelect = ''; if(draft.isConnected) draft.remove(); if(activeAreaGestureCancel === cancel) activeAreaGestureCancel = null; }
+            function move(event) { geometry = draw(snapPoint((event.clientX - cx) / zoom), snapPoint((event.clientY - cy) / zoom)); }
+            function up() { if(finished) return; finished = true; cleanup(); if(geometry.w < 20 || geometry.h < 20) { selectedAreaId = null; renderAreas(); return; } let area = { id:newId('annotation_area'), x:geometry.left, y:geometry.top, w:Math.max(40, geometry.w), h:Math.max(40, geometry.h), color:'var(--c4)', opacity:.1 }; annotations.areas.push(area); selectArea(area.id); window.doSaveState(); }
+            function cancel() { if(finished) return; finished = true; cleanup(); renderAreas(); }
+            function keydown(event) { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancel(); } }
+            activeAreaGestureCancel = cancel; document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); document.addEventListener('keydown', keydown, true); window.addEventListener('blur', cancel);
+        }
+        window.toggleAreaMode = function(e) {
+            if(activeAreaGestureCancel) activeAreaGestureCancel();
+            areaEditMode = !areaEditMode; selectedAreaId = null; clearSel(); let button = document.getElementById('area-mode-btn'); if(button) button.classList.toggle('active', areaEditMode); renderAreas(); window.showToast(areaEditMode ? '🟨 โหมด Area — ลากพื้นที่ว่างเพื่อสร้างพื้นที่สี' : '🟨 ปิดโหมด Area — พื้นที่กลับไปคลิกทะลุได้');
+        };
+        window.deleteArea = function(id) { annotations.areas = annotations.areas.filter(area => area.id !== id); if(selectedAreaId === id) selectedAreaId = null; renderAreas(); window.doSaveState(); };
         window.toggleHlMode = function() { bd.classList.toggle('hl-mode'); };
 
         window.saveBackup = function() {
             try {
-                let data = { nodes: mmHistory[curStep]?.nodes || [], lines: mmHistory[curStep]?.lines || [], images: mmHistory[curStep]?.images || [], annotations: mmHistory[curStep]?.annotations || { lines: [], texts: [] }, nid: nid, views: { cx: cx, cy: cy, zoom: zoom } };
+                let data = { nodes: mmHistory[curStep]?.nodes || [], lines: mmHistory[curStep]?.lines || [], images: mmHistory[curStep]?.images || [], annotations: mmHistory[curStep]?.annotations || { lines: [], texts: [], areas: [] }, nid: nid, views: { cx: cx, cy: cy, zoom: zoom } };
                 localStorage.setItem('mindmap_backup', JSON.stringify(data));
             } catch(e) {}
         };
@@ -1024,6 +1100,9 @@
             clone.querySelectorAll('[data-annotation-ui], .mb, .connector-route-label, .junction-mini-tools, .connector-hit-line').forEach(control => control.remove());
             clone.querySelectorAll('.annotation-text.selected').forEach(text => text.classList.remove('selected'));
             clone.querySelectorAll('.annotation-text.editing').forEach(text => text.classList.remove('editing'));
+            clone.querySelectorAll('.annotation-area.selected').forEach(area => area.classList.remove('selected'));
+            let clonedAreaLayer = clone.querySelector('#annotation-area-layer'); if(clonedAreaLayer) clonedAreaLayer.classList.remove('area-editing');
+            let clonedAreaButton = clone.querySelector('#area-mode-btn'); if(clonedAreaButton) clonedAreaButton.classList.remove('active');
             clone.querySelectorAll('.annotation-text-content[contenteditable="true"]').forEach(content => content.contentEditable = 'false');
             let cloneCanvas = clone.querySelector('#b'); cloneCanvas.querySelectorAll('.img-float').forEach(im => im.remove());
             for(let placement of state.images) {
@@ -1065,7 +1144,7 @@
 
         function cloneMindmapState(state) { return JSON.parse(JSON.stringify(state)); }
         function currentMindmapState() {
-            let state = mmHistory[curStep] || { nodes: [], lines: [], images: [], annotations: { lines: [], texts: [] }, nid: nid };
+            let state = mmHistory[curStep] || { nodes: [], lines: [], images: [], annotations: { lines: [], texts: [], areas: [] }, nid: nid };
             let copy = cloneMindmapState(state);
             copy.nodes = copy.nodes || []; copy.lines = copy.lines || []; copy.images = copy.images || []; copy.annotations = normalizedAnnotations(copy.annotations);
             copy.nid = typeof copy.nid === 'number' ? copy.nid : nid;
@@ -1173,7 +1252,7 @@
                 assets.push({ assetId: asset.assetId, originalPath, thumbnailPath, mimeType: asset.mimeType, thumbnailMimeType: thumb && thumb.mimeType || 'image/png', checksum: asset.checksum, originalName: asset.originalName || '' });
                 zip.file(originalPath, asset.blob); if(thumb && thumb.blob) zip.file(thumbnailPath, thumb.blob);
             }
-            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.95', createdAt: new Date().toISOString(), assets: assets };
+            let manifest = { format: MM_PROJECT_FORMAT, formatVersion: MM_PROJECT_VERSION, app: 'MindMap', appVersion: '3.96', createdAt: new Date().toISOString(), assets: assets };
             zip.file('manifest.json', JSON.stringify(manifest, null, 2));
             zip.file('mindmap.json', JSON.stringify(state));
             return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -1261,6 +1340,8 @@
             if(annotation) { annotation.color = v || 'var(--bc)'; renderAnnotations(); window.doSaveState(); return; }
             let annotationText = selectedAnnotationText();
             if(annotationText) { annotationText.color = v || 'var(--fg)'; renderAnnotationTexts(); window.doSaveState(); return; }
+            let area = selectedArea();
+            if(area && areaEditMode) { area.color = v || 'var(--c4)'; renderAreas(); window.doSaveState(); return; }
             
             let sel = window.getSelection();
             if((t === 'fg' || t === 'bg') && sel.toString().length > 0) {
@@ -1399,7 +1480,7 @@
             imagePlacements = cloneMindmapState(nextImages || []); renderImageLayer();
         }
         function resetTransientStateForLoad() {
-            cancelActiveNodeDragForStateLoad(); clearFindHighlight(); connectorNavHoverId = null; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null;
+            if(activeAreaGestureCancel) activeAreaGestureCancel(); cancelActiveNodeDragForStateLoad(); clearFindHighlight(); connectorNavHoverId = null; selectedAnnotationId = null; selectedAnnotationTextId = null; selectedAreaId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null;
             clearObjectSelection(); document.querySelectorAll('.connector-route-label, .junction-mini-tools').forEach(el => el.remove());
         }
         function patchCompatibleState(state, step, topology) {
@@ -1413,7 +1494,7 @@
             });
             affectedLines.forEach(line => updateLine(line));
             nid = typeof state.nid === 'number' ? state.nid : 0; annotations = normalizedAnnotations(state.annotations); if(JSON.stringify(previous.images || []) !== JSON.stringify(state.images || [])) patchImagesFromState(state.images || []); curStep = step;
-            renderAnnotations(); renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools();
+            renderAreas(); renderAnnotations(); renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools();
         }
         function nonGraphStateMatches(first, second) {
             return JSON.stringify((first && first.images) || []) === JSON.stringify((second && second.images) || []) && JSON.stringify(normalizedAnnotations(first && first.annotations)) === JSON.stringify(normalizedAnnotations(second && second.annotations));
@@ -1441,12 +1522,12 @@
                 if(changedGeometryNodeIds.has(ls.n1) || changedGeometryNodeIds.has(ls.n2)) affectedLines.add(line);
             }
             nodes = state.nodes.map(ns => document.getElementById(ns.id)); affectedLines.forEach(line => updateLine(line)); nid = typeof state.nid === 'number' ? state.nid : 0; annotations = normalizedAnnotations(state.annotations); curStep = step;
-            renderAnnotations(); renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools();
+            renderAreas(); renderAnnotations(); renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools();
         }
         function rebuildStateFully(state, step) {
-            resetTransientStateForLoad(); nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; ensureAnnotationTextLayer().innerHTML = ''; document.querySelectorAll('.mb').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); nid = typeof state.nid === 'number' ? state.nid : 0;
+            resetTransientStateForLoad(); nodes.forEach(n => n.remove()); s.innerHTML = '<g id="annotation-layer"></g>'; ensureAnnotationAreaLayer().innerHTML = ''; ensureAnnotationTextLayer().innerHTML = ''; document.querySelectorAll('.mb').forEach(el => el.remove()); nodes = []; imageDomById.forEach(im => im.remove()); imageDomById.clear(); images = []; imagePlacements = cloneMindmapState(state.images || []); annotations = normalizedAnnotations(state.annotations); nid = typeof state.nid === 'number' ? state.nid : 0;
             state.nodes.forEach(ns => createNodeFromState(ns)); state.lines.forEach(ls => createConnectorFromState(ls, false));
-            updateAll(); curStep = step; renderAnnotations(); renderAnnotationTexts(); renderImageLayer();
+            updateAll(); curStep = step; renderAreas(); renderAnnotations(); renderAnnotationTexts(); renderImageLayer();
         }
         window.loadState = function(step, forceFull) {
             let state = mmHistory[step], targetGraph = validatedGraphState(state); if(!targetGraph) { console.warn('Rejected invalid MindMap history state', step); window.showToast('⚠️ ไม่สามารถโหลด History ขั้นนี้ได้ เพราะข้อมูลโครงสร้างไม่สมบูรณ์'); return false; }
@@ -1622,7 +1703,7 @@
         }
         function scheduleNodeDrag(pointerEvent) { pendingDragPointer = { clientX:pointerEvent.clientX, clientY:pointerEvent.clientY, shiftKey:pointerEvent.shiftKey }; if(dragRenderFrame === null) dragRenderFrame = requestAnimationFrame(applyPendingNodeDrag); }
         function flushPendingNodeDrag() { if(dragRenderFrame !== null) { cancelAnimationFrame(dragRenderFrame); dragRenderFrame = null; } if(pendingDragPointer) applyPendingNodeDrag(); }
-        function clearSel() { clearObjectSelection(); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId; selectedAnnotationId = null; selectedAnnotationTextId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
+        function clearSel() { clearObjectSelection(); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId, hadArea = !!selectedAreaId; selectedAnnotationId = null; selectedAnnotationTextId = null; selectedAreaId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); if(hadArea) renderAreas(); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
 
         window.addEventListener('wheel', function(e) {
             if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('#zoom-status')) return;
@@ -1636,6 +1717,9 @@
             if(e.target.closest('#float-ui-btn')) return;
 
             if(e.button === 1 || e.button === 2) { isPan = true; px = e.clientX; py = e.clientY; }
+            else if(e.button === 0 && areaEditMode && (e.target === ensureAnnotationAreaLayer() || e.target === b)) {
+                e.preventDefault(); e.stopPropagation(); clearSel(); startAreaCreation(e);
+            }
             else if(e.button === 0) { 
                 isSel = true; isAddSel = e.shiftKey; if(!isAddSel) clearSel(); preSel = new Set(nodes.filter(n => n.classList.contains('sel'))); preImageSel = new Set(selectedImageIds); sx = (e.clientX - cx) / zoom; sy = (e.clientY - cy) / zoom; sb.style.left = sx + 'px'; sb.style.top = sy + 'px'; sb.style.width = '0px'; sb.style.height = '0px'; sb.style.display = 'block';
                 document.body.style.userSelect = 'none';
@@ -1663,7 +1747,7 @@
 
         window.addEventListener('dblclick', function(e) {
             if(e.target.tagName === 'BUTTON' || e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('.mb') || e.target.closest('.connector-route-label') || e.target.closest('.junction-mini-tools') || e.target.closest('#about-btn')) return;
-            if(e.target.closest('.n') || e.target.closest('.img-float') || e.target.closest('.annotation-text')) return;
+            if(areaEditMode || e.target.closest('.n') || e.target.closest('.img-float') || e.target.closest('.annotation-text')) return;
             let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; addNode(nx, ny, null); window.doSaveState();
         });
 
@@ -1731,6 +1815,7 @@
             if(e.key === 'Escape' && document.getElementById('about-ui').style.display !== 'none') { e.preventDefault(); window.closeAbout(); return; }
             if(e.key === 'Escape' && document.getElementById('image-detail-ui').classList.contains('open')) { e.preventDefault(); window.closeImageDetail(); return; }
             if(e.key === 'Escape' && nodeNoteId) { e.preventDefault(); window.closeNodeNote(); return; }
+            if(e.key === 'Escape' && areaEditMode) { e.preventDefault(); if(activeAreaGestureCancel) activeAreaGestureCancel(); areaEditMode = false; selectedAreaId = null; let button = document.getElementById('area-mode-btn'); if(button) button.classList.remove('active'); renderAreas(); window.showToast('🟨 ปิดโหมด Area'); return; }
             if(e.key === 'Tab') {
                 let active = document.activeElement;
                 if(active && active.classList.contains('nt')) { e.preventDefault(); if(!e.shiftKey) { let nd = active.nextElementSibling; if(nd && nd.classList.contains('nd')) nd.focus(); } return; } 
@@ -1739,6 +1824,7 @@
             if(e.key === 'Delete') {
                 let ae = document.activeElement;
                 if(ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+                if(selectedAreaId) { e.preventDefault(); window.deleteArea(selectedAreaId); return; }
                 if(selectedAnnotationTextId) { e.preventDefault(); window.deleteAnnotationText(selectedAnnotationTextId); return; }
                 if(selectedAnnotationId) { e.preventDefault(); window.deleteAnnotationLine(selectedAnnotationId); return; }
                 if(nodes.some(n => n.classList.contains('sel')) || selectedImageIds.size) { e.preventDefault(); deleteSelectedObjectsActivity(); }
@@ -1789,7 +1875,7 @@
                     }
                     updateTransform(); updateAll();
                     window.doSaveState();
-                    renderAnnotations(); renderAnnotationTexts();
+                    renderAreas(); renderAnnotations(); renderAnnotationTexts();
                 }
             } else {
                 let loaded = false;
