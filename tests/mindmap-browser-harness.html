@@ -418,8 +418,7 @@
       progress('4/4 ทดสอบ multi-selection Delete เป็นหนึ่ง activity');
       const regularBatchTargets = ['n10', 'n11', 'n12'].map(id => win.document.getElementById(id));
       assertion(report, 'regular batch-delete targets exist', regularBatchTargets.every(Boolean));
-      win.document.querySelectorAll('.n.sel, .img-float.sel').forEach(element => element.classList.remove('sel'));
-      regularBatchTargets.forEach(node => node.classList.add('sel'));
+      win.eval(`selectNodeImageGroup(${JSON.stringify(regularBatchTargets.map(node => node.id))}, [])`);
       const regularBatchBefore = graphIds(win);
       pressDelete(win);
       await nextPaint(win);
@@ -434,9 +433,7 @@
 
       progress('4/4 ทดสอบ regular Node + junction batch เป็นหนึ่ง activity');
       const branchGraph = graphIds(win);
-      win.document.querySelectorAll('.n.sel, .img-float.sel').forEach(element => element.classList.remove('sel'));
-      win.document.getElementById(addedRegular.id).classList.add('sel');
-      win.document.getElementById(addedJunction.id).classList.add('sel');
+      win.eval(`selectNodeImageGroup(${JSON.stringify([addedRegular.id, addedJunction.id])}, [])`);
       pressDelete(win);
       await nextPaint(win);
       const branchBatchAfter = graphIds(win);
@@ -614,7 +611,7 @@
           n1: { text: 'ต้นทาง V3.95', position: .18, autoPlacement: false, placementRevision: 4 },
           n2: { text: 'ปลายทาง V3.95', position: .82, autoPlacement: false, placementRevision: 4 },
         });
-        clearSel(); document.getElementById(${JSON.stringify(source.id)}).classList.add('sel'); updateLine(line); renderConnectorRouteLabels(); window.doSaveState();
+        replaceSelection('node', ${JSON.stringify(source.id)}); updateLine(line); renderConnectorRouteLabels(); window.doSaveState();
       })()`);
 
       function routeScaleAt(zoom) {
@@ -822,6 +819,76 @@
       assertion(report, 'Alt+Shift-drag copies Floating Text on the dominant vertical axis in one activity', copyAfter.count === copyBefore.count + 1 && copyAfter.step === copyBefore.step + 1 && Math.abs(copyAfter.copy.x - copyAfter.original.x) < .01 && Math.abs(copyAfter.copy.y - copyAfter.original.y) > 20, JSON.stringify({ copyBefore, copyAfter }));
     }
 
+    async function runV397UnifiedSelectionChecks(win, report) {
+      progress('8/8 ทดสอบ V3.97: Unified Selection, Align/Dist และ Area duplicate');
+      const setup = win.eval(`(() => {
+        clearSel(); if(areaEditMode) window.toggleAreaMode();
+        const line={id:newId('annotation'),x1:240,y1:240,x2:420,y2:420,color:'var(--c9)'};
+        const text={id:newId('annotation_text'),x:300,y:300,text:'V3.97 Selection',description:'mixed object',color:'var(--c9)',fontSize:28};
+        const area={id:newId('annotation_area'),x:520,y:220,w:220,h:180,color:'var(--c4)',opacity:.1};
+        annotations.lines.push(line); annotations.texts.push(text); annotations.areas.push(area);
+        renderAnnotations(); renderAnnotationTexts(); renderAreas(); window.doSaveState();
+        return {lineId:line.id,textId:text.id,areaId:area.id,imageId:imagePlacements[0]&&imagePlacements[0].id,nodeIds:['n20','n21']};
+      })()`);
+      assertion(report, 'V3.97 mixed-selection fixtures exist', Boolean(setup.imageId && setup.nodeIds.every(id => win.document.getElementById(id))));
+
+      win.eval(`replaceSelection('node','n20'); addSelection('node','n21')`);
+      const primaryVisuals = win.eval(`({selected:selectedEntries().length,primary:primarySelection(),primaryNodes:document.querySelectorAll('.n.primary-sel').length,secondaryControls:Array.from(document.querySelectorAll('.n.sel:not(.primary-sel) .p')).filter(el=>getComputedStyle(el).display!=='none').length})`);
+      assertion(report, 'Selection Registry keeps one primary while secondary Nodes expose no controls', primaryVisuals.selected === 2 && primaryVisuals.primary.kind === 'node' && primaryVisuals.primary.id === 'n21' && primaryVisuals.primaryNodes === 1 && primaryVisuals.secondaryControls === 0, JSON.stringify(primaryVisuals));
+
+      const lineHit = win.document.querySelector('.annotation-line-hit[data-annotation-id="' + setup.lineId + '"]');
+      mouse(win, lineHit, 'mousedown', 300, 300, { shiftKey: true });
+      assertion(report, 'Shift-click toggles a Timeline Line into the shared selection', win.eval(`isSelected('line',${JSON.stringify(setup.lineId)}) && selectedEntries().length===3`));
+
+      win.eval('clearSel(); cx=0; cy=0; zoom=1; updateTransform();');
+      const canvas = win.document.getElementById('b');
+      mouse(win, canvas, 'mousedown', 260, 260);
+      documentMouse(win, 'mousemove', 390, 390);
+      documentMouse(win, 'mouseup', 390, 390);
+      const marquee = win.eval(`({line:isSelected('line',${JSON.stringify(setup.lineId)}),text:isSelected('text',${JSON.stringify(setup.textId)}),area:isSelected('area',${JSON.stringify(setup.areaId)})})`);
+      assertion(report, 'marquee selects intersecting Timeline Line and Floating Text but not Area outside Area mode', marquee.line && marquee.text && !marquee.area, JSON.stringify(marquee));
+
+      win.eval(`clearSel(); replaceSelection('node','n20'); addSelection('image',${JSON.stringify(setup.imageId)}); addSelection('line',${JSON.stringify(setup.lineId)}); addSelection('text',${JSON.stringify(setup.textId)}); snapGrid=false;`);
+      const dragBefore = win.eval(`({node:selectionObjectBounds(selectionEntry('node','n20')),image:selectionObjectBounds(selectionEntry('image',${JSON.stringify(setup.imageId)})),line:selectionObjectBounds(selectionEntry('line',${JSON.stringify(setup.lineId)})),text:selectionObjectBounds(selectionEntry('text',${JSON.stringify(setup.textId)}))})`);
+      const anchor = win.document.getElementById('n20');
+      const anchorRect = anchor.getBoundingClientRect();
+      mouse(win, anchor, 'mousedown', anchorRect.left + 5, anchorRect.top + 5);
+      mouse(win, win, 'mousemove', anchorRect.left + 45, anchorRect.top + 29);
+      mouse(win, win, 'mouseup', anchorRect.left + 45, anchorRect.top + 29);
+      const dragAfter = win.eval(`({node:selectionObjectBounds(selectionEntry('node','n20')),image:selectionObjectBounds(selectionEntry('image',${JSON.stringify(setup.imageId)})),line:selectionObjectBounds(selectionEntry('line',${JSON.stringify(setup.lineId)})),text:selectionObjectBounds(selectionEntry('text',${JSON.stringify(setup.textId)}))})`);
+      const dragDeltas = Object.keys(dragBefore).map(key => ({x:dragAfter[key].left-dragBefore[key].left,y:dragAfter[key].top-dragBefore[key].top}));
+      assertion(report, 'dragging one selected Object moves Node, image, Line, and Text by one shared delta', dragDeltas.every(delta => Math.abs(delta.x-dragDeltas[0].x)<.01 && Math.abs(delta.y-dragDeltas[0].y)<.01), JSON.stringify(dragDeltas));
+
+      win.doAlign('t');
+      const alignedTops = win.eval(`selectedEntries().map(entry=>selectionObjectBounds(entry).top)`);
+      assertion(report, 'T-Align uses bounds for every selected Object kind', alignedTops.every(value => Math.abs(value-alignedTops[0])<.01), JSON.stringify(alignedTops));
+      win.doDist('x');
+      const distributed = win.eval(`selectedEntries().map(entry=>selectionObjectBounds(entry)).sort((a,b)=>a.left-b.left)`);
+      const gaps = distributed.slice(1).map((bounds,index)=>bounds.left-distributed[index].right);
+      assertion(report, 'horizontal Dist creates equal gaps across mixed Object bounds', gaps.every(value => Math.abs(value-gaps[0])<.01), JSON.stringify(gaps));
+
+      win.toggleAreaMode();
+      win.eval(`replaceSelection('area',${JSON.stringify(setup.areaId)})`);
+      let areaEl = win.document.querySelector('.annotation-area[data-annotation-area-id="' + setup.areaId + '"]');
+      let areaRect = areaEl.getBoundingClientRect();
+      const areaCopyBefore = win.eval('({count:annotations.areas.length,step:curStep})');
+      mouse(win, areaEl, 'mousedown', areaRect.left + areaRect.width / 2, areaRect.top + areaRect.height / 2, { altKey: true });
+      documentMouse(win, 'mousemove', areaRect.left + areaRect.width / 2 + 72, areaRect.top + areaRect.height / 2 + 48, { altKey: true });
+      documentMouse(win, 'mouseup', areaRect.left + areaRect.width / 2 + 72, areaRect.top + areaRect.height / 2 + 48, { altKey: true });
+      const areaCopyAfter = win.eval('({count:annotations.areas.length,step:curStep,primary:primarySelection(),copy:annotations.areas[annotations.areas.length-1]})');
+      assertion(report, 'Alt-drag Area creates one independently placed copy in one history activity', areaCopyAfter.count === areaCopyBefore.count + 1 && areaCopyAfter.step === areaCopyBefore.step + 1 && areaCopyAfter.primary.kind === 'area' && areaCopyAfter.primary.id === areaCopyAfter.copy.id, JSON.stringify({areaCopyBefore,areaCopyAfter}));
+
+      win.eval(`clearSel(); replaceSelection('node','n20'); addSelection('image',${JSON.stringify(setup.imageId)}); addSelection('line',${JSON.stringify(setup.lineId)}); addSelection('text',${JSON.stringify(setup.textId)}); addSelection('area',${JSON.stringify(areaCopyAfter.copy.id)});`);
+      const deleteBefore = win.eval('({step:curStep,count:selectedEntries().length})');
+      pressDelete(win);
+      const deleted = win.eval(`({step:curStep,node:!!document.getElementById('n20'),image:!!imagePlacementById(${JSON.stringify(setup.imageId)}),line:annotations.lines.some(item=>item.id===${JSON.stringify(setup.lineId)}),text:annotations.texts.some(item=>item.id===${JSON.stringify(setup.textId)}),area:annotations.areas.some(item=>item.id===${JSON.stringify(areaCopyAfter.copy.id)})})`);
+      assertion(report, 'one Delete removes a five-kind mixed selection in one history activity', deleted.step === deleteBefore.step + 1 && !deleted.node && !deleted.image && !deleted.line && !deleted.text && !deleted.area, JSON.stringify({deleteBefore,deleted}));
+      win.doUndo();
+      const restored = win.eval(`({node:!!document.getElementById('n20'),image:!!imagePlacementById(${JSON.stringify(setup.imageId)}),line:annotations.lines.some(item=>item.id===${JSON.stringify(setup.lineId)}),text:annotations.texts.some(item=>item.id===${JSON.stringify(setup.textId)}),area:annotations.areas.some(item=>item.id===${JSON.stringify(areaCopyAfter.copy.id)})})`);
+      assertion(report, 'one Undo restores every kind from the mixed Delete', Object.values(restored).every(Boolean), JSON.stringify(restored));
+      if (win.eval('areaEditMode')) win.toggleAreaMode();
+    }
+
     async function runBenchmark() {
       let report;
       try {
@@ -853,6 +920,7 @@
         await runMixedImageSelectionChecks(win, report);
         await runV395InteractionChecks(win, report);
         await runV396AreaAndTextLockChecks(win, report);
+        await runV397UnifiedSelectionChecks(win, report);
         report.paintFallbacks = paintFallbackCount;
         report.throttledPaints = throttledPaintCount;
         report.overall = paintFallbackCount > 0 || throttledPaintCount > 0 ? 'PARTIAL' : 'PASS';

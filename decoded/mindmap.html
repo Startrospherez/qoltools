@@ -2,7 +2,7 @@
 <html lang="th"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MindMap V3.96</title>
+<title>MindMap V3.97</title>
     <style>
         :root {
             /* โทนสีปัจจุบัน (สำหรับกรอบ) */
@@ -78,6 +78,7 @@
         .annotation-area::before { content:""; position:absolute; inset:0; background:var(--area-color); opacity:var(--area-opacity); pointer-events:none; }
         #annotation-area-layer.area-editing .annotation-area { pointer-events:auto; cursor:grab; }
         .annotation-area.selected { outline:2px dashed rgb(33,150,243); outline-offset:-2px; }
+        .annotation-area.selected:not(.primary-sel) { outline-color:rgba(33,150,243,.62); }
         .annotation-area-draft { position:absolute; box-sizing:border-box; border:2px dashed rgb(33,150,243); background:rgba(33,150,243,.08); pointer-events:none; }
         .annotation-area-handle { position:absolute; width:12px; height:12px; box-sizing:border-box; border:2px solid rgb(33,150,243); border-radius:50%; background:var(--tb); transform:translate(-50%,-50%); pointer-events:auto; }
         .annotation-area-handle[data-handle="n"] { left:50%; top:0; cursor:ns-resize; }
@@ -92,16 +93,18 @@
         #area-mode-btn.active { background:var(--c4); box-shadow:inset 0 0 0 2px rgba(0,0,0,.18); }
         #annotation-layer { pointer-events: auto; }
         .annotation-line { fill:none; stroke-width:4; pointer-events:none; }
+        .annotation-line.selected { filter:drop-shadow(0 0 3px rgba(33,150,243,.9)); }
         .annotation-line-hit { fill:none; stroke:rgba(0,0,0,.001); stroke-width:20; vector-effect:non-scaling-stroke; pointer-events:stroke; cursor:pointer; }
         .annotation-control { pointer-events:all; cursor:pointer; }
         #annotation-text-layer { position:absolute; inset:0; z-index:1; pointer-events:none; }
         .annotation-text { position:absolute; min-width:20px; color:var(--c9); font-weight:700; line-height:1.2; white-space:pre-wrap; cursor:grab; pointer-events:auto; user-select:none; }
         .annotation-text.selected { outline:2px dashed rgb(33,150,243); outline-offset:5px; }
+        .annotation-text.selected:not(.primary-sel) { outline-color:rgba(33,150,243,.62); }
         .annotation-text.editing { cursor:text; user-select:text; outline:2px dashed rgba(33,150,243,.55); outline-offset:5px; }
         .annotation-text-content { outline:none; min-width:20px; }
         .annotation-text-description { margin-top:4px; min-width:20px; color:var(--fg); font-size:.58em; font-weight:400; line-height:1.35; opacity:.78; outline:none; white-space:pre-wrap; }
         .annotation-text-delete { position:absolute; left:-12px; top:-12px; width:20px; height:20px; padding:0; border:0; border-radius:50%; background:rgb(255,77,77); color:#fff; font:bold 14px/18px sans-serif; cursor:pointer; display:none; z-index:2; }
-        .annotation-text.selected .annotation-text-delete { display:block; }
+        .annotation-text.primary-sel .annotation-text-delete { display:block; }
         
         /* Nodes */ 
         .n { 
@@ -142,17 +145,17 @@
         .nt { outline: none; font-size: 18px; min-width: 40px; width: 100%; height: 100%; box-sizing: border-box; }
         .nd { outline: none; font-size: 14px; min-width: 40px; opacity: 0.8; margin-top: 6px; border-top: 1px dashed var(--bc); padding-top: 6px; width: 100%; box-sizing: border-box; }
         .p { position: absolute; background: var(--bc); color: rgb(255,255,255); border-radius: 50%; width: 24px; height: 24px; text-align: center; line-height: 22px; cursor: pointer; font-weight: bold; font-size: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none; z-index: 3; }
-        .n:hover .p, .n.sel .p { display: block; }
+        .n:hover:not(.sel) .p, .n.primary-sel .p { display: block; }
         .p-r { right: -15px; top: 50%; transform: translateY(-50%); }
         .p-l { left: -15px; top: 50%; transform: translateY(-50%); }
         .p-t { top: -15px; left: 50%; transform: translateX(-50%); }
         .p-b { bottom: -15px; left: 50%; transform: translateX(-50%); }
         .note-btn { position: absolute; left: -10px; bottom: -10px; width: 22px; height: 22px; padding: 0; border: 1px solid color-mix(in srgb, var(--tb) 85%, var(--fg)); border-radius: 50%; background: var(--tb); color: var(--c9); cursor: pointer; font-size: 12px; line-height: 20px; display: none; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .note-btn:hover { background: var(--c9); color: #fff; border-color: var(--c9); }
-        .n:hover .note-btn, .n.sel .note-btn { display: block; }
+        .n:hover:not(.sel) .note-btn, .n.primary-sel .note-btn { display: block; }
         .n.j .note-btn { display: none !important; }
         .dx { position: absolute; left: -10px; top: -10px; background: rgb(255,77,77); color: rgb(255,255,255); border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 18px; cursor: pointer; font-size: 12px; display: none; z-index: 4; }
-        .n:hover .dx, .n.sel .dx { display: block; }
+        .n:hover:not(.sel) .dx, .n.primary-sel .dx { display: block; }
         .mb { position: absolute; background: var(--c9); color: #000; border: 2px solid var(--bc); border-radius: 50%; width: 18px; height: 18px; text-align: center; line-height: 14px; font-size: 14px; font-weight: bold; cursor: pointer; transform: translate(-50%,-50%); z-index: 3; pointer-events: auto; opacity: 0; transition: all 0.2s; }
         .mb::before { content: ""; position: absolute; top: -15px; left: -15px; right: -15px; bottom: -15px; border-radius: 50%; }
         .mb.crowded::before { top: -6px; left: -6px; right: -6px; bottom: -6px; }
@@ -179,12 +182,12 @@
         .img-float { position: absolute; cursor: grab; z-index: 2; }
         .img-float img { width: 100%; height: 100%; display: block; pointer-events: none; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
         .img-float .ifx { position: absolute; left: -10px; top: -10px; background: rgb(255,77,77); color: rgb(255,255,255); border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 18px; cursor: pointer; font-size: 12px; display: none; z-index: 4; }
-        .img-float:hover .ifx, .img-float.sel .ifx { display: block; }
+        .img-float:hover:not(.sel) .ifx, .img-float.primary-sel .ifx { display: block; }
         .img-float .ifr { position: absolute; right: -7px; bottom: -7px; width: 16px; height: 16px; background: var(--bc); border: 2px solid var(--tb,#fff); border-radius: 50%; cursor: nwse-resize; display: none; z-index: 4; }
-        .img-float:hover .ifr, .img-float.sel .ifr { display: block; }
+        .img-float:hover:not(.sel) .ifr, .img-float.primary-sel .ifr { display: block; }
         .img-float.sel { outline: 2px dashed rgb(33,150,243); outline-offset: 2px; }
         .img-float .if-info { position:absolute; left:-8px; bottom:-30px; width:24px; height:24px; border:0; border-radius:50%; background:rgb(33,150,243); color:#fff; font-size:14px; cursor:pointer; display:none; z-index:4; }
-        .img-float:hover .if-info, .img-float.sel .if-info { display:block; }
+        .img-float:hover:not(.sel) .if-info, .img-float.primary-sel .if-info { display:block; }
         #image-detail-ui { position:fixed; inset:0; z-index:10000000; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); padding:24px; box-sizing:border-box; }
         #image-detail-ui.open { display:flex; }
         .image-detail-card { width:min(1080px,96vw); height:min(760px,92vh); display:grid; grid-template-columns:minmax(0,1fr) minmax(270px,340px); gap:16px; padding:16px; box-sizing:border-box; border:1px solid var(--bc); border-radius:10px; background:var(--tb); color:var(--fg); box-shadow:0 16px 48px rgba(0,0,0,.45); }
@@ -242,7 +245,7 @@
     </div>
     <div id="about-ui" role="dialog" aria-modal="true" aria-labelledby="about-title" onclick="if(event.target===this)window.closeAbout()">
         <div class="about-card">
-            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.96</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;"><div style="flex:1;"><h2 id="about-title">MindMap V3.97</h2><p style="margin:4px 0 0;opacity:0.75;">สร้างแผนผังความคิด เชื่อมโยงหัวข้อ และเก็บรายละเอียดประกอบ</p></div><button type="button" onclick="window.closeAbout()" title="ปิด" aria-label="ปิด" style="flex:0 0 auto;background:transparent;color:var(--fg);border:1px solid var(--bc);border-radius:50%;width:30px;height:30px;font-size:20px;line-height:24px;cursor:pointer;">×</button></div>
             <!-- MINDMAP_INFO_CONTENT -->
         </div>
     </div>
@@ -382,7 +385,7 @@
         
         // Mindmap State
         let b = document.getElementById('b'), s = document.getElementById('s'), sb = document.getElementById('selBox');
-        let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], dragImageStartPos = [], dragAnchorKind = null, dragConnectorLines = [], dragRenderFrame = null, pendingDragPointer = null, images = [];
+        let nid = 0, drag = null, px, py, cx = -10000, cy = -10000, zoom = 1, isPan = false, isSel = false, sx, sy, isMoved = false, nodes = [], mmHistory = [], curStep = -1, dragStartX = 0, dragStartY = 0, dragStartPos = [], dragImageStartPos = [], dragAnnotationStartPos = [], dragAnchorKind = null, dragConnectorLines = [], dragRenderFrame = null, pendingDragPointer = null, images = [];
         let imagePlacements = [], imageLayerVisible = true, activeImageDetailId = null;
         let annotations = { lines: [], texts: [], areas: [] }, selectedAnnotationId = null, selectedAnnotationTextId = null, selectedAreaId = null, editingAnnotationTextId = null, areaEditMode = false, activeAreaGestureCancel = null, lastAnnotationTextClick = { id:null, at:0 }, connectorNavHoverId = null, connectorNavHideTimer = null, editingConnectorRouteLabel = null, connectorRouteClickTimer = null;
         const imageDomById = new Map(), imageThumbUrlByAsset = new Map(), selectedImageIds = new Set();
@@ -392,9 +395,43 @@
         const MM_PROJECT_EXTENSION = '.mindmap.zip';
         const MM_THUMB_MAX = 480;
         
-        // Selection variables
+        // Unified transient selection. Project files never persist this registry.
+        const selectionRegistry = { items:new Map(), primary:null };
+        function selectionKey(kind, id) { return kind + ':' + id; }
+        function selectionEntry(kind, id) { return { kind:kind, id:id }; }
+        function isSelected(kind, id) { return selectionRegistry.items.has(selectionKey(kind, id)); }
+        function selectedEntries(kind) { let values = Array.from(selectionRegistry.items.values()); return kind ? values.filter(entry => entry.kind === kind) : values; }
+        function selectedIds(kind) { return selectedEntries(kind).map(entry => entry.id); }
+        function primarySelection() { return selectionRegistry.primary && selectionRegistry.items.get(selectionRegistry.primary) || null; }
+        function setPrimarySelection(kind, id) { let key = selectionKey(kind, id); if(selectionRegistry.items.has(key)) selectionRegistry.primary = key; }
+        function replaceSelection(kind, id) { selectionRegistry.items.clear(); let entry = selectionEntry(kind, id); selectionRegistry.items.set(selectionKey(kind, id), entry); selectionRegistry.primary = selectionKey(kind, id); syncSelectionVisuals(); }
+        function addSelection(kind, id, primary) { let entry = selectionEntry(kind, id), key = selectionKey(kind, id); selectionRegistry.items.set(key, entry); if(primary !== false) selectionRegistry.primary = key; syncSelectionVisuals(); }
+        function toggleSelection(kind, id) { let key = selectionKey(kind, id); if(selectionRegistry.items.has(key)) { selectionRegistry.items.delete(key); if(selectionRegistry.primary === key) selectionRegistry.primary = selectionRegistry.items.size ? Array.from(selectionRegistry.items.keys()).pop() : null; } else { selectionRegistry.items.set(key, selectionEntry(kind, id)); selectionRegistry.primary = key; } syncSelectionVisuals(); }
+        function clearSelectionKinds(kinds) { let changed = false; selectionRegistry.items.forEach((entry, key) => { if(kinds.includes(entry.kind)) { selectionRegistry.items.delete(key); changed = true; } }); if(selectionRegistry.primary && !selectionRegistry.items.has(selectionRegistry.primary)) selectionRegistry.primary = selectionRegistry.items.size ? Array.from(selectionRegistry.items.keys()).pop() : null; if(changed) syncSelectionVisuals(); }
+        function clearSelectionRegistry() { selectionRegistry.items.clear(); selectionRegistry.primary = null; syncSelectionVisuals(); }
+        function selectionExists(entry) {
+            if(entry.kind === 'node') return !!document.getElementById(entry.id);
+            if(entry.kind === 'image') return !!imagePlacementById(entry.id);
+            if(entry.kind === 'line') return annotations.lines.some(item => item.id === entry.id);
+            if(entry.kind === 'text') return annotations.texts.some(item => item.id === entry.id);
+            if(entry.kind === 'area') return annotations.areas.some(item => item.id === entry.id);
+            return false;
+        }
+        function pruneSelectionRegistry() { selectionRegistry.items.forEach((entry, key) => { if(!selectionExists(entry) || (entry.kind === 'area' && !areaEditMode)) selectionRegistry.items.delete(key); }); if(selectionRegistry.primary && !selectionRegistry.items.has(selectionRegistry.primary)) selectionRegistry.primary = selectionRegistry.items.size ? Array.from(selectionRegistry.items.keys()).pop() : null; }
+        function syncSelectionVisuals() {
+            pruneSelectionRegistry(); let primary = primarySelection();
+            selectedAnnotationId = primary && primary.kind === 'line' ? primary.id : null;
+            selectedAnnotationTextId = primary && primary.kind === 'text' ? primary.id : null;
+            selectedAreaId = primary && primary.kind === 'area' ? primary.id : null;
+            nodes.forEach(node => { node.classList.toggle('sel', isSelected('node', node.id)); node.classList.toggle('primary-sel', !!primary && primary.kind === 'node' && primary.id === node.id); });
+            selectedImageIds.clear(); selectedIds('image').forEach(id => selectedImageIds.add(id));
+            images.forEach(im => { let id = im.dataset.placementId || im.id; im.classList.toggle('sel', isSelected('image', id)); im.classList.toggle('primary-sel', !!primary && primary.kind === 'image' && primary.id === id); });
+            renderAreas(); renderAnnotations(); renderAnnotationTexts(); renderConnectorRouteLabels(); renderJunctionMiniTools();
+        }
+
+        // Marquee variables
         let isAddSel = false;
-        let preSel = new Set(), preImageSel = new Set();
+        let preSelectionKeys = new Set();
 
         let crDrag = false, crResize = false, crPx, crPy, crW, crH, crL, crT;
         let modalCallback = null;
@@ -437,12 +474,12 @@
         function newId(prefix) { return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8); }
         function placementFromElement(im) { return { id: im.id, x: im.style.left, y: im.style.top, w: im.style.width, h: im.style.height, src: im.querySelector('img') ? im.querySelector('img').src : '', caption: '', source: '', note: '' }; }
         function imagePlacementById(id) { return imagePlacements.find(p => p.id === id); }
-        function selectedImagePlacements() { return imagePlacements.filter(p => selectedImageIds.has(p.id)); }
-        function syncImageSelection(im) { if(im) im.classList.toggle('sel', selectedImageIds.has(im.id)); }
+        function selectedImagePlacements() { return imagePlacements.filter(p => isSelected('image', p.id)); }
+        function syncImageSelection(im) { if(!im) return; let id = im.dataset.placementId || im.id, primary = primarySelection(); im.classList.toggle('sel', isSelected('image', id)); im.classList.toggle('primary-sel', !!primary && primary.kind === 'image' && primary.id === id); }
         function syncRenderedImageSelection() { images.forEach(syncImageSelection); }
-        function setImageSelected(id, selected) { if(selected) selectedImageIds.add(id); else selectedImageIds.delete(id); syncImageSelection(imageDomById.get(id)); }
-        function clearImageSelection() { selectedImageIds.clear(); syncRenderedImageSelection(); }
-        function clearObjectSelection() { nodes.forEach(n => n.classList.remove('sel')); clearImageSelection(); }
+        function setImageSelected(id, selected) { if(selected) addSelection('image', id); else if(isSelected('image', id)) toggleSelection('image', id); }
+        function clearImageSelection() { clearSelectionKinds(['image']); }
+        function clearObjectSelection() { clearSelectionKinds(['node','image']); }
         function placementDimensions(p) { return { x: parseFloat(p.x) || 0, y: parseFloat(p.y) || 0, w: Math.max(30, parseFloat(p.w) || 30), h: Math.max(20, parseFloat(p.h) || 20) }; }
         function revokeImageThumbUrls() { imageThumbUrlByAsset.forEach(url => URL.revokeObjectURL(url)); imageThumbUrlByAsset.clear(); }
         async function thumbnailUrlFor(placement) {
@@ -912,10 +949,11 @@
             let layer = ensureAnnotationAreaLayer(); layer.innerHTML = ''; layer.classList.toggle('area-editing', areaEditMode);
             annotations.areas.forEach(area => {
                 let el = document.createElement('div'); el.className = 'annotation-area'; el.dataset.annotationAreaId = area.id; el.style.left = area.x + 'px'; el.style.top = area.y + 'px'; el.style.width = area.w + 'px'; el.style.height = area.h + 'px'; el.style.setProperty('--area-color', area.color); el.style.setProperty('--area-opacity', area.opacity);
+                if(isSelected('area', area.id)) el.classList.add('selected');
+                if(selectedAreaId === area.id) el.classList.add('primary-sel');
                 if(areaEditMode) {
-                    el.onmousedown = e => { if(e.button !== 0) return; e.preventDefault(); e.stopPropagation(); startAreaGesture(e, area.id, 'move'); };
+                    el.onmousedown = e => { if(e.button !== 0) return; e.preventDefault(); e.stopPropagation(); if(e.altKey) { startAreaCopyDrag(e, area.id); return; } if(e.shiftKey) { toggleSelection('area', area.id); return; } startAreaGesture(e, area.id, 'move'); };
                     if(selectedAreaId === area.id) {
-                        el.classList.add('selected');
                         ['n','s','e','w','nw','ne','sw','se'].forEach(handle => { let control = document.createElement('span'); control.className = 'annotation-area-handle'; control.dataset.annotationUi = 'true'; control.dataset.handle = handle; control.onmousedown = e => { if(e.button !== 0) return; e.preventDefault(); e.stopPropagation(); startAreaGesture(e, area.id, handle); }; el.appendChild(control); });
                         let remove = document.createElement('button'); remove.type = 'button'; remove.className = 'annotation-area-delete'; remove.dataset.annotationUi = 'true'; remove.textContent = '×'; remove.title = 'ลบพื้นที่'; remove.onmousedown = e => { e.preventDefault(); e.stopPropagation(); window.deleteArea(area.id); }; el.appendChild(remove);
                     }
@@ -926,7 +964,7 @@
         function renderAnnotations() {
             let layer = ensureAnnotationLayer(); layer.innerHTML = '';
             annotations.lines.forEach(line => {
-                let el = document.createElementNS('http://www.w3.org/2000/svg', 'line'); el.classList.add('annotation-line'); el.dataset.annotationId = line.id; el.setAttribute('x1', line.x1); el.setAttribute('y1', line.y1); el.setAttribute('x2', line.x2); el.setAttribute('y2', line.y2); el.setAttribute('stroke', line.color); layer.appendChild(el);
+                let el = document.createElementNS('http://www.w3.org/2000/svg', 'line'); el.classList.add('annotation-line'); if(isSelected('line', line.id)) el.classList.add('selected'); el.dataset.annotationId = line.id; el.setAttribute('x1', line.x1); el.setAttribute('y1', line.y1); el.setAttribute('x2', line.x2); el.setAttribute('y2', line.y2); el.setAttribute('stroke', line.color); layer.appendChild(el);
                 let hit = document.createElementNS('http://www.w3.org/2000/svg', 'line'); hit.classList.add('annotation-line-hit'); hit.dataset.annotationId = line.id; hit.setAttribute('stroke', 'rgba(0,0,0,.001)'); hit.setAttribute('stroke-width', '20'); hit.setAttribute('vector-effect', 'non-scaling-stroke'); hit.setAttribute('x1', line.x1); hit.setAttribute('y1', line.y1); hit.setAttribute('x2', line.x2); hit.setAttribute('y2', line.y2); hit.onmousedown = e => startAnnotationDrag(e, line.id, 'move'); layer.appendChild(hit);
             });
             let line = selectedAnnotation(); if(!line) return;
@@ -939,7 +977,7 @@
             annotations.texts.forEach(text => {
                 let el = document.createElement('div'); el.className = 'annotation-text'; el.dataset.annotationTextId = text.id; el.style.left = text.x + 'px'; el.style.top = text.y + 'px'; el.style.color = text.color; el.style.fontSize = text.fontSize + 'px';
                 let editing = editingAnnotationTextId === text.id;
-                if(selectedAnnotationTextId === text.id) el.classList.add('selected'); if(editing) { el.classList.add('editing'); el.classList.remove('selected'); }
+                if(isSelected('text', text.id)) el.classList.add('selected'); if(selectedAnnotationTextId === text.id) el.classList.add('primary-sel'); if(editing) { el.classList.add('editing'); el.classList.remove('selected', 'primary-sel'); }
                 let content = document.createElement('div'); content.className = 'annotation-text-content'; content.textContent = text.text; content.contentEditable = editing ? 'true' : 'false'; content.spellcheck = false;
                 let description = document.createElement('div'); description.className = 'annotation-text-description'; description.textContent = text.description; description.contentEditable = editing ? 'true' : 'false'; description.spellcheck = false;
                 content.onmousedown = e => { e.stopPropagation(); if(!editing) startAnnotationTextDrag(e, text.id); };
@@ -958,15 +996,78 @@
             });
             if(editingAnnotationTextId) requestAnimationFrame(() => { let content = layer.querySelector('.annotation-text[data-annotation-text-id="' + editingAnnotationTextId + '"] .annotation-text-content'); if(!content) return; content.focus(); let range = document.createRange(); range.selectNodeContents(content); let selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range); });
         }
-        function selectAnnotation(id) { selectedAnnotationId = id; selectedAnnotationTextId = null; selectedAreaId = null; editingAnnotationTextId = null; clearObjectSelection(); renderAreas(); renderAnnotations(); renderAnnotationTexts(); }
-        function selectAnnotationText(id, edit) { selectedAnnotationId = null; selectedAnnotationTextId = id; selectedAreaId = null; editingAnnotationTextId = edit ? id : null; clearObjectSelection(); renderAreas(); renderAnnotations(); renderAnnotationTexts(); }
-        function selectArea(id) { selectedAnnotationId = null; selectedAnnotationTextId = null; selectedAreaId = id; editingAnnotationTextId = null; clearObjectSelection(); renderAreas(); renderAnnotations(); renderAnnotationTexts(); }
-        function selectionSnapshot() { return { nodeIds:nodes.filter(node => node.classList.contains('sel')).map(node => node.id), imageIds:Array.from(selectedImageIds), annotationId:selectedAnnotationId, annotationTextId:selectedAnnotationTextId, areaId:selectedAreaId }; }
+        function selectAnnotation(id, additive) { editingAnnotationTextId = null; if(additive) addSelection('line', id); else if(isSelected('line', id)) { setPrimarySelection('line', id); syncSelectionVisuals(); } else replaceSelection('line', id); }
+        function selectAnnotationText(id, edit, additive) { editingAnnotationTextId = edit ? id : null; if(additive) addSelection('text', id); else if(isSelected('text', id)) { setPrimarySelection('text', id); syncSelectionVisuals(); } else replaceSelection('text', id); }
+        function selectArea(id, additive) { editingAnnotationTextId = null; if(additive) addSelection('area', id); else if(isSelected('area', id)) { setPrimarySelection('area', id); syncSelectionVisuals(); } else replaceSelection('area', id); }
+        function selectionSnapshot() { let primary = primarySelection(); return { entries:selectedEntries().map(entry => ({kind:entry.kind,id:entry.id})), primary:primary ? {kind:primary.kind,id:primary.id} : null, nodeIds:selectedIds('node'), imageIds:selectedIds('image'), annotationId:selectedAnnotationId, annotationTextId:selectedAnnotationTextId, areaId:selectedAreaId }; }
         function restoreSelectionSnapshot(snapshot) {
-            if(snapshot.annotationId && annotations.lines.some(line => line.id === snapshot.annotationId)) { selectAnnotation(snapshot.annotationId); return; }
-            if(snapshot.annotationTextId && annotations.texts.some(text => text.id === snapshot.annotationTextId)) { selectAnnotationText(snapshot.annotationTextId, false); return; }
-            if(snapshot.areaId && annotations.areas.some(area => area.id === snapshot.areaId)) { selectArea(snapshot.areaId); return; }
-            selectNodeImageGroup(snapshot.nodeIds, snapshot.imageIds);
+            selectionRegistry.items.clear(); (snapshot.entries || []).forEach(entry => { if(selectionExists(entry) && (entry.kind !== 'area' || areaEditMode)) selectionRegistry.items.set(selectionKey(entry.kind, entry.id), selectionEntry(entry.kind, entry.id)); });
+            if(snapshot.primary && selectionRegistry.items.has(selectionKey(snapshot.primary.kind, snapshot.primary.id))) selectionRegistry.primary = selectionKey(snapshot.primary.kind, snapshot.primary.id); else selectionRegistry.primary = selectionRegistry.items.size ? Array.from(selectionRegistry.items.keys()).pop() : null;
+            editingAnnotationTextId = null; syncSelectionVisuals();
+        }
+        function captureSelectionGeometry() {
+            return selectedEntries().map(entry => {
+                if(entry.kind === 'node') { let node = document.getElementById(entry.id); return node && { entry:entry, object:node, x:parseFloat(node.style.left) || 0, y:parseFloat(node.style.top) || 0 }; }
+                if(entry.kind === 'image') { let placement = imagePlacementById(entry.id), d = placement && placementDimensions(placement); return placement && { entry:entry, object:placement, x:d.x, y:d.y }; }
+                if(entry.kind === 'line') { let line = annotations.lines.find(item => item.id === entry.id); return line && { entry:entry, object:line, x:line.x1, y:line.y1, x2:line.x2, y2:line.y2 }; }
+                if(entry.kind === 'text') { let text = annotations.texts.find(item => item.id === entry.id); return text && { entry:entry, object:text, x:text.x, y:text.y }; }
+                if(entry.kind === 'area') { let area = annotations.areas.find(item => item.id === entry.id); return area && { entry:entry, object:area, x:area.x, y:area.y }; }
+                return null;
+            }).filter(Boolean);
+        }
+        function geometryForEntry(snapshot, kind, id) { return snapshot.find(item => item.entry.kind === kind && item.entry.id === id) || null; }
+        function selectionGeometryChanged(snapshot) {
+            return snapshot.some(item => {
+                if(item.entry.kind === 'node') return Math.abs((parseFloat(item.object.style.left) || 0) - item.x) > .001 || Math.abs((parseFloat(item.object.style.top) || 0) - item.y) > .001;
+                if(item.entry.kind === 'image') { let d = placementDimensions(item.object); return Math.abs(d.x - item.x) > .001 || Math.abs(d.y - item.y) > .001; }
+                if(item.entry.kind === 'line') return Math.abs(item.object.x1 - item.x) > .001 || Math.abs(item.object.y1 - item.y) > .001 || Math.abs(item.object.x2 - item.x2) > .001 || Math.abs(item.object.y2 - item.y2) > .001;
+                return Math.abs(item.object.x - item.x) > .001 || Math.abs(item.object.y - item.y) > .001;
+            });
+        }
+        function translateSelectionGeometry(snapshot, dx, dy) {
+            snapshot.forEach(item => {
+                if(item.entry.kind === 'node') { item.object.style.left = (item.x + dx) + 'px'; item.object.style.top = (item.y + dy) + 'px'; }
+                else if(item.entry.kind === 'image') { item.object.x = (item.x + dx) + 'px'; item.object.y = (item.y + dy) + 'px'; updatePlacementStyle(imageDomById.get(item.object.id), item.object); }
+                else if(item.entry.kind === 'line') { item.object.x1 = item.x + dx; item.object.y1 = item.y + dy; item.object.x2 = item.x2 + dx; item.object.y2 = item.y2 + dy; }
+                else { item.object.x = item.x + dx; item.object.y = item.y + dy; }
+            });
+        }
+        function snappedSelectionDelta(snapshot, kind, id, dx, dy) {
+            if(!snapGrid) return { dx:dx, dy:dy }; let anchor = geometryForEntry(snapshot, kind, id); if(!anchor) return { dx:dx, dy:dy };
+            if(kind === 'node') { let snapped = snapNodeToGrid(anchor.object, anchor.x + dx, anchor.y + dy); return { dx:snapped.left - anchor.x, dy:snapped.top - anchor.y }; }
+            return { dx:Math.round((anchor.x + dx) / 40) * 40 - anchor.x, dy:Math.round((anchor.y + dy) / 40) * 40 - anchor.y };
+        }
+        function renderSelectionGeometry(snapshot) {
+            let nodeIds = new Set(snapshot.filter(item => item.entry.kind === 'node').map(item => item.entry.id));
+            Array.from(s.querySelectorAll('line[data-n1][data-n2]')).forEach(line => { if(nodeIds.has(line.dataset.n1) || nodeIds.has(line.dataset.n2)) updateLine(line); });
+            if(snapshot.some(item => item.entry.kind === 'image')) renderImageLayer();
+            if(snapshot.some(item => item.entry.kind === 'line')) renderAnnotations();
+            if(snapshot.some(item => item.entry.kind === 'text')) renderAnnotationTexts();
+            if(snapshot.some(item => item.entry.kind === 'area')) renderAreas();
+            renderConnectorRouteLabels(); renderJunctionMiniTools();
+        }
+        function rectanglesOverlap(first, second) { return first.left < second.right && first.right > second.left && first.top < second.bottom && first.bottom > second.top; }
+        function segmentIntersectsRect(x1, y1, x2, y2, rect) {
+            if((x1 >= rect.left && x1 <= rect.right && y1 >= rect.top && y1 <= rect.bottom) || (x2 >= rect.left && x2 <= rect.right && y2 >= rect.top && y2 <= rect.bottom)) return true;
+            function orientation(ax, ay, bx, by, cx, cy) { let value = (by - ay) * (cx - bx) - (bx - ax) * (cy - by); return Math.abs(value) < .000001 ? 0 : (value > 0 ? 1 : 2); }
+            function onSegment(ax, ay, bx, by, cx, cy) { return bx <= Math.max(ax, cx) + .000001 && bx + .000001 >= Math.min(ax, cx) && by <= Math.max(ay, cy) + .000001 && by + .000001 >= Math.min(ay, cy); }
+            function intersects(ax, ay, bx, by, cx, cy, dx, dy) { let o1=orientation(ax,ay,bx,by,cx,cy), o2=orientation(ax,ay,bx,by,dx,dy), o3=orientation(cx,cy,dx,dy,ax,ay), o4=orientation(cx,cy,dx,dy,bx,by); if(o1 !== o2 && o3 !== o4) return true; if(o1===0 && onSegment(ax,ay,cx,cy,bx,by)) return true; if(o2===0 && onSegment(ax,ay,dx,dy,bx,by)) return true; if(o3===0 && onSegment(cx,cy,ax,ay,dx,dy)) return true; return o4===0 && onSegment(cx,cy,bx,by,dx,dy); }
+            return intersects(x1,y1,x2,y2,rect.left,rect.top,rect.right,rect.top) || intersects(x1,y1,x2,y2,rect.right,rect.top,rect.right,rect.bottom) || intersects(x1,y1,x2,y2,rect.right,rect.bottom,rect.left,rect.bottom) || intersects(x1,y1,x2,y2,rect.left,rect.bottom,rect.left,rect.top);
+        }
+        function beginStandaloneSelectionDrag(event, kind, id, axisLock) {
+            event.preventDefault(); event.stopPropagation();
+            if(!isSelected(kind, id)) replaceSelection(kind, id); else { setPrimarySelection(kind, id); syncSelectionVisuals(); }
+            let startX = event.clientX, startY = event.clientY, snapshot = captureSelectionGeometry(), moved = false; document.body.style.userSelect = 'none';
+            function move(moveEvent) {
+                let dx = (moveEvent.clientX - startX) / zoom, dy = (moveEvent.clientY - startY) / zoom;
+                if(axisLock && moveEvent.shiftKey) { if(Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0; }
+                let snapped = snappedSelectionDelta(snapshot, kind, id, dx, dy); translateSelectionGeometry(snapshot, snapped.dx, snapped.dy); moved = selectionGeometryChanged(snapshot); renderSelectionGeometry(snapshot);
+            }
+            function cleanup() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.removeEventListener('keydown', keydown, true); window.removeEventListener('blur', cancel); document.body.style.userSelect = ''; }
+            function up() { cleanup(); if(moved) window.doSaveState(); }
+            function cancel() { translateSelectionGeometry(snapshot, 0, 0); cleanup(); renderSelectionGeometry(snapshot); }
+            function keydown(keyEvent) { if(keyEvent.key === 'Escape') { keyEvent.preventDefault(); keyEvent.stopPropagation(); cancel(); } }
+            document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); document.addEventListener('keydown', keydown, true); window.addEventListener('blur', cancel);
         }
         function startSelectedAnnotationCopyDrag(e, kind, id) {
             e.preventDefault(); e.stopPropagation(); let items = kind === 'line' ? annotations.lines : annotations.texts, original = items.find(item => item.id === id); if(!original) return;
@@ -994,16 +1095,17 @@
         function startAnnotationTextDrag(e, id) {
             if(editingAnnotationTextId) return;
             if(e.altKey) { startSelectedAnnotationCopyDrag(e, 'text', id); return; }
+            if(e.shiftKey) { e.preventDefault(); e.stopPropagation(); toggleSelection('text', id); return; }
             e.preventDefault(); e.stopPropagation(); let text = annotations.texts.find(item => item.id === id); if(!text) return;
             let now = Date.now(); if(lastAnnotationTextClick.id === id && now - lastAnnotationTextClick.at < 500) { lastAnnotationTextClick = { id:null, at:0 }; window.editAnnotationText(id); return; } lastAnnotationTextClick = { id:id, at:now }; selectAnnotationText(id, false);
-            let startX = e.clientX, startY = e.clientY, original = { x:text.x, y:text.y }, moved = false; document.body.style.userSelect = 'none';
-            function move(event) { let dx = (event.clientX - startX) / zoom, dy = (event.clientY - startY) / zoom; if(Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true; if(event.shiftKey) { if(Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0; } text.x = snapPoint(original.x + dx); text.y = snapPoint(original.y + dy); renderAnnotationTexts(); }
-            function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; if(moved) window.doSaveState(); }
-            document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+            beginStandaloneSelectionDrag(e, 'text', id, true);
         }
         function startAnnotationDrag(e, id, mode) {
             if(e.altKey && mode === 'move') { startSelectedAnnotationCopyDrag(e, 'line', id); return; }
-            e.preventDefault(); e.stopPropagation(); let line = annotations.lines.find(item => item.id === id); if(!line) return; selectAnnotation(id);
+            if(e.shiftKey && mode === 'move') { e.preventDefault(); e.stopPropagation(); toggleSelection('line', id); return; }
+            e.preventDefault(); e.stopPropagation(); let line = annotations.lines.find(item => item.id === id); if(!line) return;
+            if(mode === 'move') { beginStandaloneSelectionDrag(e, 'line', id, true); return; }
+            selectAnnotation(id);
             let startX = e.clientX, startY = e.clientY, original = { x1:line.x1, y1:line.y1, x2:line.x2, y2:line.y2 };
             document.body.style.userSelect = 'none';
             function move(event) {
@@ -1017,12 +1119,13 @@
             document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
         }
         window.addAnnotationLine = function() { let viewport = getUsableViewport(), y = (viewport.centerY - cy) / zoom, x = (viewport.centerX - cx) / zoom; let line = { id: newId('annotation'), x1: x, y1: y - 200, x2: x, y2: y + 200, color:'var(--c9)' }; if(snapGrid) { line.x1=snapPoint(line.x1); line.y1=snapPoint(line.y1); line.x2=snapPoint(line.x2); line.y2=snapPoint(line.y2); } annotations.lines.push(line); selectAnnotation(line.id); window.doSaveState(); };
-        window.deleteAnnotationLine = function(id) { annotations.lines = annotations.lines.filter(line => line.id !== id); if(selectedAnnotationId === id) selectedAnnotationId = null; renderAnnotations(); window.doSaveState(); };
+        window.deleteAnnotationLine = function(id) { annotations.lines = annotations.lines.filter(line => line.id !== id); selectionRegistry.items.delete(selectionKey('line', id)); syncSelectionVisuals(); window.doSaveState(); };
         window.addAnnotationText = function() { let viewport = getUsableViewport(), x = snapPoint((viewport.centerX - cx) / zoom), y = snapPoint((viewport.centerY - cy) / zoom); let text = { id:newId('annotation_text'), x:x, y:y, text:'หัวข้อช่วงเวลา...', description:'คำอธิบายช่วงเวลา...', color:'var(--c9)', fontSize:28 }; annotations.texts.push(text); selectAnnotationText(text.id, true); window.doSaveState(); };
         window.editAnnotationText = function(id) { if(!annotations.texts.some(text => text.id === id)) return; selectAnnotationText(id, true); };
-        window.deleteAnnotationText = function(id) { annotations.texts = annotations.texts.filter(text => text.id !== id); if(selectedAnnotationTextId === id) { selectedAnnotationTextId = null; editingAnnotationTextId = null; } renderAnnotationTexts(); window.doSaveState(); };
+        window.deleteAnnotationText = function(id) { annotations.texts = annotations.texts.filter(text => text.id !== id); selectionRegistry.items.delete(selectionKey('text', id)); if(editingAnnotationTextId === id) editingAnnotationTextId = null; syncSelectionVisuals(); window.doSaveState(); };
         function startAreaGesture(e, id, mode) {
             let area = annotations.areas.find(item => item.id === id); if(!area || !areaEditMode) return;
+            if(mode === 'move') { beginStandaloneSelectionDrag(e, 'area', id, false); return; }
             selectArea(id); let startX = e.clientX, startY = e.clientY, original = { x:area.x, y:area.y, w:area.w, h:area.h }, changed = false, finished = false; document.body.style.userSelect = 'none';
             function cleanup() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.removeEventListener('keydown', keydown, true); window.removeEventListener('blur', cancel); document.body.style.userSelect = ''; if(activeAreaGestureCancel === cancel) activeAreaGestureCancel = null; }
             function move(event) {
@@ -1041,6 +1144,17 @@
             function keydown(event) { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancel(); } }
             activeAreaGestureCancel = cancel; document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); document.addEventListener('keydown', keydown, true); window.addEventListener('blur', cancel);
         }
+        function startAreaCopyDrag(e, id) {
+            let original = annotations.areas.find(item => item.id === id); if(!original || !areaEditMode) return;
+            e.preventDefault(); e.stopPropagation(); let originalSelection = selectionSnapshot(), startX = e.clientX, startY = e.clientY, copy = null, started = false; document.body.style.userSelect = 'none';
+            function cleanup() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.removeEventListener('keydown', keydown, true); window.removeEventListener('blur', cancel); document.body.style.userSelect = ''; }
+            function startCopy() { copy = cloneMindmapState(original); copy.id = newId('annotation_area'); annotations.areas.push(copy); started = true; replaceSelection('area', copy.id); }
+            function move(event) { let dx = (event.clientX - startX) / zoom, dy = (event.clientY - startY) / zoom; if(!started && Math.hypot(event.clientX - startX, event.clientY - startY) > 4) startCopy(); if(!started) return; let snapped = snappedSelectionDelta([{entry:selectionEntry('area', copy.id), object:copy, x:original.x, y:original.y}], 'area', copy.id, dx, dy); copy.x = original.x + snapped.dx; copy.y = original.y + snapped.dy; renderAreas(); }
+            function up() { cleanup(); if(started) window.doSaveState(); }
+            function cancel() { cleanup(); if(started) annotations.areas = annotations.areas.filter(area => area !== copy); restoreSelectionSnapshot(originalSelection); renderAreas(); }
+            function keydown(event) { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancel(); } }
+            document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); document.addEventListener('keydown', keydown, true); window.addEventListener('blur', cancel);
+        }
         function startAreaCreation(e) {
             let layer = ensureAnnotationAreaLayer(), startX = snapPoint((e.clientX - cx) / zoom), startY = snapPoint((e.clientY - cy) / zoom), draft = document.createElement('div'), finished = false; draft.className = 'annotation-area-draft'; layer.appendChild(draft); document.body.style.userSelect = 'none';
             function draw(x, y) { let left = Math.min(startX, x), top = Math.min(startY, y), right = Math.max(startX, x), bottom = Math.max(startY, y); draft.style.left = left + 'px'; draft.style.top = top + 'px'; draft.style.width = (right - left) + 'px'; draft.style.height = (bottom - top) + 'px'; return { left:left, top:top, w:right-left, h:bottom-top }; }
@@ -1054,9 +1168,9 @@
         }
         window.toggleAreaMode = function(e) {
             if(activeAreaGestureCancel) activeAreaGestureCancel();
-            areaEditMode = !areaEditMode; selectedAreaId = null; clearSel(); let button = document.getElementById('area-mode-btn'); if(button) button.classList.toggle('active', areaEditMode); renderAreas(); window.showToast(areaEditMode ? '🟨 โหมด Area — ลากพื้นที่ว่างเพื่อสร้างพื้นที่สี' : '🟨 ปิดโหมด Area — พื้นที่กลับไปคลิกทะลุได้');
+            areaEditMode = !areaEditMode; if(!areaEditMode) clearSelectionKinds(['area']); let button = document.getElementById('area-mode-btn'); if(button) button.classList.toggle('active', areaEditMode); syncSelectionVisuals(); window.showToast(areaEditMode ? '🟨 โหมด Area — ลากพื้นที่ว่างเพื่อสร้างพื้นที่สี' : '🟨 ปิดโหมด Area — พื้นที่กลับไปคลิกทะลุได้');
         };
-        window.deleteArea = function(id) { annotations.areas = annotations.areas.filter(area => area.id !== id); if(selectedAreaId === id) selectedAreaId = null; renderAreas(); window.doSaveState(); };
+        window.deleteArea = function(id) { annotations.areas = annotations.areas.filter(area => area.id !== id); selectionRegistry.items.delete(selectionKey('area', id)); syncSelectionVisuals(); window.doSaveState(); };
         window.toggleHlMode = function() { bd.classList.toggle('hl-mode'); };
 
         window.saveBackup = function() {
@@ -1347,7 +1461,8 @@
             return { id:n.id, x:n.style.left, y:n.style.top, bg:n.style.background, fg:n.style.color, bd:n.style.borderColor, shape:n.dataset.shape || 'box', fs:n.querySelector('.nt') ? n.querySelector('.nt').style.fontSize : '', dfs:n.querySelector('.nd') ? n.querySelector('.nd').style.fontSize : '', txt:n.querySelector('.nt') ? n.querySelector('.nt').innerHTML : '', desc:n.querySelector('.nd') ? n.querySelector('.nd').innerHTML : '', note:n.dataset.note || '', type:n.classList.contains('j') ? 'j' : 'n' };
         }
         function selectNodeImageGroup(nodeIds, imageIds) {
-            clearSel(); nodeIds.forEach(id => { let node = document.getElementById(id); if(node) node.classList.add('sel'); }); imageIds.forEach(id => { if(imagePlacementById(id)) selectedImageIds.add(id); }); syncRenderedImageSelection(); renderConnectorRouteLabels(); renderJunctionMiniTools();
+            selectionRegistry.items.clear(); nodeIds.forEach(id => { if(document.getElementById(id)) selectionRegistry.items.set(selectionKey('node', id), selectionEntry('node', id)); }); imageIds.forEach(id => { if(imagePlacementById(id)) selectionRegistry.items.set(selectionKey('image', id), selectionEntry('image', id)); });
+            let primary = imageIds.length ? selectionKey('image', imageIds[imageIds.length - 1]) : (nodeIds.length ? selectionKey('node', nodeIds[nodeIds.length - 1]) : null); selectionRegistry.primary = primary && selectionRegistry.items.has(primary) ? primary : (selectionRegistry.items.size ? Array.from(selectionRegistry.items.keys()).pop() : null); syncSelectionVisuals();
         }
         function copySelectedNodeImageGroup(selection) {
             let originalNodes = selection.nodeIds.map(id => document.getElementById(id)).filter(Boolean), originalImages = selection.imageIds.map(imagePlacementById).filter(Boolean); if(!originalNodes.length && !originalImages.length) return null;
@@ -1457,7 +1572,7 @@
         }
         function resetTransientStateForLoad() {
             if(activeAreaGestureCancel) activeAreaGestureCancel(); cancelActiveNodeDragForStateLoad(); clearFindHighlight(); connectorNavHoverId = null; selectedAnnotationId = null; selectedAnnotationTextId = null; selectedAreaId = null; editingAnnotationTextId = null; editingConnectorRouteLabel = null;
-            clearObjectSelection(); document.querySelectorAll('.connector-route-label, .junction-mini-tools').forEach(el => el.remove());
+            selectionRegistry.items.clear(); selectionRegistry.primary = null; selectedImageIds.clear(); nodes.forEach(node => node.classList.remove('sel','primary-sel')); document.querySelectorAll('.connector-route-label, .junction-mini-tools').forEach(el => el.remove());
         }
         function patchCompatibleState(state, step, topology) {
             let previous = mmHistory[curStep] || {}, previousNodes = new Map((previous.nodes || []).map(item => [item.id, item])), previousLines = new Map((previous.lines || []).map(item => [item.id, item]));
@@ -1520,8 +1635,8 @@
             n.onmousedown = function(e) { 
                 e.stopPropagation(); 
                 if(e.altKey) { startSelectedObjectCopyDrag(e, n, 'node'); return; }
-                if(e.shiftKey) { n.classList.toggle('sel'); renderJunctionMiniTools(); return; }
-                if(!n.classList.contains('sel')) { clearSel(); n.classList.add('sel'); }
+                if(e.shiftKey) { toggleSelection('node', n.id); return; }
+                if(!isSelected('node', n.id)) replaceSelection('node', n.id); else { setPrimarySelection('node', n.id); syncSelectionVisuals(); }
                 beginObjectDrag(e, n, 'node');
             }; 
             n.onmouseenter = function() { cancelConnectorNavigationHide(); connectorNavHoverId = n.id; renderConnectorRouteLabels(); };
@@ -1541,8 +1656,8 @@
                 if(e.target.closest('.ifx') || e.target.closest('.ifr') || e.target.closest('.if-info')) return;
                 e.stopPropagation();
                 if(e.altKey) { startSelectedObjectCopyDrag(e, im, 'image'); return; }
-                if(e.shiftKey) { setImageSelected(id, !selectedImageIds.has(id)); return; }
-                if(!selectedImageIds.has(id)) { clearSel(); setImageSelected(id, true); }
+                if(e.shiftKey) { toggleSelection('image', id); return; }
+                if(!isSelected('image', id)) replaceSelection('image', id); else { setPrimarySelection('image', id); syncSelectionVisuals(); }
                 beginObjectDrag(e, im, 'image');
             };
             im.querySelector('.ifx').onmousedown = e => e.stopPropagation();
@@ -1563,8 +1678,8 @@
                 document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
             };
         }
-        function removeImagePlacement(id) { let index = imagePlacements.findIndex(p => p.id === id); if(index < 0) return false; selectedImageIds.delete(id); imagePlacements.splice(index, 1); removeImageDom(id); return true; }
-        window.delImage = function(id) { if(removeImagePlacement(id)) window.doSaveState(); };
+        function removeImagePlacement(id) { let index = imagePlacements.findIndex(p => p.id === id); if(index < 0) return false; selectionRegistry.items.delete(selectionKey('image', id)); selectedImageIds.delete(id); imagePlacements.splice(index, 1); removeImageDom(id); return true; }
+        window.delImage = function(id) { if(removeImagePlacement(id)) { syncSelectionVisuals(); window.doSaveState(); } };
         function normalizeConnectorArrow(value) { return ['none', 'forward', 'reverse', 'both'].includes(value) ? value : 'none'; }
         function clampConnectorRoutePosition(value, fallback) { return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback; }
         function normalizeConnectorRouteLabels(value) {
@@ -1600,12 +1715,20 @@
         window.cycleConnectorArrow = function(e, lineId) { e.preventDefault(); e.stopPropagation(); let line = document.getElementById(lineId); if(!line) return; let modes = ['none', 'forward', 'reverse', 'both'], current = normalizeConnectorArrow(line.dataset.arrow); line.dataset.arrow = modes[(modes.indexOf(current) + 1) % modes.length]; updateLine(line); window.doSaveState(); };
         window.createLine = function(id1, id2) { return createConnectorFromState({ id:'l_' + id1 + '_' + id2 + '_' + Date.now(), n1:id1, n2:id2, arrow:'none', routeLabels:null }, true); };
         window.startLineDrag = function(e, pid, dir) { e.stopPropagation(); let startX = e.clientX; let startY = e.clientY; let pNode = document.getElementById(pid); if(!pNode) return; let x1 = pNode.offsetLeft + pNode.offsetWidth / 2; let y1 = pNode.offsetTop + pNode.offsetHeight / 2; let tl = document.createElementNS('http://www.w3.org/2000/svg', 'line'); tl.setAttribute('stroke', 'var(--bc)'); tl.setAttribute('stroke-width', '3'); tl.setAttribute('stroke-dasharray', '5,5'); tl.style.pointerEvents = 'none'; tl.setAttribute('x1', x1); tl.setAttribute('y1', y1); tl.setAttribute('x2', x1); tl.setAttribute('y2', y1); s.appendChild(tl); let moved = false; s.style.pointerEvents = 'auto'; document.body.style.userSelect = 'none'; let allLines = s.querySelectorAll('line[data-n1][data-n2]'); allLines.forEach(l => { if(l !== tl) { l.style.pointerEvents = 'auto'; l.style.strokeWidth = '20'; } }); function mm(me) { if(Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) moved = true; tl.setAttribute('x2', (me.clientX - cx) / zoom); tl.setAttribute('y2', (me.clientY - cy) / zoom); } function mu(me) { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); tl.remove(); s.style.pointerEvents = 'none'; document.body.style.userSelect = ''; allLines.forEach(l => { l.style.pointerEvents = 'none'; l.style.strokeWidth = '3'; }); let targetNode = me.target.closest('.n'); let targetLine = me.target.closest('line'); if(targetLine === tl) targetLine = null; let targetMb = me.target.closest('.mb'); if(targetMb) { let mbLine = document.getElementById(targetMb.id.replace(/^mb_/, '')); if(mbLine) { targetLine = mbLine; targetNode = null; } } if(targetNode && targetNode.id !== pid) { let existing = document.querySelector('line[data-n1="' + pid + '"][data-n2="' + targetNode.id + '"], line[data-n2="' + pid + '"][data-n1="' + targetNode.id + '"]'); if(!existing) { window.createLine(pid, targetNode.id); window.doSaveState(); } } else if(targetLine && targetLine.id.startsWith('l_') && targetLine.dataset.n1 !== pid && targetLine.dataset.n2 !== pid) { let tn1 = targetLine.dataset.n1, tn2 = targetLine.dataset.n2; let tmx = (parseFloat(targetLine.getAttribute('x1')) + parseFloat(targetLine.getAttribute('x2'))) / 2; let tmy = (parseFloat(targetLine.getAttribute('y1')) + parseFloat(targetLine.getAttribute('y2'))) / 2; let tmb = document.getElementById('mb_' + targetLine.id); targetLine.remove(); if(tmb) tmb.remove(); let j = addNode(tmx - 8, tmy - 8, null, 'j'); window.createLine(tn1, j.id); window.createLine(j.id, tn2); window.createLine(pid, j.id); window.doSaveState(); } else if(moved) { let nx = (me.clientX - cx) / zoom; let ny = (me.clientY - cy) / zoom; addNode(nx - 50, ny - 30, pid); window.doSaveState(); } else { window.addLink(pid, dir); } } document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); };
-        function removeNode(id) { if(nodeNoteId === id) window.closeNodeNote(); let n = document.getElementById(id); if(!n) return false; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(removeConnectorElement); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } return true; }
-        window.del = function(id) { if(removeNode(id)) window.doSaveState(); };
+        function removeNode(id) { if(nodeNoteId === id) window.closeNodeNote(); let n = document.getElementById(id); if(!n) return false; let isJ = n.classList.contains('j'); let connected = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(l => l.dataset.n1 === id || l.dataset.n2 === id); let others = connected.map(l => l.dataset.n1 === id ? l.dataset.n2 : l.dataset.n1); selectionRegistry.items.delete(selectionKey('node', id)); nodes = nodes.filter(x => x.id !== id); n.remove(); connected.forEach(removeConnectorElement); if(isJ && others.length === 2 && others[0] !== others[1] && document.getElementById(others[0]) && document.getElementById(others[1])) { let exists = document.querySelector('line[data-n1="' + others[0] + '"][data-n2="' + others[1] + '"], line[data-n1="' + others[1] + '"][data-n2="' + others[0] + '"]'); if(!exists) window.createLine(others[0], others[1]); } return true; }
+        window.del = function(id) { if(removeNode(id)) { syncSelectionVisuals(); window.doSaveState(); } };
         function deleteSelectedObjectsActivity() {
-            let nodeIds = nodes.filter(node => node.classList.contains('sel')).map(node => node.id), imageIds = Array.from(selectedImageIds); if(!nodeIds.length && !imageIds.length) return false;
+            let entries = selectedEntries(); if(!entries.length) return false;
             let changed = false, failure = null;
-            try { nodeIds.forEach(id => { if(removeNode(id)) changed = true; }); imageIds.forEach(id => { if(removeImagePlacement(id)) changed = true; }); }
+            try {
+                entries.filter(entry => entry.kind === 'node').forEach(entry => { if(removeNode(entry.id)) changed = true; });
+                entries.filter(entry => entry.kind === 'image').forEach(entry => { if(removeImagePlacement(entry.id)) changed = true; });
+                let lineIds = new Set(entries.filter(entry => entry.kind === 'line').map(entry => entry.id)), textIds = new Set(entries.filter(entry => entry.kind === 'text').map(entry => entry.id)), areaIds = new Set(entries.filter(entry => entry.kind === 'area').map(entry => entry.id));
+                if(lineIds.size) { let before = annotations.lines.length; annotations.lines = annotations.lines.filter(item => !lineIds.has(item.id)); changed = changed || annotations.lines.length !== before; }
+                if(textIds.size) { let before = annotations.texts.length; annotations.texts = annotations.texts.filter(item => !textIds.has(item.id)); changed = changed || annotations.texts.length !== before; }
+                if(areaIds.size) { let before = annotations.areas.length; annotations.areas = annotations.areas.filter(item => !areaIds.has(item.id)); changed = changed || annotations.areas.length !== before; }
+                selectionRegistry.items.clear(); selectionRegistry.primary = null; syncSelectionVisuals();
+            }
             catch(error) { failure = error; }
             if(changed) window.doSaveState();
             if(failure) { console.error('Batch delete activity failed after a partial change.', failure); window.showToast('⚠️ ลบบางรายการไม่สำเร็จ — สามารถ Undo การเปลี่ยนแปลงที่เกิดขึ้นได้'); }
@@ -1650,8 +1773,9 @@
         function beginObjectDrag(event, anchor, anchorKind) {
             resetNodeDragRenderState(); drag = anchor; dragAnchorKind = anchorKind; px = event.clientX; py = event.clientY; drag.style.cursor = 'grabbing'; isMoved = false;
             dragStartX = event.clientX; dragStartY = event.clientY;
-            dragStartPos = nodes.filter(node => node.classList.contains('sel')).map(node => ({ node:node, left:parseFloat(node.style.left) || 0, top:parseFloat(node.style.top) || 0 }));
+            dragStartPos = selectedIds('node').map(id => document.getElementById(id)).filter(Boolean).map(node => ({ node:node, left:parseFloat(node.style.left) || 0, top:parseFloat(node.style.top) || 0 }));
             dragImageStartPos = selectedImagePlacements().map(placement => { let d = placementDimensions(placement); return { placement:placement, left:d.x, top:d.y }; });
+            dragAnnotationStartPos = captureSelectionGeometry().filter(item => ['line','text','area'].includes(item.entry.kind));
             let draggedIds = new Set(dragStartPos.map(item => item.node.id)); dragConnectorLines = Array.from(s.querySelectorAll('line[data-n1][data-n2]')).filter(line => draggedIds.has(line.dataset.n1) || draggedIds.has(line.dataset.n2));
             if(snapGrid) dragStartPos.forEach(item => item.node.classList.add('snap-dragging'));
             document.body.style.userSelect = 'none'; renderConnectorRouteLabels(); if(anchorKind === 'node' && anchor.classList.contains('j')) clearJunctionMiniTools(); else renderJunctionMiniTools();
@@ -1661,9 +1785,9 @@
             return dragStartPos.find(item => item.node === drag) || null;
         }
         function dragPositionChanged() {
-            return dragStartPos.some(item => Math.abs((parseFloat(item.node.style.left) || 0) - item.left) > .001 || Math.abs((parseFloat(item.node.style.top) || 0) - item.top) > .001) || dragImageStartPos.some(item => { let d = placementDimensions(item.placement); return Math.abs(d.x - item.left) > .001 || Math.abs(d.y - item.top) > .001; });
+            return dragStartPos.some(item => Math.abs((parseFloat(item.node.style.left) || 0) - item.left) > .001 || Math.abs((parseFloat(item.node.style.top) || 0) - item.top) > .001) || dragImageStartPos.some(item => { let d = placementDimensions(item.placement); return Math.abs(d.x - item.left) > .001 || Math.abs(d.y - item.top) > .001; }) || selectionGeometryChanged(dragAnnotationStartPos);
         }
-        function cancelActiveNodeDragForStateLoad() { resetNodeDragRenderState(); dragStartPos.forEach(item => item.node.classList.remove('snap-dragging')); if(drag) drag.style.cursor = 'grab'; drag = null; dragAnchorKind = null; dragStartPos = []; dragImageStartPos = []; isMoved = false; }
+        function cancelActiveNodeDragForStateLoad() { resetNodeDragRenderState(); dragStartPos.forEach(item => item.node.classList.remove('snap-dragging')); if(drag) drag.style.cursor = 'grab'; drag = null; dragAnchorKind = null; dragStartPos = []; dragImageStartPos = []; dragAnnotationStartPos = []; isMoved = false; }
         function applyPendingNodeDrag() {
             dragRenderFrame = null; let pointer = pendingDragPointer; pendingDragPointer = null; if(!drag || !pointer) return;
             let tdx = (pointer.clientX - dragStartX) / zoom, tdy = (pointer.clientY - dragStartY) / zoom;
@@ -1675,11 +1799,12 @@
             }
             dragStartPos.forEach(item => { item.node.style.left = (item.left + tdx) + 'px'; item.node.style.top = (item.top + tdy) + 'px'; });
             dragImageStartPos.forEach(item => { item.placement.x = (item.left + tdx) + 'px'; item.placement.y = (item.top + tdy) + 'px'; updatePlacementStyle(imageDomById.get(item.placement.id), item.placement); });
-            dragConnectorLines.forEach(line => { if(line.isConnected) updateLine(line); }); renderConnectorRouteLabels(dragConnectorLines, dragStartPos.length === 1 ? dragStartPos[0].node : null); isMoved = dragPositionChanged();
+            translateSelectionGeometry(dragAnnotationStartPos, tdx, tdy);
+            dragConnectorLines.forEach(line => { if(line.isConnected) updateLine(line); }); if(dragAnnotationStartPos.some(item => item.entry.kind === 'line')) renderAnnotations(); if(dragAnnotationStartPos.some(item => item.entry.kind === 'text')) renderAnnotationTexts(); if(dragAnnotationStartPos.some(item => item.entry.kind === 'area')) renderAreas(); renderConnectorRouteLabels(dragConnectorLines, dragStartPos.length === 1 ? dragStartPos[0].node : null); isMoved = dragPositionChanged();
         }
         function scheduleNodeDrag(pointerEvent) { pendingDragPointer = { clientX:pointerEvent.clientX, clientY:pointerEvent.clientY, shiftKey:pointerEvent.shiftKey }; if(dragRenderFrame === null) dragRenderFrame = requestAnimationFrame(applyPendingNodeDrag); }
         function flushPendingNodeDrag() { if(dragRenderFrame !== null) { cancelAnimationFrame(dragRenderFrame); dragRenderFrame = null; } if(pendingDragPointer) applyPendingNodeDrag(); }
-        function clearSel() { clearObjectSelection(); let hadLine = !!selectedAnnotationId, hadText = !!selectedAnnotationTextId, hadArea = !!selectedAreaId; selectedAnnotationId = null; selectedAnnotationTextId = null; selectedAreaId = null; editingAnnotationTextId = null; if(hadLine) renderAnnotations(); if(hadText) renderAnnotationTexts(); if(hadArea) renderAreas(); renderConnectorRouteLabels(); renderJunctionMiniTools(); }
+        function clearSel() { editingAnnotationTextId = null; clearSelectionRegistry(); }
 
         window.addEventListener('wheel', function(e) {
             if(e.target.closest('.sys-ui') || e.target.closest('#find-ui') || e.target.closest('#cropUI') || e.target.closest('#sys-modal') || e.target.closest('#node-note-ui') || e.target.closest('#about-ui') || e.target.closest('#image-detail-ui') || e.target.closest('#zoom-status')) return;
@@ -1697,7 +1822,7 @@
                 e.preventDefault(); e.stopPropagation(); clearSel(); startAreaCreation(e);
             }
             else if(e.button === 0) { 
-                isSel = true; isAddSel = e.shiftKey; if(!isAddSel) clearSel(); preSel = new Set(nodes.filter(n => n.classList.contains('sel'))); preImageSel = new Set(selectedImageIds); sx = (e.clientX - cx) / zoom; sy = (e.clientY - cy) / zoom; sb.style.left = sx + 'px'; sb.style.top = sy + 'px'; sb.style.width = '0px'; sb.style.height = '0px'; sb.style.display = 'block';
+                isSel = true; isAddSel = e.shiftKey; if(!isAddSel) clearSel(); preSelectionKeys = new Set(selectionRegistry.items.keys()); sx = (e.clientX - cx) / zoom; sy = (e.clientY - cy) / zoom; sb.style.left = sx + 'px'; sb.style.top = sy + 'px'; sb.style.width = '0px'; sb.style.height = '0px'; sb.style.display = 'block';
                 document.body.style.userSelect = 'none';
             }
         });
@@ -1711,13 +1836,22 @@
             
             if(drag) { px = e.clientX; py = e.clientY; scheduleNodeDrag(e); }
             else if(isPan) { cx += e.clientX - px; cy += e.clientY - py; px = e.clientX; py = e.clientY; if(fitRestoreView) fitRestoreView.wasPanned = true; updateTransform(); }
-            else if(isSel) { let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom; let rx = Math.min(sx, nx), ry = Math.min(sy, ny), rw = Math.abs(nx - sx), rh = Math.abs(ny - sy); sb.style.left = rx + 'px'; sb.style.top = ry + 'px'; sb.style.width = rw + 'px'; sb.style.height = rh + 'px'; nodes.forEach(n => { let nl = parseFloat(n.style.left), nt = parseFloat(n.style.top), nw = n.offsetWidth, nh = n.offsetHeight; let inBox = (nl < rx + rw && nl + nw > rx && nt < ry + rh && nt + nh > ry); if(inBox || (isAddSel && preSel.has(n))) n.classList.add('sel'); else n.classList.remove('sel'); }); imagePlacements.forEach(p => { let d = placementDimensions(p), inBox = d.x < rx + rw && d.x + d.w > rx && d.y < ry + rh && d.y + d.h > ry; if(inBox || (isAddSel && preImageSel.has(p.id))) selectedImageIds.add(p.id); else selectedImageIds.delete(p.id); }); syncRenderedImageSelection(); }
+            else if(isSel) {
+                let nx = (e.clientX - cx) / zoom, ny = (e.clientY - cy) / zoom, rx = Math.min(sx, nx), ry = Math.min(sy, ny), rw = Math.abs(nx - sx), rh = Math.abs(ny - sy), rect = {left:rx,top:ry,right:rx+rw,bottom:ry+rh}, next = new Map();
+                if(isAddSel) preSelectionKeys.forEach(key => { let entry = selectionRegistry.items.get(key); if(entry) next.set(key, entry); });
+                nodes.forEach(node => { let bounds = {left:node.offsetLeft,top:node.offsetTop,right:node.offsetLeft+node.offsetWidth,bottom:node.offsetTop+node.offsetHeight}; if(rectanglesOverlap(bounds, rect)) next.set(selectionKey('node', node.id), selectionEntry('node', node.id)); });
+                imagePlacements.forEach(placement => { let d = placementDimensions(placement), bounds = {left:d.x,top:d.y,right:d.x+d.w,bottom:d.y+d.h}; if(rectanglesOverlap(bounds, rect)) next.set(selectionKey('image', placement.id), selectionEntry('image', placement.id)); });
+                annotations.lines.forEach(line => { if(segmentIntersectsRect(line.x1,line.y1,line.x2,line.y2,rect)) next.set(selectionKey('line', line.id), selectionEntry('line', line.id)); });
+                annotations.texts.forEach(text => { let el = b.querySelector('.annotation-text[data-annotation-text-id="' + text.id + '"]'), width = el ? el.offsetWidth : 20, height = el ? el.offsetHeight : text.fontSize * 1.8, bounds = {left:text.x,top:text.y,right:text.x+width,bottom:text.y+height}; if(rectanglesOverlap(bounds, rect)) next.set(selectionKey('text', text.id), selectionEntry('text', text.id)); });
+                selectionRegistry.items = next; if(selectionRegistry.primary && !next.has(selectionRegistry.primary)) selectionRegistry.primary = next.size ? Array.from(next.keys()).pop() : null; if(!selectionRegistry.primary && next.size) selectionRegistry.primary = Array.from(next.keys()).pop(); syncSelectionVisuals();
+                sb.style.left = rx + 'px'; sb.style.top = ry + 'px'; sb.style.width = rw + 'px'; sb.style.height = rh + 'px';
+            }
         });
 
         window.addEventListener('mouseup', function(e) {
             document.body.style.userSelect = '';
             if(crDrag) crDrag = false; if(crResize) crResize = false;
-            if(drag) { flushPendingNodeDrag(); drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); let changed = dragPositionChanged(); drag = null; dragAnchorKind = null; dragConnectorLines = []; dragStartPos = []; dragImageStartPos = []; renderImageLayer(); if(changed) window.doSaveState(); isMoved = false; }
+            if(drag) { flushPendingNodeDrag(); drag.style.cursor = 'grab'; dragStartPos.forEach(p => p.node.classList.remove('snap-dragging')); let changed = dragPositionChanged(); drag = null; dragAnchorKind = null; dragConnectorLines = []; dragStartPos = []; dragImageStartPos = []; dragAnnotationStartPos = []; renderImageLayer(); renderAreas(); renderAnnotations(); renderAnnotationTexts(); if(changed) window.doSaveState(); isMoved = false; }
             isPan = false; isSel = false; document.body.style.cursor = 'default'; sb.style.display = 'none'; if(!editingConnectorRouteLabel) renderConnectorRouteLabels(); renderJunctionMiniTools();
         });
 
@@ -1746,8 +1880,33 @@
         };
         window.toggleImageLayer = function(e) { imageLayerVisible = !imageLayerVisible; let btn = document.getElementById('image-layer-btn'); if(btn) btn.style.background = imageLayerVisible ? 'var(--c9)' : ''; if(!imageLayerVisible) clearSel(); renderImageLayer(); window.showToast(imageLayerVisible ? '🌄 แสดงภาพบน Canvas' : '🌄 ซ่อนภาพบน Canvas — ข้อมูลรูปยังอยู่ครบ'); };
 
-        window.doAlign = function(ax) { let sels = nodes.filter(n => n.classList.contains('sel')); if(sels.length < 2) return; if(ax === 't') { let min = Math.min(...sels.map(n => parseFloat(n.style.top))); sels.forEach(n => { n.style.top = min + 'px'; }); } else if(ax === 'b') { let max = Math.max(...sels.map(n => parseFloat(n.style.top) + n.offsetHeight)); sels.forEach(n => { n.style.top = (max - n.offsetHeight) + 'px'; }); } else if(ax === 'cy') { let avg = sels.reduce((s, n) => s + parseFloat(n.style.top) + n.offsetHeight / 2, 0) / sels.length; sels.forEach(n => { n.style.top = (avg - n.offsetHeight / 2) + 'px'; }); } else if(ax === 'l') { let min = Math.min(...sels.map(n => parseFloat(n.style.left))); sels.forEach(n => { n.style.left = min + 'px'; }); } else if(ax === 'r') { let max = Math.max(...sels.map(n => parseFloat(n.style.left) + n.offsetWidth)); sels.forEach(n => { n.style.left = (max - n.offsetWidth) + 'px'; }); } else if(ax === 'cx') { let avg = sels.reduce((s, n) => s + parseFloat(n.style.left) + n.offsetWidth / 2, 0) / sels.length; sels.forEach(n => { n.style.left = (avg - n.offsetWidth / 2) + 'px'; }); } updateAll(); window.doSaveState(); };
-        window.doDist = function(ax) { let sels = nodes.filter(n => n.classList.contains('sel')); if(sels.length < 3) return; if(ax === 'x') { sels.sort((a, b) => parseFloat(a.style.left) - parseFloat(b.style.left)); let min = parseFloat(sels[0].style.left), max = parseFloat(sels[sels.length - 1].style.left), totalWidth = sels.slice(0, -1).reduce((sum, n) => sum + (n.offsetWidth || 150), 0), step = (max - min - totalWidth) / (sels.length - 1); let curX = min; sels.forEach((n, i) => { n.style.left = curX + 'px'; curX += (n.offsetWidth || 150) + step; }); } else { sels.sort((a, b) => parseFloat(a.style.top) - parseFloat(b.style.top)); let min = parseFloat(sels[0].style.top), max = parseFloat(sels[sels.length - 1].style.top), totalHeight = sels.slice(0, -1).reduce((sum, n) => sum + (n.offsetHeight || 80), 0), step = (max - min - totalHeight) / (sels.length - 1); let curY = min; sels.forEach((n, i) => { n.style.top = curY + 'px'; curY += (n.offsetHeight || 80) + step; }); } updateAll(); window.doSaveState(); };
+        function selectionObjectBounds(entry) {
+            if(entry.kind === 'node') { let node = document.getElementById(entry.id), left = node && (parseFloat(node.style.left) || 0), top = node && (parseFloat(node.style.top) || 0); return node && {left:left,top:top,right:left+node.offsetWidth,bottom:top+node.offsetHeight}; }
+            if(entry.kind === 'image') { let placement = imagePlacementById(entry.id), d = placement && placementDimensions(placement); return d && {left:d.x,top:d.y,right:d.x+d.w,bottom:d.y+d.h}; }
+            if(entry.kind === 'line') { let line = annotations.lines.find(item => item.id === entry.id); return line && {left:Math.min(line.x1,line.x2),top:Math.min(line.y1,line.y2),right:Math.max(line.x1,line.x2),bottom:Math.max(line.y1,line.y2)}; }
+            if(entry.kind === 'text') { let text = annotations.texts.find(item => item.id === entry.id), el = text && b.querySelector('.annotation-text[data-annotation-text-id="' + entry.id + '"]'), width = el ? el.offsetWidth : 20, height = el ? el.offsetHeight : (text ? text.fontSize * 1.8 : 0); return text && {left:text.x,top:text.y,right:text.x+width,bottom:text.y+height}; }
+            if(entry.kind === 'area') { let area = annotations.areas.find(item => item.id === entry.id); return area && {left:area.x,top:area.y,right:area.x+area.w,bottom:area.y+area.h}; }
+            return null;
+        }
+        function translateSelectionEntry(entry, dx, dy) {
+            if(entry.kind === 'node') { let node=document.getElementById(entry.id); if(node){node.style.left=((parseFloat(node.style.left)||0)+dx)+'px';node.style.top=((parseFloat(node.style.top)||0)+dy)+'px';} }
+            else if(entry.kind === 'image') { let placement=imagePlacementById(entry.id),d=placement&&placementDimensions(placement);if(d){placement.x=(d.x+dx)+'px';placement.y=(d.y+dy)+'px';} }
+            else if(entry.kind === 'line') { let line=annotations.lines.find(item=>item.id===entry.id);if(line){line.x1+=dx;line.y1+=dy;line.x2+=dx;line.y2+=dy;} }
+            else if(entry.kind === 'text') { let text=annotations.texts.find(item=>item.id===entry.id);if(text){text.x+=dx;text.y+=dy;} }
+            else if(entry.kind === 'area') { let area=annotations.areas.find(item=>item.id===entry.id);if(area){area.x+=dx;area.y+=dy;} }
+        }
+        function finishSelectionLayout() { updateAll(); renderImageLayer(); renderAnnotations(); renderAnnotationTexts(); renderAreas(); syncSelectionVisuals(); window.doSaveState(); }
+        window.doAlign = function(ax) {
+            let items = selectedEntries().map(entry => ({entry:entry,bounds:selectionObjectBounds(entry)})).filter(item => item.bounds); if(items.length < 2) return;
+            let target = ax === 't' ? Math.min(...items.map(item=>item.bounds.top)) : ax === 'b' ? Math.max(...items.map(item=>item.bounds.bottom)) : ax === 'l' ? Math.min(...items.map(item=>item.bounds.left)) : ax === 'r' ? Math.max(...items.map(item=>item.bounds.right)) : ax === 'cy' ? items.reduce((sum,item)=>sum+(item.bounds.top+item.bounds.bottom)/2,0)/items.length : items.reduce((sum,item)=>sum+(item.bounds.left+item.bounds.right)/2,0)/items.length;
+            items.forEach(item => { let dx=0,dy=0;if(ax==='t')dy=target-item.bounds.top;else if(ax==='b')dy=target-item.bounds.bottom;else if(ax==='l')dx=target-item.bounds.left;else if(ax==='r')dx=target-item.bounds.right;else if(ax==='cy')dy=target-(item.bounds.top+item.bounds.bottom)/2;else dx=target-(item.bounds.left+item.bounds.right)/2;translateSelectionEntry(item.entry,dx,dy); }); finishSelectionLayout();
+        };
+        window.doDist = function(ax) {
+            let items = selectedEntries().map(entry => ({entry:entry,bounds:selectionObjectBounds(entry)})).filter(item => item.bounds); if(items.length < 3) return;
+            if(ax === 'x') { items.sort((a,b)=>a.bounds.left-b.bounds.left); let start=items[0].bounds.left,end=items[items.length-1].bounds.right,total=items.reduce((sum,item)=>sum+item.bounds.right-item.bounds.left,0),gap=(end-start-total)/(items.length-1),cursor=start;items.forEach(item=>{translateSelectionEntry(item.entry,cursor-item.bounds.left,0);cursor+=item.bounds.right-item.bounds.left+gap;}); }
+            else { items.sort((a,b)=>a.bounds.top-b.bounds.top); let start=items[0].bounds.top,end=items[items.length-1].bounds.bottom,total=items.reduce((sum,item)=>sum+item.bounds.bottom-item.bounds.top,0),gap=(end-start-total)/(items.length-1),cursor=start;items.forEach(item=>{translateSelectionEntry(item.entry,0,cursor-item.bounds.top);cursor+=item.bounds.bottom-item.bounds.top+gap;}); }
+            finishSelectionLayout();
+        };
 
         window.setCropRatio = function(r, e) { e.stopPropagation(); currentCropRatio = r; let cb = document.getElementById('cropBox'); if (r) { let w = parseFloat(cb.style.width || window.innerWidth * 0.8); if (w > 0) cb.style.height = (w / r) + 'px'; } };
         window.setCustomCropRatio = function(e) { e.stopPropagation(); window.showPrompt('กำหนดสัดส่วน (เช่น 16:9 หรือ 1920x1080):', '', function(val) { if(!val) return; let r; val = val.toLowerCase().replace(/\s/g, ''); if(val.includes(':')) { let p = val.split(':'); r = parseFloat(p[0]) / parseFloat(p[1]); } else if(val.includes('x')) { let p = val.split('x'); r = parseFloat(p[0]) / parseFloat(p[1]); } else { window.showAlert('โปรดพิมพ์สัดส่วนโดยใช้ : หรือ x ครับ (เช่น 16:9 หรือ 1920x1080)'); return; } if(r && !isNaN(r)) { window.setCropRatio(r, {stopPropagation:function(){}}); } else { window.showAlert('สัดส่วนไม่ถูกต้องครับ'); } }); };
@@ -1791,7 +1950,7 @@
             if(e.key === 'Escape' && document.getElementById('about-ui').style.display !== 'none') { e.preventDefault(); window.closeAbout(); return; }
             if(e.key === 'Escape' && document.getElementById('image-detail-ui').classList.contains('open')) { e.preventDefault(); window.closeImageDetail(); return; }
             if(e.key === 'Escape' && nodeNoteId) { e.preventDefault(); window.closeNodeNote(); return; }
-            if(e.key === 'Escape' && areaEditMode) { e.preventDefault(); if(activeAreaGestureCancel) activeAreaGestureCancel(); areaEditMode = false; selectedAreaId = null; let button = document.getElementById('area-mode-btn'); if(button) button.classList.remove('active'); renderAreas(); window.showToast('🟨 ปิดโหมด Area'); return; }
+            if(e.key === 'Escape' && areaEditMode) { e.preventDefault(); if(activeAreaGestureCancel) activeAreaGestureCancel(); areaEditMode = false; clearSelectionKinds(['area']); let button = document.getElementById('area-mode-btn'); if(button) button.classList.remove('active'); syncSelectionVisuals(); window.showToast('🟨 ปิดโหมด Area'); return; }
             if(e.key === 'Tab') {
                 let active = document.activeElement;
                 if(active && active.classList.contains('nt')) { e.preventDefault(); if(!e.shiftKey) { let nd = active.nextElementSibling; if(nd && nd.classList.contains('nd')) nd.focus(); } return; } 
@@ -1800,10 +1959,7 @@
             if(e.key === 'Delete') {
                 let ae = document.activeElement;
                 if(ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
-                if(selectedAreaId) { e.preventDefault(); window.deleteArea(selectedAreaId); return; }
-                if(selectedAnnotationTextId) { e.preventDefault(); window.deleteAnnotationText(selectedAnnotationTextId); return; }
-                if(selectedAnnotationId) { e.preventDefault(); window.deleteAnnotationLine(selectedAnnotationId); return; }
-                if(nodes.some(n => n.classList.contains('sel')) || selectedImageIds.size) { e.preventDefault(); deleteSelectedObjectsActivity(); }
+                if(selectedEntries().length) { e.preventDefault(); deleteSelectedObjectsActivity(); }
                 return;
             }
             if(e.altKey || (e.getModifierState && e.getModifierState('AltGraph'))) {
